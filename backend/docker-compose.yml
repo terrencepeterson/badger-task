@@ -1,0 +1,14 @@
+services:
+
+  db:
+    image: mariadb:lts
+    environment:
+      MARIADB_ROOT_PASSWORD: example
+      MARIADB_USER: ${db_user}
+      MARIADB_PASSWORD: ${db_pass}
+      MARIADB_DATABASE: tasks
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db-data:/var/lib/mysql
+
