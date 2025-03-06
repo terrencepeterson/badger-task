@@ -11,4 +11,13 @@ services:
       - "3306:3306"
     volumes:
       - ./db-data:/var/lib/mysql
+  server:
+    build:
+      context: .
+    user: "node"
+    volumes:
+      - ./:/home/node/api
+      - /home/node/api/node_modules
+    ports:
+      - "8001:8001"
 
