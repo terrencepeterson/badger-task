@@ -6,7 +6,7 @@ services:
       MARIADB_ROOT_PASSWORD: example
       MARIADB_USER: ${db_user}
       MARIADB_PASSWORD: ${db_pass}
-      MARIADB_DATABASE: tasks
+      MARIADB_DATABASE: ${db_name}
     ports:
       - "3306:3306"
     volumes:
@@ -14,10 +14,9 @@ services:
   server:
     build:
       context: .
-    user: "node"
+    command: sh -c "npm install && npm start"
     volumes:
       - ./:/home/node/api
-      - /home/node/api/node_modules
     ports:
       - "8001:8001"
 

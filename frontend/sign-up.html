@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title></title>
+        <link href="css/style.css" rel="stylesheet">
+    </head>
+    <body>
+        <form class="register-form" method="POST">
+            <div>
+                <label for="email">Email</label>
+                <input type="email" name="email" id="email" value="test@test.com" required>
+            </div>
+            <div>
+                <label for="password">Password</label>
+                <input type="password" name="password" id="password" value="123456" required>
+            </div>
+            <div>
+                <label for="verify-password">Confirm Password</label>
+                <input type="password" name="confirm_password" id="verify-password" value="123456" required>
+            </div>
+            <button type="submit">Submit</button>
+        </form>
+    </body>
+
+    <script>
+        const url = 'http://localhost:8001/sign-up'
+        const form = document.querySelector('form')
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            let data = new FormData(form)
+            data = Object.fromEntries(data)
+            const res = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data)
+            })
+            console.log(res)
+        })
+    </script>
+</html>
+
