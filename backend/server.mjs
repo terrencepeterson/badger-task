@@ -2,11 +2,25 @@
 import '@dotenvx/dotenvx/config'
 import express from "express"
 import cors from "cors"
+import DOMPurify from "isomorphic-dompurify";
 
 const app = express()
+const { server_host: host, server_port: port } = process.env
 app.use(express.json())
 app.use(cors())
-const { server_host: host, server_port: port } = process.env
+
+const sanitiseInput = (req, res, next) => {
+    if (!req.body) {
+        return
+    }
+
+    for (const key in req.body) {
+        req.body[key] = DOMPurify.sanitize(req.body[key])
+    }
+
+    next()
+}
+app.post('*', sanitiseInput)
 
 app.get('/', (req, res) => {
     res.json([
