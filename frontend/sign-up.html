@@ -9,16 +9,20 @@
     <body>
         <form class="register-form" method="POST">
             <div>
+                <label for="name">Name</label>
+                <input type="text" name="name" id="name" value="Bob Schmidt" required>
+            </div>
+            <div>
                 <label for="email">Email</label>
-                <input type="email" name="email" id="email" value="test@test.com" required>
+                <input type="email" name="email" id="email" value="test@matt.com" required>
             </div>
             <div>
                 <label for="password">Password</label>
-                <input type="password" name="password" id="password" value="123456" required>
+                <input type="password" name="password" id="password" value="Password123#" required>
             </div>
             <div>
                 <label for="verify-password">Confirm Password</label>
-                <input type="password" name="confirm_password" id="verify-password" value="123456" required>
+                <input type="password" name="confirm_password" id="verify-password" value="Password123#" required>
             </div>
             <button type="submit">Submit</button>
         </form>
@@ -38,7 +42,8 @@
                 },
                 body: JSON.stringify(data)
             })
-            console.log(res)
+            const parsedRes = await res.json()
+            console.log(parsedRes)
         })
     </script>
 </html>

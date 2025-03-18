@@ -2,6 +2,7 @@ import '@dotenvx/dotenvx/config'
 import express from "express"
 import cors from "cors"
 import { responseFormatter, sanitiseInput } from './middleware.mjs'
+import { signup } from './auth.mjs'
 
 const app = express()
 const { server_host: host, server_port: port } = process.env
@@ -19,10 +20,14 @@ app.get('/', (req, res) => {
     ])
 })
 
-app.post('/sign-up', (req, res) => {
-    console.log('test post')
-    console.log(req.body)
-    res.send(req.body)
+app.post('/sign-up', async (req, res) => {
+    try {
+        const data = await signup(req.body)
+        res.success(data)
+    } catch (e) {
+        console.error(e)
+        res.error(e.message)
+    }
 })
 
 app.listen(port, host, () => {
