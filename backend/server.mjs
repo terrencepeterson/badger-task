@@ -1,13 +1,15 @@
-//require("dotenv").config()
 import '@dotenvx/dotenvx/config'
 import express from "express"
 import cors from "cors"
 import DOMPurify from "isomorphic-dompurify";
 
+import responseFormatter from './responseFormatter.mjs'
+
 const app = express()
 const { server_host: host, server_port: port } = process.env
 app.use(express.json())
 app.use(cors())
+app.use(responseFormatter)
 
 const sanitiseInput = (req, res, next) => {
     if (!req.body) {
