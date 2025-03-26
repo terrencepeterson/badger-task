@@ -1,5 +1,6 @@
 import DOMPurify from "isomorphic-dompurify";
 const AUTH_TOKEN_COOKIE_NAME = 'authToken'
+import { unauthenticated } from "./errorMessages.mjs"
 
 export function responseFormatter (req, res, next) {
     res.setTokenCookie = (token) => {
@@ -55,12 +56,27 @@ export function responseFormatter (req, res, next) {
 }
 
 export function sanitiseInput(req, res, next) {
-    if (!req.body) {
+    if (req.body) {
+        for (const key in req.body) {
+            req.body[key] = DOMPurify.sanitize(req.body[key])
+        }
+    }
+
+    next()
+}
+
+export async function authenticate(req, res, next) {
+    const authToken = await req.getAuthToken()
+
+    if (!authToken) {
+        res.error(unauthenticated.messaage, unauthenticated.code, unauthenticated.details)
+        req.user = null // not sure if necessary here but i feel hacker could send a user property in the request
         return
     }
 
-    for (const key in req.body) {
-        req.body[key] = DOMPurify.sanitize(req.body[key])
+    req.user = {
+        id: authToken.id,
+        role: authToken.role
     }
 
     next()

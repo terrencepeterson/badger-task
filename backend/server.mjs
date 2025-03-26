@@ -1,7 +1,7 @@
 import '@dotenvx/dotenvx/config'
 import express from "express"
 import cors from "cors"
-import { responseFormatter, sanitiseInput } from './middleware.mjs'
+import { responseFormatter, sanitiseInput, authenticate } from './middleware.mjs'
 import { signup, login } from './auth.mjs'
 
 const app = express()
@@ -17,14 +17,7 @@ app.use(cors(corsOptions))
 app.use(responseFormatter)
 app.post('*', sanitiseInput)
 
-app.get('/', async (req, res) => {
-    const authToken = await req.getAuthToken()
-
-    if (!authToken) {
-        res.error('Access denied, please login', 401, { redirect: true, url: "/login"})
-        return
-    }
-
+app.get('/', authenticate, async (req, res) => {
     res.json([
         { id: 1, name: 'bob', age: 26 },
         { id: 2, name: 'jason', age: 16 },
