@@ -65,6 +65,15 @@ export async function addUser({ name, email, description, role, password, img_ur
     return user[0]
 }
 
+export async function getUserByEmail(email) {
+    const user = await query(`
+        SELECT id, email, password, role
+        FROM ${USER_TABLE} where email = '${email}'
+    `)
+
+    return user.length ? user[0] : null
+}
+
 process.on('SIGINT', async () => {
     console.log("Closing database connection pool...");
     await pool.end();
