@@ -7,3 +7,11 @@ export const unauthenticated = {
     }
 }
 
+export const loggedOut = {
+    message: "Logged out",
+    metaData: {
+        redirect: true,
+        url: "/login"
+    }
+}
+

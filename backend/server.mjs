@@ -3,6 +3,7 @@ import express from "express"
 import cors from "cors"
 import { responseFormatter, sanitiseInput, authenticate } from './middleware.mjs'
 import { signup, login } from './auth.mjs'
+import { loggedOut } from './standarisedResponses.mjs'
 
 const app = express()
 const { server_host: host, server_port: port } = process.env
@@ -40,6 +41,16 @@ app.post('/login', async (req, res) => {
         const token = await login(req.body)
         res.setTokenCookie(token)
         res.success('Successfully logged in!')
+    } catch (e) {
+        console.error(e)
+        res.error(e.message)
+    }
+})
+
+app.get('/logout', authenticate, async (req, res) => {
+    try {
+        res.clearCookie(process.env.auth_token_cookie_name)
+        res.success(loggedOut.message, loggedOut.metaData)
     } catch (e) {
         console.error(e)
         res.error(e.message)

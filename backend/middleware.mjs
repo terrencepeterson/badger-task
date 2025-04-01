@@ -1,10 +1,9 @@
 import DOMPurify from "isomorphic-dompurify";
-const AUTH_TOKEN_COOKIE_NAME = 'authToken'
-import { unauthenticated } from "./errorMessages.mjs"
+import { unauthenticated } from "./standarisedResponses.mjs"
 
 export function responseFormatter (req, res, next) {
     res.setTokenCookie = (token) => {
-        res.cookie(AUTH_TOKEN_COOKIE_NAME, token, {
+        res.cookie(process.env.auth_token_cookie_name, token, {
             httpOnly: true,
             secure: true,
             partitioned: true,
@@ -42,7 +41,7 @@ export function responseFormatter (req, res, next) {
               )
             : {}
 
-        const authToken = cookies[AUTH_TOKEN_COOKIE_NAME]
+        const authToken = cookies[process.env.auth_token_cookie_name]
         if (!authToken) {
             return null
         }
