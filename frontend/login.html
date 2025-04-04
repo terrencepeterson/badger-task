@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title></title>
+    <link href="css/style.css" rel="stylesheet">
+</head>
+
+<body>
+    <h1>test</h1>
+    <form id="login-form" method="POST" style="margin-bottom: 1rem;">
+        <div>
+            <label for="email">Email</label>
+            <input type="email" name="email" id="email" value="test2@test.com" required>
+        </div>
+        <div>
+            <label for="password">Password</label>
+            <input type="password" name="password" id="password" value="Password123#" required>
+        </div>
+        <button type="submit">Submit</button>
+        <button id="logout" type="button">Logout</button>
+    </form>
+
+    <div>
+        <div>
+            <label for="last-id">Last ID</label>
+            <input type="number" name="last-id" id="last-id" value="0">
+        </div>
+        <button id="get-data">Get Data</button>
+    </div>
+</body>
+
+<script>
+    const loginUrl = 'http://localhost:8001/login'
+    const form = document.querySelector('#login-form')
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault()
+        let data = new FormData(form)
+        data = Object.fromEntries(data)
+        const res = await fetch(loginUrl, {
+            method: "POST",
+            credentials: 'include',
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data)
+        })
+        const parsedRes = await res.json()
+        console.log(parsedRes)
+    })
+
+    const logoutUrl = 'http://localhost:8001/logout'
+    const logoutButton = document.querySelector('#logout')
+    logoutButton.addEventListener('click', async () => {
+        let headers = new Headers();
+        headers.append('Content-Type', 'application/json');
+        headers.append('Accept', 'application/json');
+        try {
+            const data = await fetch(logoutUrl, {credentials: 'include', headers})
+            const parsedData = await data.json()
+            console.log(parsedData)
+        } catch (e) {
+            console.log(e)
+        }
+    })
+
+    const dashboardData = []
+    const lastInput = document.querySelector('#last-id')
+    const dataUrl = 'http://localhost:8001/dashboard'
+    const button = document.querySelector('#get-data')
+    button.addEventListener('click', async () => {
+        let headers = new Headers();
+        headers.append('Content-Type', 'application/json');
+        headers.append('Accept', 'application/json');
+        const params = new URLSearchParams({
+            lastTaskId: lastInput.value,
+        });
+
+        const data = await fetch(`${dataUrl}?${params}`, {credentials: 'include', headers})
+        const parsedData = await data.json()
+        console.log(parsedData.data)
+        if (!parsedData) {
+            return
+        }
+
+        // get number of tasks
+        dashboardData.push(...parsedData.data.tasks)
+        const set = new Set()
+        dashboardData.forEach(data => set.add(data.taskId))
+        console.log(set.size)
+        const lastInputId = parsedData.data.tasks[parsedData.data.tasks.length - 1].taskId
+        lastInput.value = lastInputId
+    })
+</script>
+
+</html>
+

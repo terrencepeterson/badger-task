@@ -4,12 +4,13 @@ import cors from "cors"
 import { responseFormatter, sanitiseInput, authenticate } from './middleware.mjs'
 import { signup, login } from './auth.mjs'
 import { loggedOut } from './standarisedResponses.mjs'
+import { dashboard } from './api.mjs'
 
 const app = express()
 const { server_host: host, server_port: port } = process.env
 
 const corsOptions = {
-    origin: 'http://127.0.0.1:5500',
+    origin: true,
     credentials: true
 }
 
@@ -18,12 +19,14 @@ app.use(cors(corsOptions))
 app.use(responseFormatter)
 app.post('*', sanitiseInput)
 
-app.get('/', authenticate, async (req, res) => {
-    res.json([
-        { id: 1, name: 'bob', age: 26 },
-        { id: 2, name: 'jason', age: 16 },
-        { id: 3, name: 'susan', age: 36 }
-    ])
+app.get('/dashboard', authenticate, async (req, res) => {
+    try {
+        const { lastTaskId } = req.query
+        const data = await dashboard(req.user.id, +lastTaskId)
+        res.success(data)
+    } catch (e) {
+        res.error(e.message)
+    }
 })
 
 app.post('/sign-up', async (req, res) => {
