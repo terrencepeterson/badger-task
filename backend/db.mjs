@@ -2,6 +2,7 @@ import '@dotenvx/dotenvx/config'
 import mariadb from 'mariadb'
 
 const ACTIVE_USER_TABLE = 'active_user'
+const AGENDA_COLS_TABLE = 'column_agenda'
 const USER_TABLE = 'user'
 
 const pool = mariadb.createPool({
@@ -57,12 +58,25 @@ export async function addUser({ name, email, description, role, password, img_ur
     `, { message: 'Failed to add user to database'})
 
     const userId = Number(data.insertId)
+    await addDefaultAgenda(userId)
+
     const user = await query(`
         SELECT id, name, email, img_url, created_at
         FROM ${USER_TABLE} where id = ${userId}
     `)
 
     return user[0]
+}
+
+// always called when a user is added
+function addDefaultAgenda(userId) {
+    return query(`
+        INSERT INTO ${AGENDA_COLS_TABLE} (name, colour, \`column\`, user_id) VALUES
+        ('Focus', '#FFAA00', 0, ${userId}),
+        ('Reply to', '#A179F2', 1, ${userId}),
+        ('Upcoming', '#2BD9D9', 2, ${userId}),
+        ('On hold', '#D01F2E', 3, ${userId});
+    `, {message: 'Failed to add default agenda cols to database'})
 }
 
 export async function getUserByEmail(email) {
