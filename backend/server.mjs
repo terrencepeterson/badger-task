@@ -4,7 +4,7 @@ import cors from "cors"
 import { responseFormatter, sanitiseInput, authenticate } from './middleware.mjs'
 import { signup, login } from './auth.mjs'
 import { loggedOut } from './standarisedResponses.mjs'
-import { dashboard } from './api.mjs'
+import { dashboard, task } from './api.mjs'
 
 const app = express()
 const { server_host: host, server_port: port } = process.env
@@ -18,6 +18,17 @@ app.use(express.json())
 app.use(cors(corsOptions))
 app.use(responseFormatter)
 app.post('*', sanitiseInput)
+
+app.get('/task', authenticate, async(req, res) => {
+    try {
+        const { taskId } = req.query
+        const data = await task(taskId)
+        res.success(data)
+    } catch(e) {
+        console.log(e)
+        res.error(e.message)
+    }
+})
 
 app.get('/dashboard', authenticate, async (req, res) => {
     try {

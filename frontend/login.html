@@ -24,11 +24,21 @@
     </form>
 
     <div>
+        <h2>Get Dashboard</h2>
         <div>
             <label for="last-id">Last ID</label>
             <input type="number" name="last-id" id="last-id" value="0">
         </div>
-        <button id="get-data">Get Data</button>
+        <button id="get-data">Get dashboard</button>
+    </div>
+
+    <div>
+        <h2>Get Task</h2>
+        <div>
+            <label for="task-id">Task id</label>
+            <input type="text" name="task-id" value="50" id="task-id">
+        </div>
+        <button type="button" class="get-task-button" >Get Task</button>
     </div>
 </body>
 
@@ -92,6 +102,19 @@
         console.log(set.size)
         const lastInputId = parsedData.data.tasks[parsedData.data.tasks.length - 1].taskId
         lastInput.value = lastInputId
+    })
+
+    const taskInputElement = document.querySelector('#task-id')
+    const taskButton = document.querySelector('.get-task-button')
+    const taskUrl = 'http://localhost:8001/task'
+    taskButton.addEventListener('click', async (e) => {
+        const params = new URLSearchParams({
+            taskId: taskInputElement.value
+        })
+
+        const data = await fetch(`${taskUrl}?${params}`, { credentials: 'include' })
+        const parsedData = await data.json()
+        console.log(parsedData)
     })
 </script>
 
