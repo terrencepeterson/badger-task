@@ -13,22 +13,6 @@ const TASK_TAG_TABLE = 'task_tag'
 const COMMENT_TABLE = 'comment'
 const CHECKLIST_TABLE = 'checklist'
 
-const SELECT_TASK_OVERVIEW_QUERY = `
-    SELECT
-        tsk.id as taskId,
-        tsk.name as taskName,
-        tsk.state as taskState,
-        cp.project_id as projectId,
-        GROUP_CONCAT(tt.tag_id SEPARATOR ',') AS tags
-    FROM ${TASK_TABLE} tsk
-    LEFT JOIN ${COLUMN_PROJECT_TABLE} cp
-        ON cp.id = tsk.project_column_id
-    LEFT JOIN ${TASK_TAG_TABLE} tt
-        ON tt.task_id = tsk.id
-    LEFT JOIN ${PROJECT_TABLE} p
-        ON cp.project_id = p.id
-`
-
 const pool = mariadb.createPool({
     host: 'db',
     user: process.env.db_user,
@@ -170,10 +154,22 @@ export function getTagsByUserId(userId) {
     `)
 }
 
-export function getDashboardTasks(id, lastTaskId = 0) {
-    return query(`
-        ${SELECT_TASK_OVERVIEW_QUERY}
-        WHERE tsk.assignee = ${id}
+export async function getDashboardTasks(id, lastTaskId = 0) {
+    let tasks = await query(`
+        SELECT
+            tsk.id as taskId,
+            tsk.name as taskName,
+            tsk.state as taskState,
+            cp.project_id as projectId,
+            GROUP_CONCAT(tt.tag_id SEPARATOR ',') AS tags
+        FROM ${TASK_TABLE} tsk
+        LEFT JOIN ${COLUMN_PROJECT_TABLE} cp
+            ON cp.id = tsk.project_column_id
+        LEFT JOIN ${TASK_TAG_TABLE} tt
+            ON tt.task_id = tsk.id
+        LEFT JOIN ${PROJECT_TABLE} p
+            ON cp.project_id = p.id
+            WHERE tsk.assignee = ${id}
         AND tsk.id > ${lastTaskId}
         GROUP BY
             tsk.id, tsk.name, tsk.state
@@ -181,6 +177,16 @@ export function getDashboardTasks(id, lastTaskId = 0) {
             p.created_at ASC
         LIMIT 5;
     `)
+
+    tasks = tasks.map(task => {
+        const tags = !task.tags ? [] : task.tags.split(',')
+        return {
+            ...task,
+            tags
+        }
+    })
+
+    return tasks
 }
 
 export async function getTaskById(taskId) {

@@ -19,9 +19,7 @@ export async function dashboard(userId, lastTaskId = 0) {
     }
 
     let dashboardData = {}
-    let tasks = await getDashboardTasks(userId, lastTaskId)
-    tasks = tasks.map(t => ({ ...t, tags: t.tags.split(',') }))
-    dashboardData.tasks = tasks
+    dashboardData.tasks = await getDashboardTasks(userId, lastTaskId)
 
     if (lastTaskId) { // if it's not the first request to this endpoint
         return dashboardData
