@@ -40,6 +40,15 @@
         </div>
         <button type="button" class="get-task-button" >Get Task</button>
     </div>
+
+    <div>
+        <h2>Get project</h2>
+        <div>
+            <label for="project-id">Project id</label>
+            <input type="text" name="project-id" value="13" id="project-id">
+        </div>
+        <button type="button" class="get-project-button" >Get Project</button>
+    </div>
 </body>
 
 <script>
@@ -113,6 +122,19 @@
         })
 
         const data = await fetch(`${taskUrl}?${params}`, { credentials: 'include' })
+        const parsedData = await data.json()
+        console.log(parsedData)
+    })
+
+    const projectInputElement = document.querySelector('#project-id')
+    const projectButton = document.querySelector('.get-project-button')
+    const projectUrl = 'http://localhost:8001/project'
+    projectButton.addEventListener('click', async (e) => {
+        const params = new URLSearchParams({
+            projectId: projectInputElement.value
+        })
+
+        const data = await fetch(`${projectUrl}?${params}`, { credentials: 'include' })
         const parsedData = await data.json()
         console.log(parsedData)
     })

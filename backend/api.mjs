@@ -6,18 +6,22 @@ import {
     getTaskById,
     getCommentsByTaskId,
     getTagsByTaskId,
-    getChecklistByTaskId
+    getChecklistByTaskId,
+    getProjectTasks,
+    getProjectColumnsByProjectId,
+    getProjectUsersByProjectId,
+    getProjectByProjectId
 } from "./db.mjs"
 
 export async function dashboard(userId, lastTaskId = 0) {
+    if (!userId) {
+        throw new Error('Not authenticated, please login')
+    }
+
     let dashboardData = {}
     let tasks = await getDashboardTasks(userId, lastTaskId)
     tasks = tasks.map(t => ({ ...t, tags: t.tags.split(',') }))
     dashboardData.tasks = tasks
-
-    if (!userId) {
-        throw new Error('Not authenticated, please login')
-    }
 
     if (lastTaskId) { // if it's not the first request to this endpoint
         return dashboardData
@@ -50,5 +54,22 @@ export async function task(taskId) {
     task.checklist = await getChecklistByTaskId(taskId)
 
     return task
+}
+
+export async function project(projectId) {
+    if (!projectId) {
+        throw new Error('No project id provided')
+    }
+    const projectDetails = await getProjectByProjectId(projectId)
+
+    if (!projectDetails) {
+        throw new Error('Project does not exist with that id')
+    }
+
+    projectDetails.tasks = await getProjectTasks(projectId)
+    projectDetails.columns = await getProjectColumnsByProjectId(projectId)
+    projectDetails.users = await getProjectUsersByProjectId(projectId)
+
+    return projectDetails
 }
 

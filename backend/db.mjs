@@ -13,6 +13,22 @@ const TASK_TAG_TABLE = 'task_tag'
 const COMMENT_TABLE = 'comment'
 const CHECKLIST_TABLE = 'checklist'
 
+const SELECT_TASK_OVERVIEW_QUERY = `
+    SELECT
+        tsk.id as taskId,
+        tsk.name as taskName,
+        tsk.state as taskState,
+        cp.project_id as projectId,
+        GROUP_CONCAT(tt.tag_id SEPARATOR ',') AS tags
+    FROM ${TASK_TABLE} tsk
+    LEFT JOIN ${COLUMN_PROJECT_TABLE} cp
+        ON cp.id = tsk.project_column_id
+    LEFT JOIN ${TASK_TAG_TABLE} tt
+        ON tt.task_id = tsk.id
+    LEFT JOIN ${PROJECT_TABLE} p
+        ON cp.project_id = p.id
+`
+
 const pool = mariadb.createPool({
     host: 'db',
     user: process.env.db_user,
@@ -156,19 +172,7 @@ export function getTagsByUserId(userId) {
 
 export function getDashboardTasks(id, lastTaskId = 0) {
     return query(`
-        SELECT
-            tsk.id as taskId,
-            tsk.name as taskName,
-            tsk.state as taskState,
-            cp.project_id as projectId,
-            GROUP_CONCAT(tt.tag_id SEPARATOR ',') AS tags
-        FROM ${TASK_TABLE} tsk
-        LEFT JOIN ${COLUMN_PROJECT_TABLE} cp
-            ON cp.id = tsk.project_column_id
-        LEFT JOIN ${TASK_TAG_TABLE} tt
-            ON tt.task_id = tsk.id
-        LEFT JOIN ${PROJECT_TABLE} p
-            ON cp.project_id = p.id
+        ${SELECT_TASK_OVERVIEW_QUERY}
         WHERE tsk.assignee = ${id}
         AND tsk.id > ${lastTaskId}
         GROUP BY
@@ -240,6 +244,85 @@ export function getChecklistByTaskId(taskId) {
         SELECT c.id as checklistId, c.name as checklistName, c.state as checklistState
         FROM ${CHECKLIST_TABLE} c
         WHERE c.task_id = ${taskId}
+    `)
+}
+
+export async function getProjectByProjectId(projectId) {
+    const project = await query(`
+        SELECT
+            p.name,
+            p.img_url,
+            p.created_at,
+            p.description,
+            u.name as createdBy
+        FROM project p
+        INNER JOIN user u
+            ON u.id = p.created_by
+        WHERE p.id = ${projectId}
+    `)
+
+    return project.length ? project[0] : null
+}
+
+export function getProjectTasks(projectId) {
+    return query(`
+        WITH RankedTasks AS (
+        SELECT
+            tsk.id AS taskId,
+            tsk.name AS taskName,
+            tsk.state,
+            tsk.project_row as row,
+            cp.id AS columnProjectId,
+            u.id as assigneeId,
+            ROW_NUMBER() OVER (PARTITION BY cp.id ORDER BY tsk.project_row ASC) AS rn
+            FROM project p
+            INNER JOIN column_project cp
+                ON cp.project_id = p.id
+            INNER JOIN task tsk
+                ON tsk.project_column_id = cp.id
+            INNER JOIN user u
+                ON u.id = tsk.assignee
+            WHERE p.id = ${projectId}
+        )
+        SELECT taskId, taskName, state, columnProjectId, row, assigneeId
+        FROM RankedTasks
+        WHERE rn <= 10;
+    `)
+}
+
+export async function getProjectColumnsByProjectId(projectId) {
+    let columns = await query(`
+        SELECT
+            cp.id,
+            cp.name,
+            cp.colour,
+            cp.icon,
+            CAST(COUNT(t.id) AS UNSIGNED) AS taskCount
+        FROM column_project cp
+        LEFT JOIN task t
+            ON t.project_column_id = cp.id
+        WHERE cp.project_id = ${projectId}
+        GROUP BY id, name, colour, icon;
+    `)
+
+    if (columns.length) {
+        columns = columns.map(c => ({...c, taskCount: Number(c.taskCount)}))
+    }
+
+    return columns
+}
+
+export function getProjectUsersByProjectId(projectId) {
+    return query(`
+        SELECT DISTINCT
+            u.id,
+            u.name,
+            u.img_url
+        FROM user u
+        INNER JOIN task t ON t.assignee = u.id
+        INNER JOIN column_project cp ON cp.id = t.project_column_id
+        INNER JOIN project p ON p.id = cp.project_id
+        WHERE p.id = ${projectId};
     `)
 }
 
