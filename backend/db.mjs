@@ -189,7 +189,7 @@ export async function getDashboardTasks(id, lastTaskId = 0) {
     return tasks
 }
 
-export async function getTaskById(taskId) {
+export async function getTaskById(taskId, userId) {
     const task = await query(`
         SELECT
             tsk.id as taskId,
@@ -200,20 +200,24 @@ export async function getTaskById(taskId) {
             tsk.created_at,
             u.name as assigneeName,
             u.img_url as assigneeImgUrl,
-            ca.name as columnAgendaName,
-            ca.colour as columnAgendaColour,
-            p.id as projectId,
             p.name as projectName,
-            cp.name as columnProjectName
+            ca.name as columnAgendaName,
+            ca.colour as columnAgendaColour
         FROM ${TASK_TABLE} tsk
         LEFT JOIN ${USER_TABLE} u
             ON tsk.assignee = u.id
-        LEFT JOIN ${COLUMN_AGENDA_TABLE} ca
-            ON ca.id = tsk.agenda_column_id
         LEFT JOIN ${COLUMN_PROJECT_TABLE} cp
             ON cp.id = tsk.project_column_id
         LEFT JOIN ${PROJECT_TABLE} p
             ON p.id = cp.project_id
+        LEFT JOIN (
+            SELECT tca.task_id, ca.name, ca.colour, ca.id
+            FROM ${TASK_COLUMN_AGENDA_TABLE} tca
+            INNER JOIN ${COLUMN_AGENDA_TABLE} ca
+                ON ca.id = tca.column_agenda_id
+            WHERE ca.user_id = ${userId}
+        ) ca
+            ON ca.task_id = tsk.id
         WHERE tsk.id = ${taskId};
     `)
 

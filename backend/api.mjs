@@ -37,12 +37,12 @@ export async function dashboard(userId, lastTaskId = 0) {
     return dashboardData
 }
 
-export async function task(taskId) {
+export async function task(taskId, userId) {
     if (!taskId) {
         throw new Error('No task ID provided')
     }
 
-    const task = await getTaskById(taskId)
+    const task = await getTaskById(taskId, userId)
     if (!task || !task.taskId) {
         throw new Error('Task not found with specified ID')
     }

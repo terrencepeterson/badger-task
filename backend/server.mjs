@@ -33,7 +33,7 @@ app.get('/project', authenticate, async(req, res) => {
 app.get('/task', authenticate, async(req, res) => {
     try {
         const { taskId } = req.query
-        const data = await task(taskId)
+        const data = await task(taskId, req.user.id)
         res.success(data)
     } catch(e) {
         console.log(e)
