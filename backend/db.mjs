@@ -284,7 +284,7 @@ export async function getProjectByProjectId(projectId) {
     return project.length ? project[0] : null
 }
 
-export function getProjectTasks(projectId) {
+export function getProjectTasks(projectId, userId) {
     return query(`
         WITH RankedTasks AS (
             SELECT
@@ -294,19 +294,28 @@ export function getProjectTasks(projectId) {
                 tsk.project_row as row,
                 cp.id AS columnProjectId,
                 u.id as assigneeId,
-                ROW_NUMBER() OVER (PARTITION BY cp.id ORDER BY tsk.project_row ASC) AS rn
-            FROM project p
-            INNER JOIN column_project cp
+                ROW_NUMBER() OVER (PARTITION BY cp.id ORDER BY tsk.project_row ASC) AS rn,
+                ca.colour as agendaColour
+            FROM ${PROJECT_TABLE} p
+            LEFT JOIN ${COLUMN_PROJECT_TABLE} cp
                 ON cp.project_id = p.id
-            INNER JOIN task tsk
+            LEFT JOIN ${TASK_TABLE} tsk
                 ON tsk.project_column_id = cp.id
-            INNER JOIN user u
+            LEFT JOIN ${USER_TABLE} u
                 ON u.id = tsk.assignee
+            LEFT JOIN (
+                SELECT ca.colour, tca.task_id
+                FROM ${TASK_COLUMN_AGENDA_TABLE} tca
+                INNER JOIN ${COLUMN_AGENDA_TABLE} ca
+                    ON ca.id = tca.column_agenda_id
+                WHERE ca.user_id = ${userId}
+            ) ca
+                ON ca.task_id = tsk.id
             WHERE p.id = ${projectId}
         )
-        SELECT taskId, taskName, state, columnProjectId, row, assigneeId
+        SELECT taskId, taskName, state, columnProjectId, row, assigneeId, agendaColour
         FROM RankedTasks
-        WHERE rn <= 10;
+        WHERE rn <= 5;
     `)
 }
 

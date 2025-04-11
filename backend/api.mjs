@@ -54,7 +54,7 @@ export async function task(taskId, userId) {
     return task
 }
 
-export async function project(projectId) {
+export async function project(projectId, userId) {
     if (!projectId) {
         throw new Error('No project id provided')
     }
@@ -64,7 +64,7 @@ export async function project(projectId) {
         throw new Error('Project does not exist with that id')
     }
 
-    projectDetails.tasks = await getProjectTasks(projectId)
+    projectDetails.tasks = await getProjectTasks(projectId, userId)
     projectDetails.columns = await getProjectColumnsByProjectId(projectId)
     projectDetails.users = await getProjectUsersByProjectId(projectId)
 

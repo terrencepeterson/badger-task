@@ -22,7 +22,7 @@ app.post('*', sanitiseInput)
 app.get('/project', authenticate, async(req, res) => {
     try {
         const { projectId } = req.query
-        const data = await project(projectId)
+        const data = await project(projectId, req.user.id)
         res.success(data)
     } catch(e) {
         console.log(e)
