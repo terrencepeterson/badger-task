@@ -12,6 +12,7 @@ const TAG_TABLE = 'tag'
 const TASK_TAG_TABLE = 'task_tag'
 const COMMENT_TABLE = 'comment'
 const CHECKLIST_TABLE = 'checklist'
+const TASK_COLUMN_AGENDA_TABLE = 'task_column_agenda'
 
 const pool = mariadb.createPool({
     host: 'db',
@@ -154,14 +155,15 @@ export function getTagsByUserId(userId) {
     `)
 }
 
-export async function getDashboardTasks(id, lastTaskId = 0) {
+export async function getDashboardTasks(userId, lastTaskId = 0) {
     let tasks = await query(`
         SELECT
             tsk.id as taskId,
             tsk.name as taskName,
             tsk.state as taskState,
             cp.project_id as projectId,
-            GROUP_CONCAT(tt.tag_id SEPARATOR ',') AS tags
+            GROUP_CONCAT(tt.tag_id SEPARATOR ',') AS tags,
+            ca.colour as agendaColour
         FROM ${TASK_TABLE} tsk
         LEFT JOIN ${COLUMN_PROJECT_TABLE} cp
             ON cp.id = tsk.project_column_id
@@ -169,7 +171,15 @@ export async function getDashboardTasks(id, lastTaskId = 0) {
             ON tt.task_id = tsk.id
         LEFT JOIN ${PROJECT_TABLE} p
             ON cp.project_id = p.id
-            WHERE tsk.assignee = ${id}
+        LEFT JOIN (
+            SELECT tca.task_id, ca.name, ca.colour, ca.id
+            FROM ${TASK_COLUMN_AGENDA_TABLE} tca
+            INNER JOIN ${COLUMN_AGENDA_TABLE} ca
+                ON ca.id = tca.column_agenda_id
+            WHERE ca.user_id = ${userId}
+        ) ca
+            ON ca.task_id = tsk.id
+        WHERE tsk.assignee = ${userId}
         AND tsk.id > ${lastTaskId}
         GROUP BY
             tsk.id, tsk.name, tsk.state
@@ -277,14 +287,14 @@ export async function getProjectByProjectId(projectId) {
 export function getProjectTasks(projectId) {
     return query(`
         WITH RankedTasks AS (
-        SELECT
-            tsk.id AS taskId,
-            tsk.name AS taskName,
-            tsk.state,
-            tsk.project_row as row,
-            cp.id AS columnProjectId,
-            u.id as assigneeId,
-            ROW_NUMBER() OVER (PARTITION BY cp.id ORDER BY tsk.project_row ASC) AS rn
+            SELECT
+                tsk.id AS taskId,
+                tsk.name AS taskName,
+                tsk.state,
+                tsk.project_row as row,
+                cp.id AS columnProjectId,
+                u.id as assigneeId,
+                ROW_NUMBER() OVER (PARTITION BY cp.id ORDER BY tsk.project_row ASC) AS rn
             FROM project p
             INNER JOIN column_project cp
                 ON cp.project_id = p.id
