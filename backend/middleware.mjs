@@ -1,14 +1,17 @@
 import DOMPurify from "isomorphic-dompurify";
 import { unauthenticated } from "./standarisedResponses.mjs"
+export const cookieSettings = {
+    httpOnly: true,
+    secure: true,
+    partitioned: true
+}
 
 export function responseFormatter (req, res, next) {
     res.setTokenCookie = (token) => {
-        res.cookie(process.env.auth_token_cookie_name, token, {
-            httpOnly: true,
-            secure: true,
-            partitioned: true,
-            maxAge: 24 * 60 * 60 * 1000
-        })
+        // seperated this out as when clearing cookie you don't need maxAge
+        const maxAgeSetting = { maxAge: 24 * 60 * 60 * 1000 } 
+        Object.assign(maxAgeSetting, cookieSettings)
+        res.cookie(process.env.auth_token_cookie_name, token, maxAgeSetting)
     }
 
     res.success = (data, metadata = {}) => {
@@ -66,6 +69,7 @@ export function sanitiseInput(req, res, next) {
 
 export async function authenticate(req, res, next) {
     const authToken = await req.getAuthToken()
+    console.log(authToken)
 
     if (!authToken) {
         res.error(unauthenticated.messaage, unauthenticated.code, unauthenticated.details)

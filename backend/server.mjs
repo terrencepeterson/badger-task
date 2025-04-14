@@ -1,7 +1,7 @@
 import '@dotenvx/dotenvx/config'
 import express from "express"
 import cors from "cors"
-import { responseFormatter, sanitiseInput, authenticate } from './middleware.mjs'
+import { responseFormatter, sanitiseInput, authenticate, cookieSettings } from './middleware.mjs'
 import { signup, login } from './auth.mjs'
 import { loggedOut } from './standarisedResponses.mjs'
 import { dashboard, task, project } from './api.mjs'
@@ -74,7 +74,7 @@ app.post('/login', async (req, res) => {
 
 app.get('/logout', authenticate, async (req, res) => {
     try {
-        res.clearCookie(process.env.auth_token_cookie_name)
+        res.clearCookie(process.env.auth_token_cookie_name, cookieSettings)
         res.success(loggedOut.message, loggedOut.metaData)
     } catch (e) {
         console.error(e)
