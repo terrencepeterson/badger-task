@@ -15,7 +15,8 @@ import {
     getAgendaColumns,
     getAgendaUsers,
     getAgendaTags,
-    getAgendaProjects
+    getAgendaProjects,
+    getProjectTags
 } from "./db.mjs"
 
 export async function dashboard(userId, lastTaskId = 0) {
@@ -72,6 +73,7 @@ export async function project(projectId, userId) {
     projectDetails.tasks = await getProjectTasks(projectId, userId)
     projectDetails.columns = await getProjectColumnsByProjectId(projectId)
     projectDetails.users = await getProjectUsersByProjectId(projectId)
+    projectDetails.tags = await getProjectTags(projectId)
 
     return projectDetails
 }

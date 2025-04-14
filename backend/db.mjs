@@ -1,5 +1,6 @@
 import '@dotenvx/dotenvx/config'
 import mariadb from 'mariadb'
+import { project } from './api.mjs'
 
 const ACTIVE_USER_TABLE = 'active_user'
 const USER_TABLE = 'user'
@@ -21,6 +22,16 @@ const pool = mariadb.createPool({
     database: process.env.db_name,
     connectionLimit: 5
 })
+
+function mapTags(data) {
+    return data.map(d => {
+        const tags = !d.tags ? [] : d.tags.split(',')
+        return {
+            ...d,
+            tags
+        }
+    })
+}
 
 async function query(queryStatement, rethrowError = false) {
     let conn;
@@ -188,13 +199,7 @@ export async function getDashboardTasks(userId, lastTaskId = 0) {
         LIMIT 5;
     `)
 
-    tasks = tasks.map(task => {
-        const tags = !task.tags ? [] : task.tags.split(',')
-        return {
-            ...task,
-            tags
-        }
-    })
+    tasks = mapTags(tasks)
 
     return tasks
 }
@@ -284,8 +289,8 @@ export async function getProjectByProjectId(projectId) {
     return project.length ? project[0] : null
 }
 
-export function getProjectTasks(projectId, userId) {
-    return query(`
+export async function getProjectTasks(projectId, userId) {
+    let projectTasks = await query(`
         WITH RankedTasks AS (
             SELECT
                 tsk.id AS taskId,
@@ -295,14 +300,17 @@ export function getProjectTasks(projectId, userId) {
                 cp.id AS columnProjectId,
                 u.id as assigneeId,
                 ROW_NUMBER() OVER (PARTITION BY cp.id ORDER BY tsk.project_row ASC) AS rn,
-                ca.colour as agendaColour
+                ca.colour as agendaColour,
+                GROUP_CONCAT(tt.tag_id SEPARATOR ',') AS tags
             FROM ${PROJECT_TABLE} p
             LEFT JOIN ${COLUMN_PROJECT_TABLE} cp
                 ON cp.project_id = p.id
-            LEFT JOIN ${TASK_TABLE} tsk
+            INNER JOIN ${TASK_TABLE} tsk
                 ON tsk.project_column_id = cp.id
             LEFT JOIN ${USER_TABLE} u
                 ON u.id = tsk.assignee
+            LEFT JOIN ${TASK_TAG_TABLE} tt
+                ON tt.task_id = tsk.id
             LEFT JOIN (
                 SELECT ca.colour, tca.task_id
                 FROM ${TASK_COLUMN_AGENDA_TABLE} tca
@@ -312,10 +320,34 @@ export function getProjectTasks(projectId, userId) {
             ) ca
                 ON ca.task_id = tsk.id
             WHERE p.id = ${projectId}
+            GROUP BY taskId, taskName, state, columnProjectId, row, assigneeId, agendaColour
         )
-        SELECT taskId, taskName, state, columnProjectId, row, assigneeId, agendaColour
+        SELECT taskId, taskName, state, columnProjectId, row, assigneeId, agendaColour, tags
         FROM RankedTasks
         WHERE rn <= 5;
+    `)
+
+    projectTasks = mapTags(projectTasks)
+
+    return projectTasks
+}
+
+export function getProjectTags(projectId) {
+    return query(`
+        SELECT DISTINCT
+            tag.id,
+            tag.name,
+            tag.colour
+        FROM ${PROJECT_TABLE} p
+        INNER JOIN ${COLUMN_PROJECT_TABLE} cp
+            ON cp.project_id = p.id
+        INNER JOIN ${TASK_TABLE} t
+            ON t.project_column_id = cp.id
+        INNER JOIN ${TASK_TAG_TABLE} tt
+            ON tt.task_id = t.id
+        INNER JOIN ${TAG_TABLE}
+            ON tag.id = tt.tag_id
+        WHERE p.id = ${projectId}
     `)
 }
 
