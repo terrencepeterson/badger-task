@@ -355,6 +355,112 @@ export function getProjectUsersByProjectId(projectId) {
     `)
 }
 
+export function getAgendaTasks(userId) {
+    return query(`
+        WITH RankedTasks AS (
+            SELECT
+                tsk.id AS taskId,
+                tsk.name AS taskName,
+                tsk.state,
+                cp.project_id as projectId,
+                ca.id AS columnAgendaId,
+                tca.row,
+                tsk.assignee,
+                ROW_NUMBER() OVER (PARTITION BY tca.column_agenda_id ORDER BY tca.row ASC) AS rn,
+                GROUP_CONCAT(tt.tag_id SEPARATOR ',') AS tags
+            FROM column_agenda ca
+            INNER JOIN task_column_agenda tca
+                ON tca.column_agenda_id = ca.id
+            INNER JOIN task tsk
+                ON tsk.id = tca.task_id
+            INNER JOIN column_project cp
+                ON cp.id = tsk.project_column_id
+            LEFT JOIN task_tag tt
+                ON tt.task_id = tsk.id
+            WHERE ca.user_id = ${userId}
+            GROUP BY taskId, taskName, state, projectId, columnAgendaId, row, assignee
+        )
+        SELECT taskId, taskName, state, projectId, columnAgendaId, row, assignee, tags
+        FROM RankedTasks
+        WHERE rn <= 5;
+    `)
+}
+
+export async function getAgendaColumns(userId) {
+    let columns = await query(`
+        SELECT
+            ca.id,
+            ca.name,
+            ca.colour,
+            COUNT (tca.task_id) as taskCount -- if no tasks then 0
+        FROM column_agenda ca
+        LEFT JOIN task_column_agenda tca
+            ON tca.column_agenda_id = ca.id
+        WHERE ca.user_id = ${userId}
+        GROUP BY ca.id;
+    `)
+
+    columns = columns.map(c => ({
+        ...c,
+        taskCount: Number(c.taskCount)
+    }))
+
+    return columns
+}
+
+export function getAgendaUsers(userId) {
+    return query(`
+        SELECT DISTINCT
+            u.id,
+            u.name,
+            u.img_url
+        FROM column_agenda ca
+        INNER JOIN task_column_agenda tca
+            ON tca.column_agenda_id = ca.id
+        INNER JOIN task tsk
+            ON tsk.id = tca.task_id
+        INNER JOIN user u
+            ON u.id = tsk.assignee
+        WHERE ca.user_id = ${userId};
+    `)
+}
+
+export function getAgendaTags(userId) {
+    return query(`
+        SELECT DISTINCT
+            t.id,
+            t.name,
+            t.colour
+        FROM column_agenda ca
+        INNER JOIN task_column_agenda tca
+            ON tca.column_agenda_id = ca.id
+        INNER JOIN task_tag tt
+            ON tt.task_id = tca.task_id
+        INNER JOIN tag t
+            ON t.id = tt.tag_id
+        WHERE ca.user_id = ${userId};
+    `)
+}
+
+export function getAgendaProjects(userId) {
+    return query(`
+        SELECT DISTINCT
+            p.id,
+            p.img_url,
+            p.name
+        FROM column_agenda ca
+        INNER JOIN task_column_agenda tca
+            ON tca.column_agenda_id = ca.id
+        INNER JOIN task t
+            ON t.id = tca.task_id
+        INNER JOIN column_project cp
+            ON cp.id = t.project_column_id
+        INNER JOIN project p
+            ON p.id = cp.project_id
+        WHERE ca.user_id = ${userId};
+    `)
+}
+
 process.on('SIGINT', async () => {
     console.log("Closing database connection pool...");
     await pool.end();

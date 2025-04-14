@@ -10,7 +10,12 @@ import {
     getProjectTasks,
     getProjectColumnsByProjectId,
     getProjectUsersByProjectId,
-    getProjectByProjectId
+    getProjectByProjectId,
+    getAgendaTasks,
+    getAgendaColumns,
+    getAgendaUsers,
+    getAgendaTags,
+    getAgendaProjects
 } from "./db.mjs"
 
 export async function dashboard(userId, lastTaskId = 0) {
@@ -69,5 +74,20 @@ export async function project(projectId, userId) {
     projectDetails.users = await getProjectUsersByProjectId(projectId)
 
     return projectDetails
+}
+
+export async function agenda(userId) {
+    if (!userId) {
+        throw new Error('Not authenticated, please login')
+    }
+    const agenda = {}
+
+    agenda.tasks = await getAgendaTasks(userId)
+    agenda.columns = await getAgendaColumns(userId)
+    agenda.users = await getAgendaUsers(userId)
+    agenda.tags = await getAgendaTags(userId)
+    agenda.projects = await getAgendaProjects(userId)
+
+    return agenda
 }
 
