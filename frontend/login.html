@@ -49,6 +49,23 @@
         </div>
         <button type="button" class="get-project-button" >Get Project</button>
     </div>
+
+    <div>
+        <h2>Get Agenda</h2>
+        <button type="button" class="get-agenda-button">Get Agenda</button>
+    </div>
+    <div>
+        <h3>Get Agenda Column</h3>
+        <div>
+            <label for="column-agenda-id">Column agenda id</label>
+            <input type="number" name="column-agenda-id" value="" id="column-agenda-id">
+        </div>
+        <div>
+            <label for="column-row">Column row</label>
+            <input type="0" name="column-row" value="" id="column-row">
+        </div>
+        <button type="button" class="get-agenda-column">Get Agenda Column</button>
+    </div>
 </body>
 
 <script>
@@ -135,6 +152,30 @@
         })
 
         const data = await fetch(`${projectUrl}?${params}`, { credentials: 'include' })
+        const parsedData = await data.json()
+        console.log(parsedData)
+    })
+
+    const agendaButtonElement = document.querySelector('.get-agenda-button')
+    const agendaUrl  = 'http://localhost:8001/agenda'
+    agendaButtonElement.addEventListener('click', async (e) => {
+        const data = await fetch(agendaUrl, { credentials: 'include' })
+        const parsedData = await data.json()
+        console.log(parsedData)
+    })
+
+
+    const columnAgendaIdElement = document.querySelector('#column-agenda-id')
+    const columnAgendaRowElement = document.querySelector('#column-row')
+    const agendaColumnButtonElement = document.querySelector('.get-agenda-column')
+    const agendaColumnUrl = 'http://localhost:8001/agenda-column'
+    agendaColumnButtonElement.addEventListener('click', async (e) => {
+        const params = new URLSearchParams({
+            column: columnAgendaIdElement.value,
+            row: columnAgendaRowElement.value
+        })
+
+        const data = await fetch(`${agendaColumnUrl}?${params}`, { credentials: 'include' })
         const parsedData = await data.json()
         console.log(parsedData)
     })

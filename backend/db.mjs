@@ -493,6 +493,35 @@ export function getAgendaProjects(userId) {
     `)
 }
 
+export async function getAgendaColumn(columnId, row) {
+    let tasks = await query(`
+        SELECT
+            task.id,
+            task.name,
+            task.state,
+            task.assignee,
+            cp.project_id as projectId,
+            tca.row,
+            GROUP_CONCAT(tt.tag_id SEPARATOR ',') AS tags
+        FROM task_column_agenda tca
+        INNER JOIN task
+            ON task.id = tca.task_id
+        INNER JOIN column_project cp
+            ON cp.id = task.project_column_id
+        LEFT JOIN task_tag tt
+            ON tt.task_id = task.id
+        WHERE tca.column_agenda_id = ${columnId}
+        AND row > ${row}
+        GROUP BY id, name, state, assignee, projectId, \`row\`
+        ORDER BY tca.row
+        LIMIT 5;
+    `)
+
+    tasks = mapTags(tasks)
+
+    return tasks
+}
+
 process.on('SIGINT', async () => {
     console.log("Closing database connection pool...");
     await pool.end();

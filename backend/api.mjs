@@ -16,7 +16,8 @@ import {
     getAgendaUsers,
     getAgendaTags,
     getAgendaProjects,
-    getProjectTags
+    getProjectTags,
+    getAgendaColumn
 } from "./db.mjs"
 
 export async function dashboard(userId, lastTaskId = 0) {
@@ -91,5 +92,17 @@ export async function agenda(userId) {
     agenda.projects = await getAgendaProjects(userId)
 
     return agenda
+}
+
+export async function agendaColumn(column, row) {
+    if (column === null || column === undefined) {
+        throw new Error('No column provide for agenda')
+    }
+
+    if (row === null || row === undefined) {
+        throw new Error('No row provided for agenda')
+    }
+
+    return await getAgendaColumn(column, row)
 }
 
