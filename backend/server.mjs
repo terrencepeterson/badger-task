@@ -75,8 +75,8 @@ app.get('/task', authenticate, async(req, res) => {
 
 app.get('/dashboard', authenticate, async (req, res) => {
     try {
-        const { lastTaskId } = req.query
-        const data = await dashboard(req.user.id, +lastTaskId)
+        const { batchNumber } = req.query
+        const data = await dashboard(req.user.id, +batchNumber)
         res.success(data)
     } catch (e) {
         res.error(e.message)

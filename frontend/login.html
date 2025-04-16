@@ -25,10 +25,6 @@
 
     <div>
         <h2>Get Dashboard</h2>
-        <div>
-            <label for="last-id">Last ID</label>
-            <input type="number" name="last-id" id="last-id" value="0">
-        </div>
         <button id="get-data">Get dashboard</button>
     </div>
 
@@ -114,7 +110,7 @@
         }
     })
 
-    const dashboardData = []
+    let batchNumber = 0
     const lastInput = document.querySelector('#last-id')
     const dataUrl = 'http://localhost:8001/dashboard'
     const button = document.querySelector('#get-data')
@@ -123,23 +119,17 @@
         headers.append('Content-Type', 'application/json');
         headers.append('Accept', 'application/json');
         const params = new URLSearchParams({
-            lastTaskId: lastInput.value,
+            batchNumber: batchNumber
         });
 
         const data = await fetch(`${dataUrl}?${params}`, {credentials: 'include', headers})
         const parsedData = await data.json()
-        console.log(parsedData.data)
         if (!parsedData) {
             return
         }
 
-        // get number of tasks
-        dashboardData.push(...parsedData.data.tasks)
-        const set = new Set()
-        dashboardData.forEach(data => set.add(data.taskId))
-        console.log(set.size)
-        const lastInputId = parsedData.data.tasks[parsedData.data.tasks.length - 1].taskId
-        lastInput.value = lastInputId
+        console.log(parsedData)
+        batchNumber++
     })
 
     const taskInputElement = document.querySelector('#task-id')
@@ -204,6 +194,7 @@
 
         const data = await fetch(`${projectColumnUrl}?${params}`, { credentials: 'include' })
         const parsedData = await data.json()
+        console.log(parsedData)
     })
 </script>
 

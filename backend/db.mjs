@@ -166,7 +166,7 @@ export function getTagsByUserId(userId) {
     `)
 }
 
-export async function getDashboardTasks(userId, lastTaskId = 0) {
+export async function getDashboardTasks(userId, batchNumber = 0) {
     let tasks = await query(`
         SELECT
             tsk.id as taskId,
@@ -175,28 +175,27 @@ export async function getDashboardTasks(userId, lastTaskId = 0) {
             cp.project_id as projectId,
             GROUP_CONCAT(tt.tag_id SEPARATOR ',') AS tags,
             ca.colour as agendaColour
-        FROM ${TASK_TABLE} tsk
-        LEFT JOIN ${COLUMN_PROJECT_TABLE} cp
+        FROM task tsk
+        LEFT JOIN column_project cp
             ON cp.id = tsk.project_column_id
-        LEFT JOIN ${TASK_TAG_TABLE} tt
+        LEFT JOIN task_tag tt
             ON tt.task_id = tsk.id
-        LEFT JOIN ${PROJECT_TABLE} p
+        LEFT JOIN project p
             ON cp.project_id = p.id
         LEFT JOIN (
-            SELECT tca.task_id, ca.name, ca.colour, ca.id
-            FROM ${TASK_COLUMN_AGENDA_TABLE} tca
-            INNER JOIN ${COLUMN_AGENDA_TABLE} ca
+            SELECT tca.task_id, ca.colour
+            FROM task_column_agenda tca
+            INNER JOIN column_agenda ca
                 ON ca.id = tca.column_agenda_id
             WHERE ca.user_id = ${userId}
         ) ca
             ON ca.task_id = tsk.id
         WHERE tsk.assignee = ${userId}
-        AND tsk.id > ${lastTaskId}
         GROUP BY
             tsk.id, tsk.name, tsk.state
         ORDER BY
-            p.created_at ASC
-        LIMIT 5;
+            p.created_at ASC, cp.\`column\` ASC, tsk.project_row ASC
+        LIMIT 5 OFFSET ${batchNumber * 5};
     `)
 
     tasks = mapTags(tasks)

@@ -21,15 +21,15 @@ import {
     getProjectColumn
 } from "./db.mjs"
 
-export async function dashboard(userId, lastTaskId = 0) {
+export async function dashboard(userId, batchNumber = 0) {
     if (userId === null || userId === undefined) {
         throw new Error('Not authenticated, please login')
     }
 
     let dashboardData = {}
-    dashboardData.tasks = await getDashboardTasks(userId, lastTaskId)
+    dashboardData.tasks = await getDashboardTasks(userId, batchNumber)
 
-    if (lastTaskId) { // if it's not the first request to this endpoint
+    if (batchNumber) { // if it's not the first request to this endpoint
         return dashboardData
     }
 
