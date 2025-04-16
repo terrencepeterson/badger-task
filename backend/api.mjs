@@ -17,11 +17,12 @@ import {
     getAgendaTags,
     getAgendaProjects,
     getProjectTags,
-    getAgendaColumn
+    getAgendaColumn,
+    getProjectColumn
 } from "./db.mjs"
 
 export async function dashboard(userId, lastTaskId = 0) {
-    if (!userId) {
+    if (userId === null || userId === undefined) {
         throw new Error('Not authenticated, please login')
     }
 
@@ -79,8 +80,14 @@ export async function project(projectId, userId) {
     return projectDetails
 }
 
+export async function projectColumn(column, row, userId) {
+    columnRowTest(column, row)
+
+    return getProjectColumn(column, row, userId)
+}
+
 export async function agenda(userId) {
-    if (!userId) {
+    if (userId === null || userId === undefined) {
         throw new Error('Not authenticated, please login')
     }
     const agenda = {}
@@ -95,6 +102,12 @@ export async function agenda(userId) {
 }
 
 export async function agendaColumn(column, row) {
+    columnRowTest(column, row)
+
+    return await getAgendaColumn(column, row)
+}
+
+function columnRowTest(column, row) {
     if (column === null || column === undefined) {
         throw new Error('No column provide for agenda')
     }
@@ -102,7 +115,5 @@ export async function agendaColumn(column, row) {
     if (row === null || row === undefined) {
         throw new Error('No row provided for agenda')
     }
-
-    return await getAgendaColumn(column, row)
 }
 

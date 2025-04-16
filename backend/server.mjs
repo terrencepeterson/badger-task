@@ -4,7 +4,7 @@ import cors from "cors"
 import { responseFormatter, sanitiseInput, authenticate, cookieSettings } from './middleware.mjs'
 import { signup, login } from './auth.mjs'
 import { loggedOut } from './standarisedResponses.mjs'
-import { dashboard, task, project, agenda, agendaColumn } from './api.mjs'
+import { dashboard, task, project, agenda, agendaColumn, projectColumn } from './api.mjs'
 
 const app = express()
 const { server_host: host, server_port: port } = process.env
@@ -33,6 +33,17 @@ app.get('/agenda-column', authenticate, async(req, res) => {
 app.get('/agenda', authenticate, async(req, res) => {
     try {
         const data = await agenda(req.user.id)
+        res.success(data)
+    } catch(e) {
+        console.log(e)
+        res.error(e.message)
+    }
+})
+
+app.get('/project-column', authenticate, async(req, res) => {
+    try {
+        const { column, row } = req.query
+        const data = await projectColumn(column, row, req.user.id)
         res.success(data)
     } catch(e) {
         console.log(e)

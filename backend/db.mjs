@@ -332,6 +332,39 @@ export async function getProjectTasks(projectId, userId) {
     return projectTasks
 }
 
+export async function getProjectColumn(columnId, row, userId) {
+    let tasks = await query(`
+        SELECT
+            t.id,
+            t.name,
+            t.state,
+            t.assignee,
+            t.project_row,
+            GROUP_CONCAT(tt.tag_id SEPARATOR ',') AS tags,
+            ca.colour as agendaColumnColour
+        FROM task t
+        LEFT JOIN task_tag tt
+            ON tt.task_id = t.id
+        LEFT JOIN (
+            SELECT ca.colour, tca.task_id
+            FROM column_agenda ca
+            INNER JOIN task_column_agenda tca
+                ON tca.column_agenda_id = ca.id
+            WHERE ca.user_id = ${userId}
+        ) ca
+            ON ca.task_id = t.id
+        WHERE t.project_column_id = ${columnId}
+        AND t.project_row > ${row}
+        GROUP BY id, name, state, assignee, project_row
+        ORDER BY t.project_row
+        LIMIT 5;
+    `)
+
+    tasks = mapTags(tasks)
+
+    return tasks
+}
+
 export function getProjectTags(projectId) {
     return query(`
         SELECT DISTINCT

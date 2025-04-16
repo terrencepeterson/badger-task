@@ -47,7 +47,19 @@
             <label for="project-id">Project id</label>
             <input type="text" name="project-id" value="13" id="project-id">
         </div>
-        <button type="button" class="get-project-button" >Get Project</button>
+        <button type="button" class="get-project-button">Get Project</button>
+    </div>
+    <div>
+        <h3>Get Project Column</h3>
+        <div>
+            <label for="project-column-id">Project column id</label>
+            <input type="text" name="project-column-id" value="" id="project-column-id">
+        </div>
+        <div>
+            <label for="project-column-row">Project row</label>
+            <input type="text" name="project-column-row" value="" id="project-column-row">
+        </div>
+        <button type="button" class="get-project-column">Get Project Column</button>
     </div>
 
     <div>
@@ -61,7 +73,7 @@
             <input type="number" name="column-agenda-id" value="" id="column-agenda-id">
         </div>
         <div>
-            <label for="column-row">Column row</label>
+            <label for="column-row">Agenda row</label>
             <input type="0" name="column-row" value="" id="column-row">
         </div>
         <button type="button" class="get-agenda-column">Get Agenda Column</button>
@@ -178,6 +190,20 @@
         const data = await fetch(`${agendaColumnUrl}?${params}`, { credentials: 'include' })
         const parsedData = await data.json()
         console.log(parsedData)
+    })
+
+    const columnProjectIdElement = document.querySelector('#project-column-id')
+    const columnProjectRowElement = document.querySelector('#project-column-row')
+    const projectColumnButtonElement = document.querySelector('.get-project-column')
+    const projectColumnUrl = 'http://localhost:8001/project-column'
+    projectColumnButtonElement.addEventListener('click', async (e) => {
+        const params = new URLSearchParams({
+            column: columnProjectIdElement.value,
+            row: columnProjectRowElement.value
+        })
+
+        const data = await fetch(`${projectColumnUrl}?${params}`, { credentials: 'include' })
+        const parsedData = await data.json()
     })
 </script>
 
