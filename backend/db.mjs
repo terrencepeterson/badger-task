@@ -1,6 +1,5 @@
 import '@dotenvx/dotenvx/config'
 import mariadb from 'mariadb'
-import { project } from './api.mjs'
 
 const ACTIVE_USER_TABLE = 'active_user'
 const USER_TABLE = 'user'
@@ -122,7 +121,7 @@ export async function getUserDashboard(id) {
         FROM ${USER_TABLE} u
         LEFT JOIN task t
             ON t.assignee = u.id AND t.assignee = ${id}
-        INNER JOIN ${ORGANISATION_TABLE} o
+        LEFT JOIN ${ORGANISATION_TABLE} o
             ON o.id = u.organisation_id
         WHERE u.id = ${id}
     `)
