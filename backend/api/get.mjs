@@ -19,9 +19,14 @@ import {
     getProjectTags,
     getAgendaColumn,
     getProjectColumn
-} from "./db.mjs"
+} from "../db.mjs"
+import { createEndpoint } from "./utility.mjs"
 
-export async function dashboard(userId, batchNumber = 0) {
+export const dashboardEndpoint = createEndpoint(async (req) => {
+    const batchNumber =  +req.query.batchNumber
+    const { id: userId } = req.user
+
+    console.log(userId)
     if (userId === null || userId === undefined) {
         throw new Error('Not authenticated, please login')
     }
@@ -43,14 +48,16 @@ export async function dashboard(userId, batchNumber = 0) {
     dashboardData.projects = await getProjectsByUserId(userId)
 
     return dashboardData
-}
+})
 
-export async function task(taskId, userId) {
+export const taskEndpoint = createEndpoint(async (req) => {
+    const { taskId } = req.query
+
     if (!taskId) {
         throw new Error('No task ID provided')
     }
 
-    const task = await getTaskById(taskId, userId)
+    const task = await getTaskById(taskId, req.user.id)
     if (!task || !task.taskId) {
         throw new Error('Task not found with specified ID')
     }
@@ -60,9 +67,11 @@ export async function task(taskId, userId) {
     task.checklist = await getChecklistByTaskId(taskId)
 
     return task
-}
+})
 
-export async function project(projectId, userId) {
+export const projectEndpoint = createEndpoint(async (req) => {
+    const { projectId } = req.query
+
     if (!projectId) {
         throw new Error('No project id provided')
     }
@@ -72,21 +81,24 @@ export async function project(projectId, userId) {
         throw new Error('Project does not exist with that id')
     }
 
-    projectDetails.tasks = await getProjectTasks(projectId, userId)
+    projectDetails.tasks = await getProjectTasks(projectId, req.user.id)
     projectDetails.columns = await getProjectColumnsByProjectId(projectId)
     projectDetails.users = await getProjectUsersByProjectId(projectId)
     projectDetails.tags = await getProjectTags(projectId)
 
     return projectDetails
-}
+})
 
-export async function projectColumn(column, row, userId) {
+export const projectColumnEndpoint = createEndpoint((req) => {
+    const { column, row } = req.query
     columnRowTest(column, row)
 
-    return getProjectColumn(column, row, userId)
-}
+    return getProjectColumn(column, row, req.user.id)
+})
 
-export async function agenda(userId) {
+export const agendaEndpoint = createEndpoint(async (req) => {
+    const { id: userId } = req.user
+
     if (userId === null || userId === undefined) {
         throw new Error('Not authenticated, please login')
     }
@@ -99,13 +111,14 @@ export async function agenda(userId) {
     agenda.projects = await getAgendaProjects(userId)
 
     return agenda
-}
+})
 
-export async function agendaColumn(column, row) {
+export const agendaColumnEndpoint = createEndpoint((req) => {
+    const { column, row } = req.query
     columnRowTest(column, row)
 
-    return await getAgendaColumn(column, row)
-}
+    return getAgendaColumn(column, row)
+})
 
 function columnRowTest(column, row) {
     if (column === null || column === undefined) {

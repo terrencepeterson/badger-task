@@ -1,9 +1,12 @@
 import bcrypt from "bcryptjs"
 import isEmail from 'validator/lib/isEmail.js'
 import isStrongPassword from 'validator/lib/isStrongPassword.js'
-import { getUserEmails, addUser, getUserByEmail } from "./db.mjs"
+import { getUserEmails, addUser, getUserByEmail } from "../db.mjs"
+import { createEndpoint } from "./utility.mjs"
+import { loggedOut } from '../standarisedResponses.mjs'
+import { cookieSettings } from "../middleware.mjs"
 
-export async function signup(body) {
+export const signupEndpoint = createEndpoint(async ({ body }) => {
     const { name, email, password, confirm_password } = body // required fields
     const description = body.description ? body.description.trim() : 'NULL'
     const img_url = body.img_url ?? 'DEFAULT'
@@ -43,9 +46,12 @@ export async function signup(body) {
     })
 
     return user
-}
 
-export async function login({ email, password }) {
+})
+
+export const loginEndpoint = createEndpoint(async (req, res) => {
+    const { email, password } = req.body
+
     if (!email.trim() || !password) {
         throw new Error('Please enter a email and password')
     }
@@ -66,10 +72,20 @@ export async function login({ email, password }) {
 
     try {
         const jsonwebtoken = await import('jsonwebtoken') // must use dynamic import on commonjs module - hence the .default too
-        const token = jsonwebtoken.default.sign({ id: user.id, role: user.role }, process.env.jwt_secret, { expiresIn: '1h' })
-        return token
+        const token = jsonwebtoken.default.sign(
+            { id: user.id, role: user.role },
+            process.env.jwt_secret,
+            { expiresIn: '1h' }
+        )
+        res.setTokenCookie(token)
+        return 'Successfully logged in!'
     } catch(e) {
         throw new Error('Currently unable to login')
     }
-}
+})
+
+export const logoutEndpoint = createEndpoint((req, res) => {
+    res.clearCookie(process.env.auth_token_cookie_name, cookieSettings)
+    return loggedOut
+})
 

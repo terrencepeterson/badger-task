@@ -1,10 +1,16 @@
 import '@dotenvx/dotenvx/config'
 import express from "express"
 import cors from "cors"
-import { responseFormatter, sanitiseInput, authenticate, cookieSettings } from './middleware.mjs'
-import { signup, login } from './auth.mjs'
-import { loggedOut } from './standarisedResponses.mjs'
-import { dashboard, task, project, agenda, agendaColumn, projectColumn } from './api.mjs'
+import { responseFormatter, sanitiseInput, authenticate } from './middleware.mjs'
+import { signupEndpoint, loginEndpoint, logoutEndpoint } from './api/auth.mjs'
+import {
+    agendaEndpoint,
+    agendaColumnEndpoint,
+    projectColumnEndpoint,
+    projectEndpoint,
+    taskEndpoint,
+    dashboardEndpoint
+} from './api/get.mjs'
 
 const app = express()
 const { server_host: host, server_port: port } = process.env
@@ -19,100 +25,16 @@ app.use(cors(corsOptions))
 app.use(responseFormatter)
 app.post('*', sanitiseInput)
 
-app.get('/agenda-column', authenticate, async(req, res) => {
-    try {
-        const { column, row } = req.query
-        const data = await agendaColumn(column, row)
-        res.success(data)
-    } catch(e) {
-        console.log(e)
-        res.error(e.message)
-    }
-})
+app.get('/agenda-column', authenticate, agendaColumnEndpoint)
+app.get('/agenda', authenticate, agendaEndpoint)
+app.get('/project-column', authenticate, projectColumnEndpoint)
+app.get('/project', authenticate, projectEndpoint)
+app.get('/task', authenticate, taskEndpoint)
+app.get('/dashboard', authenticate, dashboardEndpoint)
 
-app.get('/agenda', authenticate, async(req, res) => {
-    try {
-        const data = await agenda(req.user.id)
-        res.success(data)
-    } catch(e) {
-        console.log(e)
-        res.error(e.message)
-    }
-})
-
-app.get('/project-column', authenticate, async(req, res) => {
-    try {
-        const { column, row } = req.query
-        const data = await projectColumn(column, row, req.user.id)
-        res.success(data)
-    } catch(e) {
-        console.log(e)
-        res.error(e.message)
-    }
-})
-
-app.get('/project', authenticate, async(req, res) => {
-    try {
-        const { projectId } = req.query
-        const data = await project(projectId, req.user.id)
-        res.success(data)
-    } catch(e) {
-        console.log(e)
-        res.error(e.message)
-    }
-})
-
-app.get('/task', authenticate, async(req, res) => {
-    try {
-        const { taskId } = req.query
-        const data = await task(taskId, req.user.id)
-        res.success(data)
-    } catch(e) {
-        console.log(e)
-        res.error(e.message)
-    }
-})
-
-app.get('/dashboard', authenticate, async (req, res) => {
-    try {
-        const { batchNumber } = req.query
-        const data = await dashboard(req.user.id, +batchNumber)
-        res.success(data)
-    } catch (e) {
-        res.error(e.message)
-    }
-})
-
-app.post('/sign-up', async (req, res) => {
-    try {
-        const data = await signup(req.body)
-        res.success(data)
-    } catch (e) {
-        console.error(e)
-        res.error(e.message)
-    }
-})
-
-app.post('/login', async (req, res) => {
-    try {
-        const token = await login(req.body)
-        res.setTokenCookie(token)
-        res.success('Successfully logged in!')
-    } catch (e) {
-        console.error(e)
-        res.error(e.message)
-    }
-})
-
-app.get('/logout', authenticate, async (req, res) => {
-    try {
-        res.clearCookie(process.env.auth_token_cookie_name, cookieSettings)
-        res.success(loggedOut.message, loggedOut.metaData)
-    } catch (e) {
-        console.error(e)
-        res.error(e.message)
-    }
-})
+app.post('/sign-up', signupEndpoint)
+app.post('/login', loginEndpoint)
+app.get('/logout', authenticate, logoutEndpoint)
 
 app.listen(port, host, () => {
     console.log(`${host} listening on port ${port}`)
