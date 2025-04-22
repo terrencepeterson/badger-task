@@ -136,16 +136,22 @@ export async function getUserDashboard(id) {
 
 export function getProjectsByUserId(userId) {
      return query(`
-        SELECT
+        SELECT DISTINCT
             p.id as projectId,
             p.name as projectName,
-            p.img_url as projectImgUrl
-        FROM ${PROJECT_TABLE} p
-        LEFT JOIN ${ORGANISATION_TABLE} o
+            p.img_url as projectImgUrl,
+            p.private
+        FROM project p
+        LEFT JOIN user_project up
+            ON up.project_id = p.id
+        LEFT JOIN organisation o
             ON o.id = p.organisation_id
-        LEFT JOIN ${USER_TABLE} u
-            ON u.id = ${userId}
-        WHERE u.organisation_id = o.id;
+        LEFT JOIN user u
+            ON u.organisation_id = o.id
+        WHERE
+            u.id = ${userId} AND
+            p.private = FALSE OR
+            p.private = TRUE AND up.user_id = ${userId};
     `)
 }
 
