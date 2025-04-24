@@ -11,6 +11,7 @@ services:
       - "3306:3306"
     volumes:
       - ./db-data:/var/lib/mysql
+
   server:
     build:
       context: .
@@ -19,4 +20,18 @@ services:
       - ./:/home/node/api
     ports:
       - "8001:8001"
+    depends_on:
+      - cache
+
+  cache:
+    image: redis:8.0-rc1-alpine
+    ports:
+      - "${cache_port}:${cache_port}"
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${cache_pass}
+    volumes:
+      - cache:/data
+
+volumes:
+  cache:
+    driver: local
 
