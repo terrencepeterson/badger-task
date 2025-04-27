@@ -14,7 +14,8 @@ import {
 import {
     taskAccessControl,
     projectAccessControl,
-    agendaColumnAccessControl
+    agendaColumnAccessControl,
+    projectColumnAccessControl
 } from './api/attributeAccess.mjs'
 
 const app = express()
@@ -32,7 +33,7 @@ app.post('*', sanitiseInput)
 
 app.get('/agenda-column', authenticate, agendaColumnAccessControl, agendaColumnEndpoint)
 app.get('/agenda', authenticate, agendaEndpoint)
-app.get('/project-column', authenticate, projectColumnEndpoint)
+app.get('/project-column', authenticate, projectColumnAccessControl, projectColumnEndpoint)
 app.get('/project', authenticate, projectAccessControl, projectEndpoint)
 app.get('/task', authenticate, taskAccessControl, taskEndpoint)
 app.get('/dashboard', authenticate, dashboardEndpoint)

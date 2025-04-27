@@ -63,7 +63,7 @@ export async function addAccessControl(userId) {
 
 function createAccessControlMiddleware(attributeKey, accessControlKey, errorAttributeType) {
     return async function(req, res, next) {
-        const attribute = req.query[attributeKey] 
+        const attribute = req.query[attributeKey]
         if (attribute === undefined || attribute === null || attribute === "") {
             res.error(`Please provide a ${attributeKey}`)
             return
@@ -84,4 +84,5 @@ function createAccessControlMiddleware(attributeKey, accessControlKey, errorAttr
 export const taskAccessControl = createAccessControlMiddleware('taskId', ACCESS_CONTROL_TASKS, 'task')
 export const projectAccessControl = createAccessControlMiddleware('projectId', ACCESS_CONTROL_PROJECTS, 'project')
 export const agendaColumnAccessControl = createAccessControlMiddleware('column', ACCESS_CONTROL_COLUMN_AGENDA, 'agenda column')
+export const projectColumnAccessControl = createAccessControlMiddleware('column', ACCESS_CONTROL_COLUMN_PROJECTS, 'project column')
 
