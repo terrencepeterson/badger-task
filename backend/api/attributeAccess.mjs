@@ -61,7 +61,7 @@ export async function addAccessControl(userId) {
     }
 }
 
-function createAccessControlMiddleware(attributeKey, accessControlKey, errorMessage) {
+function createAccessControlMiddleware(attributeKey, accessControlKey, errorAttributeType) {
     return async function(req, res, next) {
         const attribute = req.query[attributeKey] 
         if (attribute === undefined || attribute === null || attribute === "") {
@@ -73,7 +73,7 @@ function createAccessControlMiddleware(attributeKey, accessControlKey, errorMess
 
         const canAccess = await redisClient.sIsMember(redisKey, attribute)
         if (!canAccess) {
-            res.error(errorMessage, 403)
+            res.error(`Unauthorised - you don\'t have permision to access this ${errorAttributeType}`, 403)
             return
         }
 
@@ -81,5 +81,6 @@ function createAccessControlMiddleware(attributeKey, accessControlKey, errorMess
     }
 }
 
-export const taskAccessControl = createAccessControlMiddleware('taskId', ACCESS_CONTROL_TASKS, 'Unauthorised - you don\'t have permision to access this task')
+export const taskAccessControl = createAccessControlMiddleware('taskId', ACCESS_CONTROL_TASKS, 'task')
+export const projectAccessControl = createAccessControlMiddleware('projectId', ACCESS_CONTROL_PROJECTS, 'project')
 

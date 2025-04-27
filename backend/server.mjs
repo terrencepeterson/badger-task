@@ -11,7 +11,7 @@ import {
     taskEndpoint,
     dashboardEndpoint
 } from './api/get.mjs'
-import { taskAccessControl } from './api/attributeAccess.mjs'
+import { taskAccessControl, projectAccessControl } from './api/attributeAccess.mjs'
 
 const app = express()
 const { server_host: host, server_port: port } = process.env
@@ -29,7 +29,7 @@ app.post('*', sanitiseInput)
 app.get('/agenda-column', authenticate, agendaColumnEndpoint)
 app.get('/agenda', authenticate, agendaEndpoint)
 app.get('/project-column', authenticate, projectColumnEndpoint)
-app.get('/project', authenticate, projectEndpoint)
+app.get('/project', authenticate, projectAccessControl, projectEndpoint)
 app.get('/task', authenticate, taskAccessControl, taskEndpoint)
 app.get('/dashboard', authenticate, dashboardEndpoint)
 
