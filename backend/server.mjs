@@ -11,7 +11,11 @@ import {
     taskEndpoint,
     dashboardEndpoint
 } from './api/get.mjs'
-import { taskAccessControl, projectAccessControl } from './api/attributeAccess.mjs'
+import {
+    taskAccessControl,
+    projectAccessControl,
+    agendaColumnAccessControl
+} from './api/attributeAccess.mjs'
 
 const app = express()
 const { server_host: host, server_port: port } = process.env
@@ -26,7 +30,7 @@ app.use(cors(corsOptions))
 app.use(responseFormatter)
 app.post('*', sanitiseInput)
 
-app.get('/agenda-column', authenticate, agendaColumnEndpoint)
+app.get('/agenda-column', authenticate, agendaColumnAccessControl, agendaColumnEndpoint)
 app.get('/agenda', authenticate, agendaEndpoint)
 app.get('/project-column', authenticate, projectColumnEndpoint)
 app.get('/project', authenticate, projectAccessControl, projectEndpoint)

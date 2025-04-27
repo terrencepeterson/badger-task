@@ -83,4 +83,5 @@ function createAccessControlMiddleware(attributeKey, accessControlKey, errorAttr
 
 export const taskAccessControl = createAccessControlMiddleware('taskId', ACCESS_CONTROL_TASKS, 'task')
 export const projectAccessControl = createAccessControlMiddleware('projectId', ACCESS_CONTROL_PROJECTS, 'project')
+export const agendaColumnAccessControl = createAccessControlMiddleware('column', ACCESS_CONTROL_COLUMN_AGENDA, 'agenda column')
 
