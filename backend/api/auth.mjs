@@ -1,3 +1,4 @@
+import '@dotenvx/dotenvx/config'
 import bcrypt from "bcryptjs"
 import isEmail from 'validator/lib/isEmail.js'
 import isStrongPassword from 'validator/lib/isStrongPassword.js'
@@ -75,7 +76,7 @@ export const loginEndpoint = createEndpoint(async (req, res) => {
         const token = jsonwebtoken.default.sign(
             { id: user.id, role: user.role },
             process.env.jwt_secret,
-            { expiresIn: '1h' }
+            { expiresIn: +process.env.auth_session_seconds } // must convert to int here as string without unit defaults to millieseconds
         )
         res.setTokenCookie(token)
         return 'Successfully logged in!'
