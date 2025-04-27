@@ -26,7 +26,6 @@ export const dashboardEndpoint = createEndpoint(async (req) => {
     const batchNumber =  +req.query.batchNumber
     const { id: userId } = req.user
 
-    console.log(userId)
     if (userId === null || userId === undefined) {
         throw new Error('Not authenticated, please login')
     }

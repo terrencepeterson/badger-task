@@ -61,3 +61,16 @@ export async function addAccessControl(userId) {
     }
 }
 
+export async function taskAccessControl(req, res, next) {
+    const { taskId } = req.query
+    const redisKey = getRedisKey(req.user.id, ACCESS_CONTROL_TASKS)
+
+    const canAccess = await redisClient.sIsMember(redisKey, taskId)
+    if (!canAccess) {
+        res.error('Unauthorised - you don\'t have permision to access this task', 403)
+        return
+    }
+
+    next()
+}
+
