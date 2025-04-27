@@ -39,6 +39,11 @@ export async function addAccessControl(userId) {
 
     const expirationTime = process.env.auth_session_seconds
     const addSet = async (userId, attributeType, accessData, expireTime) => {
+        // if a user dones't belong to an organisation empty data can be passed in here
+        // can't store empty so we don't add it to redis at all
+        if (!accessData.length) {
+            return true
+        }
         const redisKey = getRedisKey(userId, attributeType)
         const importMulti = redisClient.multi()
         importMulti.sAdd(redisKey, accessData)
