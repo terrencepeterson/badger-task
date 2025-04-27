@@ -559,6 +559,59 @@ export async function getAgendaColumn(columnId, row) {
     return tasks
 }
 
+export async function getTaskAccess(userId) {
+    let tasks = await query(`
+        SELECT
+            t.id
+        FROM task t
+        LEFT JOIN column_project cp
+            ON cp.id = t.project_column_id
+        LEFT JOIN project p
+            ON p.id = cp.project_id
+        LEFT JOIN user u
+            ON u.organisation_id = p.organisation_id
+        LEFT JOIN user_project up
+            ON up.project_id = p.id
+        WHERE
+            u.id = ${userId} AND
+            p.private = FALSE OR
+            p.private = TRUE and up.user_id = ${userId};
+    `)
+
+    tasks = tasks ? tasks.map(t => `${t.id}`) : []
+
+    return tasks
+}
+
+export async function getProjectsAccess(userId) {
+    // used to convert data from "1,2,3,4" -> ['1', '2'...] must be strings for redis
+    const convertStringToArrayStrings = (data) => data ? data.split(',').map(d => `${d}`) : []
+
+    const projectsAndColumnProjects = await query(`
+        SELECT DISTINCT
+            GROUP_CONCAT(DISTINCT p.id SEPARATOR ',') AS projects,
+            GROUP_CONCAT(DISTINCT cp.id SEPARATOR ',') AS columnProjects
+        FROM project p
+        LEFT JOIN user_project up
+            ON up.project_id = p.id
+        LEFT JOIN organisation o
+            ON o.id = p.organisation_id
+        LEFT JOIN user u
+            ON u.organisation_id = o.id
+        LEFT JOIN column_project cp
+            ON cp.project_id = p.id
+        WHERE
+            u.id = ${userId} AND
+            p.private = FALSE OR
+            p.private = TRUE AND up.user_id = ${userId};
+    `)
+
+    return {
+        projects: convertStringToArrayStrings(projectsAndColumnProjects[0].projects),
+        columnProjects: convertStringToArrayStrings(projectsAndColumnProjects[0].columnProjects),
+    }
+}
+
 process.on('SIGINT', async () => {
     console.log("Closing database connection pool...");
     await pool.end();
