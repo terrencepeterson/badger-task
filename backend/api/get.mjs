@@ -120,12 +120,12 @@ export const agendaColumnEndpoint = createEndpoint((req) => {
 })
 
 function columnRowTest(column, row) {
-    if (column === null || column === undefined) {
-        throw new Error('No column provide for agenda')
+    if (column === null || column === undefined || column === '') {
+        throw new Error('No column provide')
     }
 
-    if (row === null || row === undefined) {
-        throw new Error('No row provided for agenda')
+    if (row === null || row === undefined || row === '') {
+        throw new Error('No row provided')
     }
 }
 

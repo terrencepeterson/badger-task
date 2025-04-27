@@ -359,8 +359,7 @@ export async function getProjectColumn(columnId, row, userId) {
             ON ca.task_id = t.id
         WHERE t.project_column_id = ${columnId}
         AND t.project_row > ${row}
-        GROUP BY id, name, state, assignee, project_row
-        ORDER BY t.project_row
+        GROUP BY id, name, state, assignee, project_row, agendaColumnColour
         LIMIT 5;
     `)
 
