@@ -61,16 +61,25 @@ export async function addAccessControl(userId) {
     }
 }
 
-export async function taskAccessControl(req, res, next) {
-    const { taskId } = req.query
-    const redisKey = getRedisKey(req.user.id, ACCESS_CONTROL_TASKS)
+function createAccessControlMiddleware(attributeKey, accessControlKey, errorMessage) {
+    return async function(req, res, next) {
+        const attribute = req.query[attributeKey] 
+        if (attribute === undefined || attribute === null || attribute === "") {
+            res.error(`Please provide a ${attributeKey}`)
+            return
+        }
 
-    const canAccess = await redisClient.sIsMember(redisKey, taskId)
-    if (!canAccess) {
-        res.error('Unauthorised - you don\'t have permision to access this task', 403)
-        return
+        const redisKey = getRedisKey(req.user.id, accessControlKey)
+
+        const canAccess = await redisClient.sIsMember(redisKey, attribute)
+        if (!canAccess) {
+            res.error(errorMessage, 403)
+            return
+        }
+
+        next()
     }
-
-    next()
 }
+
+export const taskAccessControl = createAccessControlMiddleware('taskId', ACCESS_CONTROL_TASKS, 'Unauthorised - you don\'t have permision to access this task')
 
