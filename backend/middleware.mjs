@@ -36,7 +36,7 @@ export function responseFormatter (req, res, next) {
         })
     }
 
-    req.getAuthToken = async () => {
+    res.getAuthToken = async () => {
         const cookieHeader = req.headers.cookie
         const cookies = cookieHeader
             ? Object.fromEntries(
@@ -46,7 +46,7 @@ export function responseFormatter (req, res, next) {
 
         const authToken = cookies[process.env.auth_token_cookie_name]
         if (!authToken) {
-            return null
+            throw new Error('Cookie not found')
         }
 
         const jsonwebtoken = await import('jsonwebtoken') // must use dynamic import on commonjs module - hence the .default too
@@ -68,19 +68,18 @@ export function sanitiseInput(req, res, next) {
 }
 
 export async function authenticate(req, res, next) {
-    const authToken = await req.getAuthToken()
-
-    if (!authToken) {
-        res.error(unauthenticated.messaage, unauthenticated.code, unauthenticated.details)
+    let authToken
+    try {
+        authToken = await res.getAuthToken()
+        req.user = {
+            id: authToken.id,
+            role: authToken.role
+        }
+        next()
+    } catch (e) {
+        res.error(e.message, unauthenticated.code, {redirect: true, url: unauthenticated.url})
         req.user = null // not sure if necessary here but i feel hacker could send a user property in the request
         return
     }
-
-    req.user = {
-        id: authToken.id,
-        role: authToken.role
-    }
-
-    next()
 }
 
