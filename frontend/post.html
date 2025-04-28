@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title></title>
+        <link href="css/style.css" rel="stylesheet">
+    </head>
+    <body>
+        <form id="login-form" method="POST" style="margin-bottom: 1rem;">
+            <div>
+                <label for="email">Email</label>
+                <input type="email" name="email" id="email" value="test7@test.com" required>
+            </div>
+            <div>
+                <label for="password">Password</label>
+                <input type="password" name="password" id="password" value="Password123#" required>
+            </div>
+            <button type="submit">Submit</button>
+            <button id="logout" type="button">Logout</button>
+        </form>
+
+        <div>
+            <form id="create-organisation">
+                <h2>Create organisation</h2>
+                <div>
+                    <label for="">Name</label>
+                    <input type="text" name="name" value="">
+                </div>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+    </body>
+
+    <script>
+        const loginUrl = 'http://localhost:8001/login'
+        const form = document.querySelector('#login-form')
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            let data = new FormData(form)
+            data = Object.fromEntries(data)
+            const res = await fetch(loginUrl, {
+                method: "POST",
+                credentials: 'include',
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data)
+            })
+            const parsedRes = await res.json()
+            console.log(parsedRes)
+        })
+
+        const organiastionElement = document.querySelector('#create-organisation')
+        const organisationUrl = 'http://localhost:8001/organisation'
+        organiastionElement.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            let data = new FormData(e.target)
+            data = Object.fromEntries(data)
+            const res = await fetch(organisationUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+                credentials: 'include'
+            })
+            const parsedRes = await res.json()
+            console.log(parsedRes)
+        })
+    </script>
+</html>
+

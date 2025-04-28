@@ -62,6 +62,16 @@ export async function getUserEmails() {
     return emails.map(e => e.email)
 }
 
+export async function belongsToOrganisation(userId) {
+    const organisationId = await query(`
+        SELECT organisation_id
+        FROM user
+        WHERE id = ${userId}
+    `)
+
+    return !!organisationId[0].organisation_id
+}
+
 export async function addUser({ name, email, description, role, password, img_url }) {
     const addQuotes = (value) => {
         if (value === 'NULL' || value === 'DEFAULT') {
@@ -609,6 +619,30 @@ export async function getProjectsAccess(userId) {
         projects: convertStringToArrayStrings(projectsAndColumnProjects[0].projects),
         columnProjects: convertStringToArrayStrings(projectsAndColumnProjects[0].columnProjects),
     }
+}
+
+export async function addOrganisation(userId, name) {
+    const organisation = await query(`
+        INSERT INTO organisation (name)
+        VALUES ('${name}')
+    `)
+
+    const organisationId = parseInt(organisation.insertId) // use parse int here as Number(null) = 0
+    if (organisation.warningStatus || isNaN(organisationId)) {
+        throw new Error('Failed to add organisation')
+    }
+
+    const updateUser = await query(`
+        UPDATE user
+        SET role = 'admin', organisation_id = ${organisationId}
+        WHERE user.id = ${userId};
+    `)
+
+    if (updateUser.warningStatus !== 0 || updateUser.affectedRows !== 1) {
+        throw new Error('Failed to add organisation - could not update user')
+    }
+
+    return organisationId
 }
 
 process.on('SIGINT', async () => {
