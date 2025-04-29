@@ -22,6 +22,14 @@ const pool = mariadb.createPool({
     connectionLimit: 5
 })
 
+function addQuotes(value) {
+    if (value === 'NULL' || value === 'DEFAULT') {
+        return value
+    }
+
+    return `'${value}'`
+}
+
 function mapTags(data) {
     return data.map(d => {
         const tags = !d.tags ? [] : d.tags.split(',')
@@ -62,6 +70,16 @@ export async function getUserEmails() {
     return emails.map(e => e.email)
 }
 
+export async function getOrganisationIdByUserId(userId) {
+    const organisationId = await  query(`
+        SELECT organisation_id
+        FROM user
+        WHERE user.id = ${userId}
+    `)
+
+    return organisationId.length ? organisationId[0].organisation_id : null
+}
+
 export async function belongsToOrganisation(userId) {
     const organisationId = await query(`
         SELECT organisation_id
@@ -73,14 +91,6 @@ export async function belongsToOrganisation(userId) {
 }
 
 export async function addUser({ name, email, description, role, password, img_url }) {
-    const addQuotes = (value) => {
-        if (value === 'NULL' || value === 'DEFAULT') {
-            return value
-        }
-
-        return `'${value}'`
-    }
-
     const data = await query(`
         INSERT INTO ${USER_TABLE} (name, email, description, role, password, img_url)
         VALUES ('${name}', '${email}', ${addQuotes(description)}, ${role}, '${password}', ${addQuotes(img_url)})
@@ -621,7 +631,7 @@ export async function getProjectsAccess(userId) {
     }
 }
 
-export async function addOrganisation(userId, name) {
+export async function createOrganisation(userId, name) {
     const organisation = await query(`
         INSERT INTO organisation (name)
         VALUES ('${name}')
@@ -643,6 +653,15 @@ export async function addOrganisation(userId, name) {
     }
 
     return organisationId
+}
+
+export async function createProject(userId, organisationId, name, description, isPrivate) {
+    console.log(arguments)
+    const project = await query(`
+        INSERT INTO project (name, created_by, organisation_id, description, private)
+        VALUES ('${name}', ${userId}, ${organisationId}, ${addQuotes(description)}, ${isPrivate})
+    `)
+    console.log(project)
 }
 
 process.on('SIGINT', async () => {

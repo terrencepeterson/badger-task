@@ -30,6 +30,25 @@
                 <button type="submit">Submit</button>
             </form>
         </div>
+
+        <div>
+            <form id="create-project">
+                <h2>Create project</h2>
+                <div>
+                    <label for="name">Name</label>
+                    <input type="text" name="name" id="name" value="Test project">
+                </div>
+                <div>
+                    <label for="description">Description</label>
+                    <input type="text" name="description" id="description" value="Some test project description">
+                </div>
+                <div>
+                    <label for="private">Is private</label>
+                    <input type="checkbox" name="isPrivate" id="private" checked>
+                </div>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
     </body>
 
     <script>
@@ -51,6 +70,21 @@
             console.log(parsedRes)
         })
 
+        const logoutUrl = 'http://localhost:8001/logout'
+        const logoutButton = document.querySelector('#logout')
+        logoutButton.addEventListener('click', async () => {
+            let headers = new Headers();
+            headers.append('Content-Type', 'application/json');
+            headers.append('Accept', 'application/json');
+            try {
+                const data = await fetch(logoutUrl, {credentials: 'include', headers})
+                const parsedData = await data.json()
+                console.log(parsedData)
+            } catch (e) {
+                console.log(e)
+            }
+        })
+
         const organiastionElement = document.querySelector('#create-organisation')
         const organisationUrl = 'http://localhost:8001/organisation'
         organiastionElement.addEventListener('submit', async (e) => {
@@ -58,6 +92,25 @@
             let data = new FormData(e.target)
             data = Object.fromEntries(data)
             const res = await fetch(organisationUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+                credentials: 'include'
+            })
+            const parsedRes = await res.json()
+            console.log(parsedRes)
+        })
+
+        const projectElement = document.querySelector('#create-project')
+        const createProjectUrl = 'http://localhost:8001/project'
+        projectElement.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            console.log('yerp')
+            let data = new FormData(e.target)
+            data = Object.fromEntries(data)
+            const res = await fetch(createProjectUrl, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

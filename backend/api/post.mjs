@@ -1,10 +1,13 @@
 import { createEndpoint } from "./utility.mjs"
-import { addOrganisation, belongsToOrganisation } from "../db.mjs"
+import { createOrganisation, belongsToOrganisation, getOrganisationIdByUserId, createProject } from "../db.mjs"
+const VIEW_ROLE = 'viewer'
+const MANIPULATE_ROLE = 'member'
+const ADMIN_ROLE = 'admin'
 
 export const createOrganisationEndpoint = createEndpoint(async (req) => {
     const { id: userId } = req.user
 
-    if (!userId) {
+    if (userId === undefined || userId === null) {
         throw new Error('Please login to create an organisation')
     }
 
@@ -19,9 +22,34 @@ export const createOrganisationEndpoint = createEndpoint(async (req) => {
         throw new Error('Pleasae provide a name')
     }
 
-    const hasAddedOrganisation = await addOrganisation(userId, name)
+    const hasAddedOrganisation = await createOrganisation(userId, name)
     if (hasAddedOrganisation) {
         return "Successfully added organisation"
     }
+})
+
+export const createProjectEndpoint = createEndpoint(async (req) => {
+    const { id: userId, role: userRole } = req.user
+
+    if (userId === undefined || userId === null) {
+        throw new Error('Please login to create an organisation')
+    }
+
+    if (userRole === VIEW_ROLE) {
+        throw new Error('You don\'t have permission to create a project')
+    }
+
+    const organisationId = await getOrganisationIdByUserId(userId)
+    const name = req.body.name.trim()
+    let description = req.body.description.trim()
+    description = description || 'NULL'
+    const isPrivate = !!req.body.isPrivate
+
+    const hasCreatedProject = await createProject(userId, organisationId, name, description, isPrivate)
+    if (!hasCreatedProject) {
+        throw new Error('Failed to add project')
+    }
+
+    return 'Successfully added project'
 })
 
