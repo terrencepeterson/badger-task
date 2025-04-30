@@ -71,13 +71,14 @@ export async function getUserEmails() {
 }
 
 export async function getOrganisationIdByUserId(userId) {
-    const organisationId = await  query(`
+    let organisationId = await  query(`
         SELECT organisation_id
         FROM user
         WHERE user.id = ${userId}
     `)
 
-    return organisationId.length ? +organisationId[0].organisation_id : null
+    organisationId = organisationId[0].organisation_id
+    return (!organisationId && organisationId !== 0) ? false : +organisationId
 }
 
 export async function belongsToOrganisation(userId) {
