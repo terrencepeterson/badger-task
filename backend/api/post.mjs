@@ -11,7 +11,6 @@ export const createOrganisationEndpoint = createEndpoint(async (req) => {
         throw new Error('Please login to create an organisation')
     }
 
-    // check to see if the email already exists in the db
     if (await belongsToOrganisation(userId)) {
         throw new Error('Please create a new account, the current account already belongs to an organisation')
     }
@@ -47,11 +46,19 @@ export const createProjectEndpoint = createEndpoint(async (req) => {
     description = description || 'NULL'
     const isPrivate = !!req.body.isPrivate
 
-    const hasCreatedProject = await createProject(userId, organisationId, name, description, isPrivate)
-    if (!hasCreatedProject) {
+    if (!organisationId && organisationId !== 0) {
+        throw new Error('You don\'t belong to an organisation')
+    }
+
+    if (!name) {
+        throw new Error('Please provide a name')
+    }
+
+    const projectId = await createProject(userId, organisationId, name, description, isPrivate)
+    if (!projectId && projectId !== 0) {
         throw new Error('Failed to add project')
     }
 
-    return 'Successfully added project'
+    return { message: 'Successfully added project', projectId }
 })
 

@@ -49,6 +49,7 @@
                 <button type="submit">Submit</button>
             </form>
         </div>
+
     </body>
 
     <script>
@@ -107,7 +108,6 @@
         const createProjectUrl = 'http://localhost:8001/project'
         projectElement.addEventListener('submit', async (e) => {
             e.preventDefault()
-            console.log('yerp')
             let data = new FormData(e.target)
             data = Object.fromEntries(data)
             const res = await fetch(createProjectUrl, {

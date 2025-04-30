@@ -646,22 +646,26 @@ export async function createOrganisation(userId, name) {
         UPDATE user
         SET role = 'admin', organisation_id = ${organisationId}
         WHERE user.id = ${userId};
-    `)
+    `, true)
 
     if (updateUser.warningStatus !== 0 || updateUser.affectedRows !== 1) {
-        throw new Error('Failed to add organisation - could not update user')
+        return false
     }
 
     return organisationId
 }
 
 export async function createProject(userId, organisationId, name, description, isPrivate) {
-    console.log(arguments)
     const project = await query(`
         INSERT INTO project (name, created_by, organisation_id, description, private)
         VALUES ('${name}', ${userId}, ${organisationId}, ${addQuotes(description)}, ${isPrivate})
-    `)
-    console.log(project)
+    `, true)
+
+    if (project.warningStatus !== 0 || project.affectedRows !== 1) {
+        return false
+    }
+
+    return parseInt(project.insertId)
 }
 
 process.on('SIGINT', async () => {
