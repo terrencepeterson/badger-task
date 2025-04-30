@@ -22,10 +22,12 @@ export const createOrganisationEndpoint = createEndpoint(async (req) => {
         throw new Error('Pleasae provide a name')
     }
 
-    const hasAddedOrganisation = await createOrganisation(userId, name)
-    if (hasAddedOrganisation) {
-        return "Successfully added organisation"
+    const organisationId = await createOrganisation(userId, name)
+    if (!organisationId && organisationId !== 0) {
+        throw new Error('Failed to add organisation - could not update user')
     }
+
+    return { message: "Successfully added organisation", organisationId }
 })
 
 export const createProjectEndpoint = createEndpoint(async (req) => {

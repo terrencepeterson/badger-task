@@ -77,7 +77,7 @@ export async function getOrganisationIdByUserId(userId) {
         WHERE user.id = ${userId}
     `)
 
-    return organisationId.length ? organisationId[0].organisation_id : null
+    return organisationId.length ? +organisationId[0].organisation_id : null
 }
 
 export async function belongsToOrganisation(userId) {
