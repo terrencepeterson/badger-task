@@ -24,7 +24,16 @@ export async function removeAccessControl(userId) {
         getRedisKey(userId, ACCESS_CONTROL_COLUMN_AGENDA)
     ]
 
-    const hasDeleted = await redisClient.del(keys)
+    // if user doesn't have any values for a set then it doesn't get added to redis
+    const activeKeys = []
+    for (const key of keys) {
+        const exists = await redisClient.exists(key)
+        if (exists) {
+            activeKeys.push(key)
+        }
+    }
+
+    const hasDeleted = await redisClient.del(activeKeys)
     if (!hasDeleted) {
         throw new Error('Failed to delete redis keys')
     }
@@ -33,13 +42,13 @@ export async function removeAccessControl(userId) {
 }
 
 export async function addAccessControl(userId) {
-    if (userId == null) { // checks for undefined as well
-
+    if (!userId && userId !== 0) { // checks for undefined as well
+        throw new Error('Unauthorised - please login')
     }
 
     const expirationTime = process.env.auth_session_seconds
     const addSet = async (userId, attributeType, accessData, expireTime) => {
-        // if a user dones't belong to an organisation empty data can be passed in here
+        // if a user doesn't belong to an organisation empty data can be passed in here
         // can't store empty so we don't add it to redis at all
         if (!accessData.length) {
             return true
