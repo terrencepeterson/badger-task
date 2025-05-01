@@ -12,7 +12,7 @@ export const signupEndpoint = createEndpoint(async ({ body }) => {
     const { name, email, password, confirm_password } = body // required fields
     const description = body.description ? body.description.trim() : 'NULL'
     const img_url = body.img_url ?? 'DEFAULT'
-    const role = 'DEFAULT'
+    const role = 'DEFAULT' // member
 
     if (!name.trim() || !email.trim() || !password || !confirm_password) {
         throw new Error('Missing field, please enter values for all required fields')
@@ -48,8 +48,7 @@ export const signupEndpoint = createEndpoint(async ({ body }) => {
     })
 
     return user
-
-})
+}, false)
 
 export const loginEndpoint = createEndpoint(async (req, res) => {
     const { email, password } = req.body
@@ -85,7 +84,7 @@ export const loginEndpoint = createEndpoint(async (req, res) => {
     } catch(e) {
         throw new Error('Currently unable to login')
     }
-})
+}, false)
 
 export const logoutEndpoint = createEndpoint((req, res) => {
     removeAccessControl(req.user.id)

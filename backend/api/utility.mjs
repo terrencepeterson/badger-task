@@ -7,13 +7,16 @@
 //    console.log(e)
 //    res.error(e.message)
 //}
-export function createEndpoint(getData) {
+export function createEndpoint(getData, checkUser = true) {
     return async (req, res) => {
         try {
-            const data = await getData(req, res)
+            if (checkUser && !req.user.id && req.user.id !== 0) {
+                throw new Error('Unauthenticated - please login')
+            }
 
+            const data = await getData(req, res)
             if (typeof data === 'object') {
-                const successMessage = data.message 
+                const successMessage = data.message
                 delete data.message
                 res.success(successMessage, data)
                 return

@@ -1,21 +1,14 @@
 import { createEndpoint } from "./utility.mjs"
 import { createOrganisation, belongsToOrganisation, getOrganisationIdByUserId, createProject } from "../db.mjs"
-const VIEW_ROLE = 'viewer'
-const MANIPULATE_ROLE = 'member'
-const ADMIN_ROLE = 'admin'
+import { ROLE_VIEW } from "./definitions.mjs"
 
 export const createOrganisationEndpoint = createEndpoint(async (req) => {
     const { id: userId } = req.user
-
-    if (userId === undefined || userId === null) {
-        throw new Error('Please login to create an organisation')
-    }
+    const { name } = req.body
 
     if (await belongsToOrganisation(userId)) {
         throw new Error('Please create a new account, the current account already belongs to an organisation')
     }
-
-    const { name } = req.body
 
     if (!name) {
         throw new Error('Pleasae provide a name')
@@ -32,11 +25,7 @@ export const createOrganisationEndpoint = createEndpoint(async (req) => {
 export const createProjectEndpoint = createEndpoint(async (req) => {
     const { id: userId, role: userRole } = req.user
 
-    if (userId === undefined || userId === null) {
-        throw new Error('Please login to create an organisation')
-    }
-
-    if (userRole === VIEW_ROLE) {
+    if (userRole === ROLE_VIEW) {
         throw new Error('You don\'t have permission to create a project')
     }
 

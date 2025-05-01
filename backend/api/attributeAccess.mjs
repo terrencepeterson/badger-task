@@ -1,20 +1,18 @@
 import '@dotenvx/dotenvx/config'
 import { getAgendaColumns, getProjectsAccess, getTaskAccess } from "../db.mjs"
 import { createClient } from 'redis';
-export const ACCESS_CONTROL_COLUMN_AGENDA = 'columnAgenda'
-export const ACCESS_CONTROL_TASKS = 'tasks'
-export const ACCESS_CONTROL_PROJECTS = 'projects'
-export const ACCESS_CONTROL_COLUMN_PROJECTS = 'columnProjects'
+import {
+    ACCESS_CONTROL_COLUMN_AGENDA,
+    ACCESS_CONTROL_TASKS,
+    ACCESS_CONTROL_PROJECTS,
+    ACCESS_CONTROL_COLUMN_PROJECTS
+} from './definitions.mjs'
 
 const redisClient = await createClient({
     url: `redis://default:${process.env.cache_pass}@cache:${process.env.cache_port}`
 })
     .on('error', err => console.log('Redis Client Error', err))
     .connect()
-
-function getRedisKey(userId, attributeType) {
-    return `user:${userId}:${attributeType}`
-}
 
 export async function removeAccessControl(userId) {
     const keys = [
@@ -78,14 +76,12 @@ export async function addAccessControl(userId) {
 function createAccessControlMiddleware(attributeKey, accessControlKey, errorAttributeType) {
     return async function(req, res, next) {
         const attribute = req.query[attributeKey]
-        if (attribute === undefined || attribute === null || attribute === "") {
+        if (!attribute && attribute !== 0) {
             res.error(`Please provide a ${attributeKey}`)
             return
         }
 
-        const redisKey = getRedisKey(req.user.id, accessControlKey)
-
-        const canAccess = await redisClient.sIsMember(redisKey, attribute)
+        const canAccess = await getCanAccess(req.user.id, accessControlKey, attribute)
         if (!canAccess) {
             res.error(`Unauthorised - you don\'t have permision to access this ${errorAttributeType}`, 403)
             return
@@ -93,6 +89,15 @@ function createAccessControlMiddleware(attributeKey, accessControlKey, errorAttr
 
         next()
     }
+}
+
+export function getCanAccess(userId, accessControlKey, attribute) {
+    const redisKey = getRedisKey(userId, accessControlKey)
+    return redisClient.sIsMember(redisKey, attribute)
+}
+
+function getRedisKey(userId, attributeType) {
+    return `user:${userId}:${attributeType}`
 }
 
 export const taskAccessControl = createAccessControlMiddleware('taskId', ACCESS_CONTROL_TASKS, 'task')

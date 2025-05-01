@@ -26,10 +26,6 @@ export const dashboardEndpoint = createEndpoint(async (req) => {
     const batchNumber =  +req.query.batchNumber
     const { id: userId } = req.user
 
-    if (userId === null || userId === undefined) {
-        throw new Error('Not authenticated, please login')
-    }
-
     let dashboardData = {}
     dashboardData.tasks = await getDashboardTasks(userId, batchNumber)
 
@@ -98,9 +94,6 @@ export const projectColumnEndpoint = createEndpoint((req) => {
 export const agendaEndpoint = createEndpoint(async (req) => {
     const { id: userId } = req.user
 
-    if (userId === null || userId === undefined) {
-        throw new Error('Not authenticated, please login')
-    }
     const agenda = {}
 
     agenda.tasks = await getAgendaTasks(userId)

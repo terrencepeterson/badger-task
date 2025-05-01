@@ -46,7 +46,7 @@ export function responseFormatter (req, res, next) {
 
         const authToken = cookies[process.env.auth_token_cookie_name]
         if (!authToken) {
-            throw new Error('Cookie not found')
+            throw new Error('Unauthenticaed please login')
         }
 
         const jsonwebtoken = await import('jsonwebtoken') // must use dynamic import on commonjs module - hence the .default too
