@@ -22,14 +22,6 @@ const pool = mariadb.createPool({
     connectionLimit: 5
 })
 
-function addQuotes(value) {
-    if (value === 'NULL' || value === 'DEFAULT') {
-        return value
-    }
-
-    return `'${value}'`
-}
-
 function mapTags(data) {
     return data.map(d => {
         const tags = !d.tags ? [] : d.tags.split(',')
@@ -40,18 +32,14 @@ function mapTags(data) {
     })
 }
 
-async function query(queryStatement, rethrowError = false) {
+async function query(queryStatement, params = []) {
     let conn;
     try {
         conn = await pool.getConnection()
-        const rows = await conn.query(queryStatement)
+        const rows = await conn.query(queryStatement, params)
         return rows
     } catch (err) {
         console.error(err)
-
-        if (rethrowError) {
-            throw new Error(rethrowError.message)
-        }
     } finally {
         if (conn) conn.release()
     }
@@ -60,7 +48,7 @@ async function query(queryStatement, rethrowError = false) {
 export async function getUserEmails() {
     const emails = await query(`
         SELECT email
-        FROM ${ACTIVE_USER_TABLE}
+        FROM ${ACTIVE_USER_TABLE};
     `)
 
     if (!emails || !emails.length) {
@@ -74,8 +62,8 @@ export async function getOrganisationIdByUserId(userId) {
     let organisationId = await  query(`
         SELECT organisation_id
         FROM user
-        WHERE user.id = ${userId}
-    `)
+        WHERE user.id = ?;
+    `, [userId])
 
     organisationId = organisationId[0].organisation_id
     return (!organisationId && organisationId !== 0) ? false : +organisationId
@@ -85,8 +73,8 @@ export async function belongsToOrganisation(userId) {
     const organisationId = await query(`
         SELECT organisation_id
         FROM user
-        WHERE id = ${userId}
-    `)
+        WHERE id = ?;
+    `, [userId])
 
     return !!organisationId[0].organisation_id
 }
@@ -94,16 +82,16 @@ export async function belongsToOrganisation(userId) {
 export async function addUser({ name, email, description, role, password, img_url }) {
     const data = await query(`
         INSERT INTO ${USER_TABLE} (name, email, description, role, password, img_url)
-        VALUES ('${name}', '${email}', ${addQuotes(description)}, ${role}, '${password}', ${addQuotes(img_url)})
-    `, { message: 'Failed to add user to database'})
+        VALUES (?, ?, ?, ?, ?, ?)
+    `, [name, email, description, role, password, img_url])
 
     const userId = Number(data.insertId)
     await addDefaultAgenda(userId)
 
     const user = await query(`
         SELECT id, name, email, img_url, created_at
-        FROM ${USER_TABLE} where id = ${userId}
-    `)
+        FROM ${USER_TABLE} where id = ?;
+    `, [userId])
 
     return user[0]
 }
@@ -112,18 +100,18 @@ export async function addUser({ name, email, description, role, password, img_ur
 function addDefaultAgenda(userId) {
     return query(`
         INSERT INTO ${COLUMN_AGENDA_TABLE} (name, colour, \`column\`, user_id) VALUES
-        ('Focus', '#FFAA00', 0, ${userId}),
-        ('Reply to', '#A179F2', 1, ${userId}),
-        ('Upcoming', '#2BD9D9', 2, ${userId}),
-        ('On hold', '#D01F2E', 3, ${userId});
-    `, {message: 'Failed to add default agenda cols to database'})
+        ('Focus', '#FFAA00', 0, ?),
+        ('Reply to', '#A179F2', 1, ?),
+        ('Upcoming', '#2BD9D9', 2, ?),
+        ('On hold', '#D01F2E', 3, ?);
+    `, [userId, userId, userId, userId])
 }
 
 export async function getUserByEmail(email) {
     const user = await query(`
         SELECT id, email, password, role
-        FROM ${USER_TABLE} where email = '${email}'
-    `)
+        FROM ${USER_TABLE} where email = ?
+    `, [email])
 
     return user.length ? user[0] : null
 }
@@ -141,11 +129,11 @@ export async function getUserDashboard(id) {
             o.img_url as organisationImgUrl
         FROM ${USER_TABLE} u
         LEFT JOIN task t
-            ON t.assignee = u.id AND t.assignee = ${id}
+            ON t.assignee = u.id AND t.assignee = ?
         LEFT JOIN ${ORGANISATION_TABLE} o
             ON o.id = u.organisation_id
-        WHERE u.id = ${id}
-    `)
+        WHERE u.id = ?
+    `, [id,id])
 
     if (user.length) {
         user[0].tasksTotalCount = Number(user[0].tasksTotalCount)
@@ -170,10 +158,10 @@ export function getProjectsByUserId(userId) {
         LEFT JOIN user u
             ON u.organisation_id = o.id
         WHERE
-            u.id = ${userId} AND
+            u.id = ? AND
             p.private = FALSE OR
-            p.private = TRUE AND up.user_id = ${userId};
-    `)
+            p.private = TRUE AND up.user_id = ?;
+    `, [userId, userId])
 }
 
 export function getTagsByUserId(userId) {
@@ -188,8 +176,8 @@ export function getTagsByUserId(userId) {
             ON tt.tag_id = t.id
         INNER JOIN ${TASK_TABLE} tsk
             ON tsk.id = tt.task_id
-        WHERE tsk.assignee = ${userId};
-    `)
+        WHERE tsk.assignee = ?;
+    `, [userId])
 }
 
 export async function getDashboardTasks(userId, batchNumber = 0) {
@@ -213,16 +201,16 @@ export async function getDashboardTasks(userId, batchNumber = 0) {
             FROM task_column_agenda tca
             INNER JOIN column_agenda ca
                 ON ca.id = tca.column_agenda_id
-            WHERE ca.user_id = ${userId}
+            WHERE ca.user_id = ?
         ) ca
             ON ca.task_id = tsk.id
-        WHERE tsk.assignee = ${userId}
+        WHERE tsk.assignee = ?
         GROUP BY
             tsk.id, tsk.name, tsk.state
         ORDER BY
             p.created_at ASC, cp.\`column\` ASC, tsk.project_row ASC
-        LIMIT 5 OFFSET ${batchNumber * 5};
-    `)
+        LIMIT 5 OFFSET ?;
+    `, [userId, userId, batchNumber * 5])
 
     tasks = mapTags(tasks)
 
@@ -255,11 +243,11 @@ export async function getTaskById(taskId, userId) {
             FROM ${TASK_COLUMN_AGENDA_TABLE} tca
             INNER JOIN ${COLUMN_AGENDA_TABLE} ca
                 ON ca.id = tca.column_agenda_id
-            WHERE ca.user_id = ${userId}
+            WHERE ca.user_id = ?
         ) ca
             ON ca.task_id = tsk.id
-        WHERE tsk.id = ${taskId};
-    `)
+        WHERE tsk.id = ?;
+    `, [userId, taskId])
 
     return task.length ? task[0] : null
 }
@@ -275,8 +263,8 @@ export function getCommentsByTaskId(taskId) {
         FROM ${COMMENT_TABLE} c
         LEFT JOIN ${USER_TABLE} u
             ON u.id = c.created_by
-        WHERE c.task_id = ${taskId}
-    `)
+        WHERE c.task_id = ?
+    `, [taskId])
 }
 
 export function getTagsByTaskId(taskId) {
@@ -285,16 +273,16 @@ export function getTagsByTaskId(taskId) {
         FROM ${TAG_TABLE} t
         LEFT JOIN ${TASK_TAG_TABLE} tt
             ON tt.tag_id = t.id
-        WHERE tt.task_id = ${taskId}
-    `)
+        WHERE tt.task_id = ?
+    `, [taskId])
 }
 
 export function getChecklistByTaskId(taskId) {
     return query(`
         SELECT c.id as checklistId, c.name as checklistName, c.state as checklistState
         FROM ${CHECKLIST_TABLE} c
-        WHERE c.task_id = ${taskId}
-    `)
+        WHERE c.task_id = ?
+    `, [taskId])
 }
 
 export async function getProjectByProjectId(projectId) {
@@ -308,8 +296,8 @@ export async function getProjectByProjectId(projectId) {
         FROM project p
         INNER JOIN user u
             ON u.id = p.created_by
-        WHERE p.id = ${projectId}
-    `)
+        WHERE p.id = ?
+    `, [projectId])
 
     return project.length ? project[0] : null
 }
@@ -341,16 +329,16 @@ export async function getProjectTasks(projectId, userId) {
                 FROM ${TASK_COLUMN_AGENDA_TABLE} tca
                 INNER JOIN ${COLUMN_AGENDA_TABLE} ca
                     ON ca.id = tca.column_agenda_id
-                WHERE ca.user_id = ${userId}
+                WHERE ca.user_id = ?
             ) ca
                 ON ca.task_id = tsk.id
-            WHERE p.id = ${projectId}
+            WHERE p.id = ?
             GROUP BY taskId, taskName, state, columnProjectId, row, assigneeId, agendaColour
         )
         SELECT taskId, taskName, state, columnProjectId, row, assigneeId, agendaColour, tags
         FROM RankedTasks
         WHERE rn <= 5;
-    `)
+    `, [userId, projectId])
 
     projectTasks = mapTags(projectTasks)
 
@@ -375,14 +363,14 @@ export async function getProjectColumn(columnId, row, userId) {
             FROM column_agenda ca
             INNER JOIN task_column_agenda tca
                 ON tca.column_agenda_id = ca.id
-            WHERE ca.user_id = ${userId}
+            WHERE ca.user_id = ?
         ) ca
             ON ca.task_id = t.id
-        WHERE t.project_column_id = ${columnId}
-        AND t.project_row > ${row}
+        WHERE t.project_column_id = ?
+        AND t.project_row > ?
         GROUP BY id, name, state, assignee, project_row, agendaColumnColour
         LIMIT 5;
-    `)
+    `, [userId, columnId, row])
 
     tasks = mapTags(tasks)
 
@@ -404,8 +392,8 @@ export function getProjectTags(projectId) {
             ON tt.task_id = t.id
         INNER JOIN ${TAG_TABLE}
             ON tag.id = tt.tag_id
-        WHERE p.id = ${projectId}
-    `)
+        WHERE p.id = ?
+    `, [projectId])
 }
 
 export async function getProjectColumnsByProjectId(projectId) {
@@ -419,9 +407,9 @@ export async function getProjectColumnsByProjectId(projectId) {
         FROM column_project cp
         LEFT JOIN task t
             ON t.project_column_id = cp.id
-        WHERE cp.project_id = ${projectId}
+        WHERE cp.project_id = ?
         GROUP BY id, name, colour, icon;
-    `)
+    `, [projectId])
 
     if (columns.length) {
         columns = columns.map(c => ({...c, taskCount: Number(c.taskCount)}))
@@ -440,8 +428,8 @@ export function getProjectUsersByProjectId(projectId) {
         INNER JOIN task t ON t.assignee = u.id
         INNER JOIN column_project cp ON cp.id = t.project_column_id
         INNER JOIN project p ON p.id = cp.project_id
-        WHERE p.id = ${projectId};
-    `)
+        WHERE p.id = ?;
+    `, [projectId])
 }
 
 export function getAgendaTasks(userId) {
@@ -466,13 +454,13 @@ export function getAgendaTasks(userId) {
                 ON cp.id = tsk.project_column_id
             LEFT JOIN task_tag tt
                 ON tt.task_id = tsk.id
-            WHERE ca.user_id = ${userId}
+            WHERE ca.user_id = ?
             GROUP BY taskId, taskName, state, projectId, columnAgendaId, row, assignee
         )
         SELECT taskId, taskName, state, projectId, columnAgendaId, row, assignee, tags
         FROM RankedTasks
         WHERE rn <= 5;
-    `)
+    `, [userId])
 }
 
 export async function getAgendaColumns(userId) {
@@ -485,9 +473,9 @@ export async function getAgendaColumns(userId) {
         FROM column_agenda ca
         LEFT JOIN task_column_agenda tca
             ON tca.column_agenda_id = ca.id
-        WHERE ca.user_id = ${userId}
+        WHERE ca.user_id = ?
         GROUP BY ca.id;
-    `)
+    `, [userId])
 
     columns = columns.map(c => ({
         ...c,
@@ -510,8 +498,8 @@ export function getAgendaUsers(userId) {
             ON tsk.id = tca.task_id
         INNER JOIN user u
             ON u.id = tsk.assignee
-        WHERE ca.user_id = ${userId};
-    `)
+        WHERE ca.user_id = ?;
+    `, [userId])
 }
 
 export function getAgendaTags(userId) {
@@ -527,8 +515,8 @@ export function getAgendaTags(userId) {
             ON tt.task_id = tca.task_id
         INNER JOIN tag t
             ON t.id = tt.tag_id
-        WHERE ca.user_id = ${userId};
-    `)
+        WHERE ca.user_id = ?;
+    `, [userId])
 }
 
 export function getAgendaProjects(userId) {
@@ -546,8 +534,8 @@ export function getAgendaProjects(userId) {
             ON cp.id = t.project_column_id
         INNER JOIN project p
             ON p.id = cp.project_id
-        WHERE ca.user_id = ${userId};
-    `)
+        WHERE ca.user_id = ?;
+    `, [userId])
 }
 
 export async function getAgendaColumn(columnId, row) {
@@ -567,12 +555,12 @@ export async function getAgendaColumn(columnId, row) {
             ON cp.id = task.project_column_id
         LEFT JOIN task_tag tt
             ON tt.task_id = task.id
-        WHERE tca.column_agenda_id = ${columnId}
-        AND row > ${row}
+        WHERE tca.column_agenda_id = ?
+        AND row > ?
         GROUP BY id, name, state, assignee, projectId, \`row\`
         ORDER BY tca.row
         LIMIT 5;
-    `)
+    `, [columnId, row])
 
     tasks = mapTags(tasks)
 
@@ -593,10 +581,10 @@ export async function getTaskAccess(userId) {
         LEFT JOIN user_project up
             ON up.project_id = p.id
         WHERE
-            u.id = ${userId} AND
+            u.id = ? AND
             p.private = FALSE OR
-            p.private = TRUE and up.user_id = ${userId};
-    `)
+            p.private = TRUE and up.user_id = ?;
+    `, [userId, userId])
 
     tasks = tasks ? tasks.map(t => `${t.id}`) : []
 
@@ -621,10 +609,10 @@ export async function getProjectsAccess(userId) {
         LEFT JOIN column_project cp
             ON cp.project_id = p.id
         WHERE
-            u.id = ${userId} AND
+            u.id = ? AND
             p.private = FALSE OR
-            p.private = TRUE AND up.user_id = ${userId};
-    `)
+            p.private = TRUE AND up.user_id = ?;
+    `, [userId, userId])
 
     return {
         projects: convertStringToArrayStrings(projectsAndColumnProjects[0].projects),
@@ -635,8 +623,8 @@ export async function getProjectsAccess(userId) {
 export async function createOrganisation(userId, name) {
     const organisation = await query(`
         INSERT INTO organisation (name)
-        VALUES ('${name}')
-    `)
+        VALUES (?)
+    `, [name])
 
     const organisationId = parseInt(organisation.insertId) // use parse int here as Number(null) = 0
     if (organisation.warningStatus || isNaN(organisationId)) {
@@ -645,9 +633,9 @@ export async function createOrganisation(userId, name) {
 
     const updateUser = await query(`
         UPDATE user
-        SET role = 'admin', organisation_id = ${organisationId}
-        WHERE user.id = ${userId};
-    `, true)
+        SET role = 'admin', organisation_id = ?
+        WHERE user.id = ?;
+    `, [organisationId, userId])
 
     if (updateUser.warningStatus !== 0 || updateUser.affectedRows !== 1) {
         return false
@@ -659,8 +647,8 @@ export async function createOrganisation(userId, name) {
 export async function createProject(userId, organisationId, name, description, isPrivate) {
     const project = await query(`
         INSERT INTO project (name, created_by, organisation_id, description, private)
-        VALUES ('${name}', ${userId}, ${organisationId}, ${addQuotes(description)}, ${isPrivate})
-    `, true)
+        VALUES (?, ?, ?, ?, ?)
+    `, [name, userId, organisationId, description, isPrivate])
 
     if (project.warningStatus !== 0 || project.affectedRows !== 1) {
         return false
