@@ -1,3 +1,4 @@
+import { DEFAULT_DB_VALUE } from "./definitions.mjs"
 // creates an async wrapper around an endpoint
 // instead of having the below in all endpoints
 //try {
@@ -29,3 +30,12 @@ export function createEndpoint(getData, checkUser = true) {
         }
     }
 }
+
+export function formatNullableInput(input) {
+    return (!input && input !== 0) ? null : input.trim()
+}
+
+export function formatDefaultableInput(input) {
+    return (!input && input !== 0) ? DEFAULT_DB_VALUE : input.trim()
+}
+

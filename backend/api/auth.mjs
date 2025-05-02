@@ -2,17 +2,17 @@ import '@dotenvx/dotenvx/config'
 import bcrypt from "bcryptjs"
 import isEmail from 'validator/lib/isEmail.js'
 import isStrongPassword from 'validator/lib/isStrongPassword.js'
-import { getUserEmails, addUser, getUserByEmail } from "../db.mjs"
-import { createEndpoint } from "./utility.mjs"
+import { getUserEmails, createUser, getUserByEmail } from "../db.mjs"
+import { createEndpoint, formatDefaultableInput, formatNullableInput } from "./utility.mjs"
 import { loggedOut } from '../standarisedResponses.mjs'
 import { cookieSettings } from "../middleware.mjs"
 import { addAccessControl, removeAccessControl } from "./attributeAccess.mjs"
+import { ROLE_MEMBER } from './definitions.mjs'
 
 export const signupEndpoint = createEndpoint(async ({ body }) => {
     const { name, email, password, confirm_password } = body // required fields
-    const description = body.description ? body.description.trim() : 'NULL'
-    const img_url = body.img_url ?? 'DEFAULT'
-    const role = 'DEFAULT' // member
+    const description = formatNullableInput(body.description)
+    const imgUrl = formatDefaultableInput(body.imgUrl)
 
     if (!name.trim() || !email.trim() || !password || !confirm_password) {
         throw new Error('Missing field, please enter values for all required fields')
@@ -38,14 +38,7 @@ export const signupEndpoint = createEndpoint(async ({ body }) => {
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(password, salt);
 
-    const user = await addUser({
-        name: name.trim(),
-        email,
-        description,
-        role,
-        password: hash,
-        img_url
-    })
+    const user = await createUser(name, email, description, ROLE_MEMBER, hash, imgUrl)
 
     return user
 }, false)

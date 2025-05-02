@@ -1,5 +1,6 @@
 import '@dotenvx/dotenvx/config'
 import mariadb from 'mariadb'
+import { DEFAULT_DB_VALUE } from './api/definitions.mjs'
 
 const ACTIVE_USER_TABLE = 'active_user'
 const USER_TABLE = 'user'
@@ -79,15 +80,9 @@ export async function belongsToOrganisation(userId) {
     return !!organisationId[0].organisation_id
 }
 
-export async function addUser({ name, email, description, role, password, img_url }) {
-    const data = await query(`
-        INSERT INTO ${USER_TABLE} (name, email, description, role, password, img_url)
-        VALUES (?, ?, ?, ?, ?, ?)
-    `, [name, email, description, role, password, img_url])
-
-    const userId = Number(data.insertId)
+export async function createUser(name, email, description, role, password, img_url) {
+    const userId = await generateInsert(USER_TABLE, { name, email, description, role, password, img_url })
     await addDefaultAgenda(userId)
-
     const user = await query(`
         SELECT id, name, email, img_url, created_at
         FROM ${USER_TABLE} where id = ?;
@@ -621,14 +616,9 @@ export async function getProjectsAccess(userId) {
 }
 
 export async function createOrganisation(userId, name) {
-    const organisation = await query(`
-        INSERT INTO organisation (name)
-        VALUES (?)
-    `, [name])
-
-    const organisationId = parseInt(organisation.insertId) // use parse int here as Number(null) = 0
-    if (organisation.warningStatus || isNaN(organisationId)) {
-        throw new Error('Failed to add organisation')
+    const organisationId = await generateInsert(ORGANISATION_TABLE, { name })
+    if (!organisationId) {
+        throw new Error('Failed to create organisation')
     }
 
     const updateUser = await query(`
@@ -644,17 +634,34 @@ export async function createOrganisation(userId, name) {
     return organisationId
 }
 
-export async function createProject(userId, organisationId, name, description, isPrivate) {
-    const project = await query(`
-        INSERT INTO project (name, created_by, organisation_id, description, private)
-        VALUES (?, ?, ?, ?, ?)
-    `, [name, userId, organisationId, description, isPrivate])
+export function createProject(userId, organisation_id, name, description, isPrivate, img_url) {
+    return generateInsert(PROJECT_TABLE, {name, created_by: userId, organisation_id, description, private: isPrivate, img_url})
+}
 
-    if (project.warningStatus !== 0 || project.affectedRows !== 1) {
-        return false
+// need this becuase we dynamically insert values - we don't know if something is going to be a default value or not
+// when paramerterising db query you need to define the default value in the VALUES list so can't use '?'
+// config = { <columnName>: value, ... }
+async function generateInsert(tableName, config) {
+    const error = new Error(`Failed to create new ${tableName}`)
+    const queryStringColumns = Object.keys(config).join(', ')
+    const values = Object.values(config)
+    const queryStringValues = values.map(v => v === DEFAULT_DB_VALUE ? v : '?').join(', ')
+    const queryValues = values.filter(v => v !== DEFAULT_DB_VALUE)
+    const result = await query(`
+        INSERT INTO ${pool.escapeId(tableName)} (${queryStringColumns})
+        VALUES (${queryStringValues})
+    `, queryValues)
+
+    if (!result) {
+        throw error
     }
 
-    return parseInt(project.insertId)
+    const resultId = parseInt(result.insertId)
+    if (result.warningStatus !== 0 || result.affectedRows !== 1 || isNaN(resultId)) {
+        throw error
+    }
+
+    return resultId
 }
 
 process.on('SIGINT', async () => {

@@ -1,4 +1,4 @@
-import { createEndpoint } from "./utility.mjs"
+import { createEndpoint, formatDefaultableInput, formatNullableInput } from "./utility.mjs"
 import { createOrganisation, belongsToOrganisation, getOrganisationIdByUserId, createProject } from "../db.mjs"
 import { ROLE_VIEW } from "./definitions.mjs"
 
@@ -24,16 +24,16 @@ export const createOrganisationEndpoint = createEndpoint(async (req) => {
 
 export const createProjectEndpoint = createEndpoint(async (req) => {
     const { id: userId, role: userRole } = req.user
+    let { name, description, imgUrl, isPrivate } = req.body
 
     if (userRole === ROLE_VIEW) {
         throw new Error('You don\'t have permission to create a project')
     }
 
     const organisationId = await getOrganisationIdByUserId(userId)
-    const name = req.body.name.trim()
-    let description = req.body.description.trim()
-    description = description || 'NULL'
-    const isPrivate = !!req.body.isPrivate
+    description = formatNullableInput(description)
+    imgUrl = formatDefaultableInput(imgUrl)
+    isPrivate = !!isPrivate
 
     if (!organisationId && organisationId !== 0) {
         throw new Error('You don\'t belong to an organisation')
@@ -43,7 +43,7 @@ export const createProjectEndpoint = createEndpoint(async (req) => {
         throw new Error('Please provide a name')
     }
 
-    const projectId = await createProject(userId, organisationId, name, description, isPrivate)
+    const projectId = await createProject(userId, organisationId, name, description, isPrivate, imgUrl)
     if (!projectId && projectId !== 0) {
         throw new Error('Failed to add project')
     }
