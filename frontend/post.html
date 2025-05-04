@@ -73,12 +73,23 @@
                     <input type="text" name="colour" id="colour" value="#82e0aa ">
                 </div>
                 <div>
-                    <label for="column">Column</label>
-                    <input type="number" name="column" id="column" value="0">
-                </div>
-                <div>
                     <label for="project-id">Project Id</label>
                     <input type="number" name="projectId" id="project-id" value="0">
+                </div>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+
+        <div>
+            <form id="create-agenda-column">
+                <h2>Create Agenda Column</h2>
+                <div>
+                    <label for="name">Name</label>
+                    <input type="text" name="name" value="Test Agenda Column">
+                </div>
+                <div>
+                    <label for="colour">Colour</label>
+                    <input type="text" name="colour" id="colour" value="#82e0aa">
                 </div>
                 <button type="submit">Submit</button>
             </form>
@@ -167,6 +178,25 @@
             let data = new FormData(e.target)
             data = Object.fromEntries(data)
             const res = await fetch(`${createProjectColumnUrl}?${params}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+                credentials: 'include'
+            })
+            const parsedRes = await res.json()
+            console.log(parsedRes)
+        })
+
+        const agendaColumnElement = document.querySelector('#create-agenda-column')
+        const createAgendaColumnUrl = 'http://localhost:8001/agenda-column'
+        agendaColumnElement.addEventListener('submit', async (e) => {
+            e.preventDefault()
+
+            let data = new FormData(e.target)
+            data = Object.fromEntries(data)
+            const res = await fetch(`${createAgendaColumnUrl}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

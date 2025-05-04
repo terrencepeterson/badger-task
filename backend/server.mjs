@@ -17,7 +17,7 @@ import {
     agendaColumnAccessControl,
     projectColumnAccessControl
 } from './api/attributeAccess.mjs'
-import { createOrganisationEndpoint, createProjectEndpoint, createProjectColumnEndpoint } from './api/post.mjs'
+import { createOrganisationEndpoint, createProjectEndpoint, createProjectColumnEndpoint, createAgendaColumnEndpoint } from './api/post.mjs'
 
 const app = express()
 const { server_host: host, server_port: port } = process.env
@@ -47,6 +47,7 @@ app.get('/logout', logoutEndpoint)
 app.post('/organisation', authenticate, createOrganisationEndpoint)
 app.post('/project', authenticate, createProjectEndpoint)
 app.post('/project-column', authenticate, projectAccessControl, createProjectColumnEndpoint)
+app.post('/agenda-column', authenticate, createAgendaColumnEndpoint)
 
 app.listen(port, host, () => {
     console.log(`${host} listening on port ${port}`)

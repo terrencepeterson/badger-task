@@ -111,15 +111,12 @@ export async function getUserByEmail(email) {
     return user.length ? user[0] : null
 }
 
-export async function getProjectColumnColumns(projectId) {
-    const projectColumnColumns = await query(`
-        SELECT cp.column
-        FROM column_project cp
-        WHERE cp.project_id = ?
-        ORDER BY cp.column DESC;
-    `, [projectId])
+export function getProjectColumnColumns(projectId) {
+    return getColumnColumns(COLUMN_PROJECT_TABLE, 'project_id', projectId)
+}
 
-    return projectColumnColumns.length ? projectColumnColumns.map(pc => pc.column) : false
+export function getAgendaColumnColumns(userId) {
+    return getColumnColumns(COLUMN_AGENDA_TABLE, 'user_id', userId)
 }
 
 export async function getUserDashboard(id) {
@@ -653,6 +650,10 @@ export function createProjectColumn(name, icon, colour, column, project_id) {
     return generateInsert(COLUMN_PROJECT_TABLE, { name, icon, colour, column, project_id })
 }
 
+export function createAgendaColumn(name, colour, column, user_id) {
+    return generateInsert(COLUMN_AGENDA_TABLE, { name, colour, column, user_id })
+}
+
 // need this becuase we dynamically insert values - we don't know if something is going to be a default value or not
 // when paramerterising db query you need to define the default value in the VALUES list so can't use '?'
 // config = { <columnName>: value, ... }
@@ -678,6 +679,17 @@ async function generateInsert(tableName, config) {
     }
 
     return resultId
+}
+
+async function getColumnColumns(table, whereColumn, whereColumnParam) {
+    const column = await query(`
+        SELECT \`column\`
+        FROM ${pool.escapeId(table)}
+        WHERE ${whereColumn} = ?
+        ORDER BY \`column\` DESC;
+    `, [whereColumnParam])
+
+    return column.length ? column.map(c => c.column) : false
 }
 
 process.on('SIGINT', async () => {

@@ -1,9 +1,9 @@
 import { createEndpoint, formatDefaultableInput, formatNullableInput } from "./utility.mjs"
-import { createOrganisation, belongsToOrganisation, getOrganisationIdByUserId, createProject, createProjectColumn } from "../db.mjs"
+import { createOrganisation, belongsToOrganisation, getOrganisationIdByUserId, createProject, createProjectColumn, getProjectColumnColumns, getAgendaColumnColumns, createAgendaColumn } from "../db.mjs"
 import { ROLE_VIEW } from "./definitions.mjs"
 import isHexColor from 'validator/lib/isHexColor.js'
 
-const VALID_PROJECT_COLUMN_ICONS = ['wave','email','question','issue','home','computer','photo','music','tv','completed','idea','agenda','website','decision']
+const VALID_PROJECT_COLUMN_ICONS = ['wave', 'email', 'question', 'issue', 'home', 'computer', 'photo', 'music', 'tv', 'completed', 'idea', 'agenda', 'website', 'decision']
 
 export const createOrganisationEndpoint = createEndpoint(async (req) => {
     const { id: userId } = req.user
@@ -88,5 +88,31 @@ export const createProjectColumnEndpoint = createEndpoint(async (req) => {
     }
 
     return { message: 'Successfully created project column', projectColumnId }
+})
+
+export const createAgendaColumnEndpoint = createEndpoint(async (req) => {
+    const { id: userId } = req.user
+    let { name, colour, column } = req.body
+
+    if (!name) {
+        throw new Error('Please provide a name')
+    }
+
+    if (!isHexColor(colour)) {
+        throw new Error('Invalid colour')
+    }
+
+    column = parseInt(column)
+    if (isNaN(column)) {
+        const currentColumns = await getAgendaColumnColumns(userId)
+        column = ++currentColumns[0] // currentColumns always returns with highest column first
+    }
+
+    const agendaColumnId = await createAgendaColumn(name, colour, column, userId)
+    if (!agendaColumnId && agendaColumnId !== 0) {
+        throw new Error('Failed to create agenda column')
+    }
+
+    return { message: 'Successfully created agenda column', agendaColumnId }
 })
 
