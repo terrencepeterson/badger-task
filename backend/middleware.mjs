@@ -1,5 +1,6 @@
 import DOMPurify from "isomorphic-dompurify";
 import { unauthenticated } from "./standarisedResponses.mjs"
+const UNSANITARISABLE_FIELDS = []
 export const cookieSettings = {
     httpOnly: true,
     secure: true,
@@ -60,7 +61,15 @@ export function responseFormatter (req, res, next) {
 export function sanitiseInput(req, res, next) {
     if (req.body) {
         for (const key in req.body) {
-            req.body[key] = DOMPurify.sanitize(req.body[key])
+            if (UNSANITARISABLE_FIELDS.includes(key)) {
+                continue
+            }
+
+            const clean = DOMPurify.sanitize(req.body[key], { USE_PROFILES: { html: true } })
+            if (req.body[key] !== clean) {
+                res.error('Malacious content provided', 400)
+                return
+            }
         }
     }
 
