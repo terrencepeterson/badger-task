@@ -58,6 +58,7 @@ export const createProjectEndpoint = createEndpoint(async (req) => {
 export const createProjectColumnEndpoint = createEndpoint(async (req) => {
     const { role: userRole } = req.user
     let { name, icon, colour, column } = req.body
+    const projectId = parseInt(req.query.projectId)
 
     if (userRole === ROLE_VIEW) {
         throw new Error('You don\'t have permission to create a project')
@@ -75,7 +76,13 @@ export const createProjectColumnEndpoint = createEndpoint(async (req) => {
         throw new Error('Invalid colour')
     }
 
-    const projectColumnId = await createProjectColumn(name, icon, colour, +column, +req.query.projectId)
+    column = parseInt(column)
+    if (isNaN(column)) {
+        const currentColumns = await getProjectColumnColumns(projectId)
+        column = ++currentColumns[0] // currentColumns always returns with highest column first
+    }
+
+    const projectColumnId = await createProjectColumn(name, icon, colour, column, projectId)
     if (!projectColumnId && projectColumnId !== 0) {
         throw new Error('Failed to create project column')
     }
