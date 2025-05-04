@@ -63,6 +63,10 @@ export const createProjectColumnEndpoint = createEndpoint(async (req) => {
         throw new Error('You don\'t have permission to create a project')
     }
 
+    if (!name) {
+        throw new Error('Please provide a name')
+    }
+
     if (!VALID_PROJECT_COLUMN_ICONS.includes(icon)) {
         throw new Error('Invalid icon')
     }

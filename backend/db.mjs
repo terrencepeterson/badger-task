@@ -647,7 +647,8 @@ export function createProject(userId, organisation_id, name, description, isPriv
 // config = { <columnName>: value, ... }
 async function generateInsert(tableName, config) {
     const error = new Error(`Failed to create new ${tableName}`)
-    const queryStringColumns = Object.keys(config).join(', ')
+    const columnNames = Object.keys(config).map(c => c !== 'row' && c !== 'column' ? c : '`' + c + '`') // adds backtick to reserved words
+    const queryStringColumns = columnNames.join(', ')
     const values = Object.values(config)
     const queryStringValues = values.map(v => v === DEFAULT_DB_VALUE ? v : '?').join(', ')
     const queryValues = values.filter(v => v !== DEFAULT_DB_VALUE)
