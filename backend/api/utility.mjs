@@ -32,10 +32,10 @@ export function createEndpoint(getData, checkUser = true) {
 }
 
 export function formatNullableInput(input) {
-    return (!input && input !== 0) ? null : input.trim()
+    return (!input && input !== 0) ? null : input
 }
 
 export function formatDefaultableInput(input) {
-    return (!input && input !== 0) ? DEFAULT_DB_VALUE : input.trim()
+    return (!input && input !== 0) ? DEFAULT_DB_VALUE : input
 }
 

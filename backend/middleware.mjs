@@ -1,6 +1,7 @@
 import DOMPurify from "isomorphic-dompurify";
 import { unauthenticated } from "./standarisedResponses.mjs"
 const UNSANITARISABLE_FIELDS = []
+const DONT_TRIM_INPUT = ['password', 'confirmPassword']
 export const cookieSettings = {
     httpOnly: true,
     secure: true,
@@ -59,17 +60,19 @@ export function responseFormatter (req, res, next) {
 }
 
 export function sanitiseInput(req, res, next) {
-    if (req.body) {
-        for (const key in req.body) {
-            if (UNSANITARISABLE_FIELDS.includes(key)) {
-                continue
-            }
+    for (const key in req.body) {
+        if (!DONT_TRIM_INPUT.includes(key)) {
+            req.body[key] = req.body[key].trim()
+        }
 
-            const clean = DOMPurify.sanitize(req.body[key], { USE_PROFILES: { html: true } })
-            if (req.body[key] !== clean) {
-                res.error('Malacious content provided', 400)
-                return
-            }
+        if (UNSANITARISABLE_FIELDS.includes(key)) {
+            continue
+        }
+
+        const clean = DOMPurify.sanitize(req.body[key], { USE_PROFILES: { html: true } })
+        if (req.body[key] !== clean) {
+            res.error('Malacious content provided', 400)
+            return
         }
     }
 
