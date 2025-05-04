@@ -20,6 +20,9 @@
             <button id="logout" type="button">Logout</button>
         </form>
 
+        <div class="">
+
+        </div>
         <div>
             <form id="create-organisation">
                 <h2>Create organisation</h2>
@@ -46,10 +49,40 @@
                     <label for="private">Is private</label>
                     <input type="checkbox" name="isPrivate" id="private" checked>
                 </div>
+                <div>
+                    <label for="img-url">IMG url</label>
+                    <input type="text" name="imgUrl" id="img-url">
+                </div>
                 <button type="submit">Submit</button>
             </form>
         </div>
 
+        <div>
+            <form id="create-project-column">
+                <h2>Create project column</h2>
+                <div>
+                    <label for="name">Name</label>
+                    <input type="text" name="name" id="name" value="Test project">
+                </div>
+                <div>
+                    <label for="icon">Icon</label>
+                    <input type="text" name="icon" id="icon" value="wave">
+                </div>
+                <div>
+                    <label for="colour">Colour</label>
+                    <input type="text" name="colour" id="colour" value="#82e0aa ">
+                </div>
+                <div>
+                    <label for="column">Column</label>
+                    <input type="number" name="column" id="column" value="0">
+                </div>
+                <div>
+                    <label for="project-id">Project Id</label>
+                    <input type="number" name="projectId" id="project-id" value="0">
+                </div>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
     </body>
 
     <script>
@@ -111,6 +144,29 @@
             let data = new FormData(e.target)
             data = Object.fromEntries(data)
             const res = await fetch(createProjectUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+                credentials: 'include'
+            })
+            const parsedRes = await res.json()
+            console.log(parsedRes)
+        })
+
+        const projectColumnElement = document.querySelector('#create-project-column')
+        const createProjectColumnUrl = 'http://localhost:8001/project-column'
+        projectColumnElement.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            const projectId = projectColumnElement.querySelector('#project-id').value
+            const params = new URLSearchParams({
+                projectId
+            })
+
+            let data = new FormData(e.target)
+            data = Object.fromEntries(data)
+            const res = await fetch(`${createProjectColumnUrl}?${params}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

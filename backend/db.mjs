@@ -634,6 +634,10 @@ export async function createOrganisation(userId, name) {
     return organisationId
 }
 
+export function createProjectColumn(name, icon, colour, column, project_id) {
+    return generateInsert(COLUMN_PROJECT_TABLE, { name, icon, colour, column, project_id })
+}
+
 export function createProject(userId, organisation_id, name, description, isPrivate, img_url) {
     return generateInsert(PROJECT_TABLE, {name, created_by: userId, organisation_id, description, private: isPrivate, img_url})
 }

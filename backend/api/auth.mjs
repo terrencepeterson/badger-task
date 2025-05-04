@@ -10,15 +10,15 @@ import { addAccessControl, removeAccessControl } from "./attributeAccess.mjs"
 import { ROLE_MEMBER } from './definitions.mjs'
 
 export const signupEndpoint = createEndpoint(async ({ body }) => {
-    const { name, email, password, confirm_password } = body // required fields
+    const { name, email, password, confirmPassword } = body // required fields
     const description = formatNullableInput(body.description)
     const imgUrl = formatDefaultableInput(body.imgUrl)
 
-    if (!name.trim() || !email.trim() || !password || !confirm_password) {
+    if (!name.trim() || !email.trim() || !password || !confirmPassword) {
         throw new Error('Missing field, please enter values for all required fields')
     }
 
-    if (password !== confirm_password) {
+    if (password !== confirmPassword) {
         throw new Error('Passsword and confirm password do not match')
     }
 
