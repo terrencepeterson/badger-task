@@ -9,7 +9,8 @@ import {
     getAgendaColumnColumns,
     createAgendaColumn,
     getProjectColumnRows,
-    createTask
+    createTask,
+    createComment
 } from "../db.mjs"
 import isHexColor from 'validator/lib/isHexColor.js'
 import { getIsValidAssignee } from "./attributeAccess.mjs"
@@ -153,5 +154,24 @@ export const createTaskEndpoint = createEndpoint(async (req) => {
     }
 
     return { message: 'Successfully created task', taskId }
+})
+
+// access controls already check to see if use can access task
+export const createCommentEndpoint = createEndpoint(async (req) => {
+    const { id: createdBy } = req.user
+    const { text } = req.body
+    const { taskId } = req.query
+
+    if (!text) {
+        throw new Error('No text provided for comment')
+    }
+
+    const comment = await createComment(text, taskId, createdBy)
+
+    if (!comment) {
+        throw new Error('Failed to create comment')
+    }
+
+    return { message: 'Successfully created comment', comment }
 })
 

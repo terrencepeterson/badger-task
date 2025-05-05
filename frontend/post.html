@@ -114,6 +114,21 @@
             </form>
         </div>
 
+        <div style="margin-bottom: 3rem">
+            <form id="create-comment">
+                <h2>Create Comment</h2>
+                <div>
+                    <label for="text">Text</label>
+                    <input type="text" name="text" value="Some random comment text yeheee">
+                </div>
+                <div>
+                    <label for="task-id">Task Id</label>
+                    <input type="number" name="taskId" id="task-id">
+                </div>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+
         <div>
             <form id="data-picker-form">
                 <input type="date" id="birthday" name="date">
@@ -246,6 +261,29 @@
             let data = new FormData(e.target)
             data = Object.fromEntries(data)
             const res = await fetch(`${taskUrl}?${params}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+                credentials: 'include'
+            })
+            const parsedRes = await res.json()
+            console.log(parsedRes)
+        })
+
+        const commentElement = document.querySelector('#create-comment')
+        const commentUrl = 'http://localhost:8001/comment'
+        commentElement.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            const taskId = commentElement.querySelector('#task-id').value
+            const params = new URLSearchParams({
+                taskId
+            })
+
+            let data = new FormData(e.target)
+            data = Object.fromEntries(data)
+            const res = await fetch(`${commentUrl}?${params}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -669,6 +669,10 @@ export function createTask(name, description, due_date, project_row, created_by,
     return generateInsert(TASK_TABLE, { name, description, due_date, project_row, created_by, assignee, project_column_id })
 }
 
+export function createComment(text, task_id, created_by) {
+    return generateInsert(COMMENT_TABLE, { text, task_id, created_by })
+}
+
 // need this becuase we dynamically insert values - we don't know if something is going to be a default value or not
 // when paramerterising db query you need to define the default value in the VALUES list so can't use '?'
 // config = { <columnName>: value, ... }
