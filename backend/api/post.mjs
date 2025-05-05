@@ -1,6 +1,18 @@
-import { createEndpoint, formatDefaultableInput, formatNullableInput } from "./utility.mjs"
-import { createOrganisation, belongsToOrganisation, getOrganisationIdByUserId, createProject, createProjectColumn, getProjectColumnColumns, getAgendaColumnColumns, createAgendaColumn } from "../db.mjs"
+import { createEndpoint, dateIsInFuture, formatDefaultableInput, formatNullableInput, jsDateToSqlDate } from "./utility.mjs"
+import {
+    createOrganisation,
+    belongsToOrganisation,
+    getOrganisationIdByUserId,
+    createProject,
+    createProjectColumn,
+    getProjectColumnColumns,
+    getAgendaColumnColumns,
+    createAgendaColumn,
+    getProjectColumnRows,
+    createTask
+} from "../db.mjs"
 import isHexColor from 'validator/lib/isHexColor.js'
+import { getIsValidAssignee } from "./attributeAccess.mjs"
 
 const VALID_PROJECT_COLUMN_ICONS = ['wave', 'email', 'question', 'issue', 'home', 'computer', 'photo', 'music', 'tv', 'completed', 'idea', 'agenda', 'website', 'decision']
 
@@ -104,5 +116,42 @@ export const createAgendaColumnEndpoint = createEndpoint(async (req) => {
     }
 
     return { message: 'Successfully created agenda column', agendaColumnId }
+})
+
+// access control already checks to see if user can access project_column
+export const createTaskEndpoint = createEndpoint(async (req) => {
+    let { name, description, projectRow, assignee, dueDate } = req.body
+    const { id: userId } = req.user
+    const projectColumnId = req.query.column
+    const createdBy = userId
+    description = formatNullableInput(description)
+    assignee = formatNullableInput(assignee)
+
+    if (!name) {
+        throw new Error('Please provide a name')
+    }
+
+    assignee = 24
+    if (assignee && !await getIsValidAssignee(assignee, projectColumnId)) {
+        throw new Error('Invalid Assignee - they\'re not authorised to access the project that this task is being created in')
+    }
+
+    if (dueDate && !dateIsInFuture(dueDate)) {
+        throw new Error('Invalid due date - please provide a date that is in the future')
+    }
+    dueDate = jsDateToSqlDate(dueDate)
+
+    projectRow = parseInt(projectRow)
+    if (isNaN(projectRow)) {
+        const rows = await getProjectColumnRows(projectColumnId)
+        projectRow = ++rows[0]
+    }
+
+    const taskId = await createTask(name, description, dueDate, projectRow, createdBy, assignee, projectColumnId)
+    if (!taskId && taskId !== 0) {
+        throw new Error('Failed to create task')
+    }
+
+    return { message: 'Successfully created task', taskId }
 })
 

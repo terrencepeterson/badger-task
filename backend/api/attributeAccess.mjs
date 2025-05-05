@@ -14,6 +14,11 @@ const redisClient = await createClient({
     .on('error', err => console.log('Redis Client Error', err))
     .connect()
 
+export const taskAccessControl = createAccessControlMiddleware('taskId', ACCESS_CONTROL_TASKS, 'task')
+export const projectAccessControl = createAccessControlMiddleware('projectId', ACCESS_CONTROL_PROJECTS, 'project')
+export const agendaColumnAccessControl = createAccessControlMiddleware('column', ACCESS_CONTROL_COLUMN_AGENDA, 'agenda column')
+export const projectColumnAccessControl = createAccessControlMiddleware('column', ACCESS_CONTROL_COLUMN_PROJECTS, 'project column')
+
 export async function removeAccessControl(userId) {
     const keys = [
         getRedisKey(userId, ACCESS_CONTROL_TASKS),
@@ -73,6 +78,20 @@ export async function addAccessControl(userId) {
     }
 }
 
+export async function getIsValidAssignee(assignee, projectColumnId) {
+    let isValidAssignee
+    const assigneeProjectColumnExistsInCache = await doesExistInCache(assignee, ACCESS_CONTROL_COLUMN_PROJECTS)
+
+    if (assigneeProjectColumnExistsInCache) {
+        isValidAssignee = await getCanAccess(assignee, ACCESS_CONTROL_COLUMN_PROJECTS, projectColumnId)
+    } else {
+        const assigneeProjectAccessControl = await getProjectsAccess(assignee)
+        isValidAssignee = assigneeProjectAccessControl?.columnProjects.includes(projectColumnId)
+    }
+
+    return isValidAssignee
+}
+
 function createAccessControlMiddleware(attributeKey, accessControlKey, errorAttributeType) {
     return async function(req, res, next) {
         const attribute = req.query[attributeKey]
@@ -96,12 +115,12 @@ export function getCanAccess(userId, accessControlKey, attribute) {
     return redisClient.sIsMember(redisKey, attribute)
 }
 
+function doesExistInCache(userId, accessControlKey) {
+    const redisKey = getRedisKey(userId, accessControlKey)
+    return redisClient.exists(redisKey)
+}
+
 function getRedisKey(userId, attributeType) {
     return `user:${userId}:${attributeType}`
 }
-
-export const taskAccessControl = createAccessControlMiddleware('taskId', ACCESS_CONTROL_TASKS, 'task')
-export const projectAccessControl = createAccessControlMiddleware('projectId', ACCESS_CONTROL_PROJECTS, 'project')
-export const agendaColumnAccessControl = createAccessControlMiddleware('column', ACCESS_CONTROL_COLUMN_AGENDA, 'agenda column')
-export const projectColumnAccessControl = createAccessControlMiddleware('column', ACCESS_CONTROL_COLUMN_PROJECTS, 'project column')
 

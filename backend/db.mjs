@@ -119,6 +119,17 @@ export function getAgendaColumnColumns(userId) {
     return getColumnColumns(COLUMN_AGENDA_TABLE, 'user_id', userId)
 }
 
+export async function getProjectColumnRows(projectColumnId) {
+    const projectRows = await query(`
+        SELECT t.project_row
+        FROM task t
+        WHERE t.project_column_id = ?
+        ORDER BY t.project_row DESC;
+    `, [projectColumnId])
+
+    return projectRows.length ? projectRows.map(r => r.project_row) : false
+}
+
 export async function getUserDashboard(id) {
     const user = await query(`
         SELECT
@@ -652,6 +663,10 @@ export function createProjectColumn(name, icon, colour, column, project_id) {
 
 export function createAgendaColumn(name, colour, column, user_id) {
     return generateInsert(COLUMN_AGENDA_TABLE, { name, colour, column, user_id })
+}
+
+export function createTask(name, description, due_date, project_row, created_by, assignee, project_column_id) {
+    return generateInsert(TASK_TABLE, { name, description, due_date, project_row, created_by, assignee, project_column_id })
 }
 
 // need this becuase we dynamically insert values - we don't know if something is going to be a default value or not

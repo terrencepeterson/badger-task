@@ -80,7 +80,7 @@
             </form>
         </div>
 
-        <div>
+        <div style="margin-bottom: 3rem">
             <form id="create-agenda-column">
                 <h2>Create Agenda Column</h2>
                 <div>
@@ -92,6 +92,32 @@
                     <input type="text" name="colour" id="colour" value="#82e0aa">
                 </div>
                 <button type="submit">Submit</button>
+            </form>
+        </div>
+
+        <div style="margin-bottom: 3rem">
+            <form id="create-task">
+                <h2>Create Task</h2>
+                <div>
+                    <label for="name">Name</label>
+                    <input type="text" name="name" value="Test Agenda Column">
+                </div>
+                <div>
+                    <label for="description">Description</label>
+                    <input type="text" name="description">
+                </div>
+                <div>
+                    <label for="project-column-id">Project Column Id</label>
+                    <input type="text" name="projectColumnId" id="project-column-id" value="9">
+                </div>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+
+        <div>
+            <form id="data-picker-form">
+                <input type="date" id="birthday" name="date">
+                <button type="submit">Submit date</button>
             </form>
         </div>
     </body>
@@ -197,6 +223,29 @@
             let data = new FormData(e.target)
             data = Object.fromEntries(data)
             const res = await fetch(`${createAgendaColumnUrl}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+                credentials: 'include'
+            })
+            const parsedRes = await res.json()
+            console.log(parsedRes)
+        })
+
+        const taskElement = document.querySelector('#create-task')
+        const taskUrl = 'http://localhost:8001/task'
+        taskElement.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            const projectColumnId = taskElement.querySelector('#project-column-id').value
+            const params = new URLSearchParams({
+                column: projectColumnId
+            })
+
+            let data = new FormData(e.target)
+            data = Object.fromEntries(data)
+            const res = await fetch(`${taskUrl}?${params}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

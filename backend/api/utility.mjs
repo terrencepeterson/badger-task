@@ -39,3 +39,47 @@ export function formatDefaultableInput(input) {
     return (!input && input !== 0) ? DEFAULT_DB_VALUE : input
 }
 
+// new Date(year,month,day,hour,minutes)
+// months are zero based in the Date
+// expect config { year, month, day, hours, minutes }
+export function jsDateToSqlDate(dateConfig) {
+    const datetime = createDateObject(dateConfig)
+    if (!datetime) {
+        return null
+    }
+    return datetime.toISOString().replace(/T|Z/g, ' ').trim()
+}
+
+export function dateIsInFuture(dateConfig) {
+    const now = new Date()
+    const testDate = createDateObject(dateConfig)
+    if (!testDate) {
+        throw new Error('Invalid date config object provided')
+    }
+    return testDate.getTime() > now.getTime()
+}
+
+function createDateObject(dateConfig) {
+    if (!dateConfig) {
+        return null
+    }
+
+    for (const key in dateConfig) {
+        dateConfig[key] = parseInt(dateConfig[key])
+    }
+
+    let { year, month, day, hour, minute } = dateConfig
+    if (isNaN(year) || isNaN(month) || isNaN(day)) {
+        return null
+    }
+
+    if (!hour && hour !== 0) {
+        hour = minute = null
+    }
+
+    if (!isNaN(hour) && !minute && minute !== 0) { // is an hour is provided must also provide a minute value
+        minute = 0
+    }
+
+    return new Date(year, month, day, hour, minute)
+}
