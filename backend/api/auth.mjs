@@ -46,6 +46,18 @@ export const signupEndpoint = createEndpoint(async ({ body }) => {
 export const loginEndpoint = createEndpoint(async (req, res) => {
     const { email, password } = req.body
 
+    let authToken
+    try {
+        authToken = await res.getAuthToken()
+    } catch(e) {
+        // if no auth token an error will get thrown but we don't
+        // want to do anything with the error
+    }
+
+    if (authToken) {
+        throw new Error('An account is already logged in')
+    }
+
     if (!email.trim() || !password) {
         throw new Error('Please enter a email and password')
     }
