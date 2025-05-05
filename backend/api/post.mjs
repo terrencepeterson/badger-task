@@ -10,7 +10,8 @@ import {
     createAgendaColumn,
     getProjectColumnRows,
     createTask,
-    createComment
+    createComment,
+    createTag
 } from "../db.mjs"
 import isHexColor from 'validator/lib/isHexColor.js'
 import { getIsValidAssignee } from "./attributeAccess.mjs"
@@ -173,5 +174,30 @@ export const createCommentEndpoint = createEndpoint(async (req) => {
     }
 
     return { message: 'Successfully created comment', comment }
+})
+
+// access controls already checks to see if user can access project
+export const createTagEndpoint = createEndpoint(async (req) => {
+    const { name, colour } = req.body
+    const { projectId } = req.query
+
+    if (!name) {
+        throw new Error('No name provided')
+    }
+
+    if (!colour) {
+        throw new Error('No colour provided')
+    }
+
+    if (!isHexColor(colour)) {
+        throw new Error('The colour provided is not a valid hex colour')
+    }
+
+    const tagId = await createTag(name, colour, projectId)
+    if (!tagId && tagId !== 0) {
+        throw new Error('Failed to create tag')
+    }
+
+    return { message: 'Succesfully created new tag', tagId }
 })
 

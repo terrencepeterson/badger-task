@@ -26,7 +26,8 @@ import {
     createProjectColumnEndpoint,
     createAgendaColumnEndpoint,
     createTaskEndpoint,
-    createCommentEndpoint
+    createCommentEndpoint,
+    createTagEndpoint
 } from './api/post.mjs'
 
 const app = express()
@@ -60,6 +61,7 @@ app.post('/project-column', authenticate, createRoleAccessControl, projectAccess
 app.post('/agenda-column', authenticate, createAgendaColumnEndpoint)
 app.post('/task', authenticate, projectColumnAccessControl, createTaskEndpoint)
 app.post('/comment', authenticate, taskAccessControl, createCommentEndpoint)
+app.post('/tag', authenticate, createRoleAccessControl, projectAccessControl, createTagEndpoint)
 
 app.listen(port, host, () => {
     console.log(`${host} listening on port ${port}`)

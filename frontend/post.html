@@ -129,6 +129,25 @@
             </form>
         </div>
 
+        <div style="margin-bottom: 3rem">
+            <h2>Create Tag</h2>
+            <form id="create-tag">
+                <div>
+                    <label for="name">Name</label>
+                    <input type="text" name="name" value="" id="name">
+                </div>
+                <div>
+                    <label for="colour">Colour</label>
+                    <input type="text" name="colour" value="">
+                </div>
+                <div>
+                    <label for="project-id">ProjectId</label>
+                    <input type="text" name="projectId" value="" id="project-id">
+                </div>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+
         <div>
             <form id="data-picker-form">
                 <input type="date" id="birthday" name="date">
@@ -284,6 +303,29 @@
             let data = new FormData(e.target)
             data = Object.fromEntries(data)
             const res = await fetch(`${commentUrl}?${params}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+                credentials: 'include'
+            })
+            const parsedRes = await res.json()
+            console.log(parsedRes)
+        })
+
+        const tagElement = document.querySelector('#create-tag')
+        const tagUrl = 'http://localhost:8001/tag'
+        tagElement.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            const projectId = tagElement.querySelector('#project-id').value
+            const params = new URLSearchParams({
+                projectId
+            })
+
+            let data = new FormData(e.target)
+            data = Object.fromEntries(data)
+            const res = await fetch(`${tagUrl}?${params}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
