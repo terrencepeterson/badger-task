@@ -1,6 +1,5 @@
 import { createEndpoint, formatDefaultableInput, formatNullableInput } from "./utility.mjs"
 import { createOrganisation, belongsToOrganisation, getOrganisationIdByUserId, createProject, createProjectColumn, getProjectColumnColumns, getAgendaColumnColumns, createAgendaColumn } from "../db.mjs"
-import { ROLE_VIEW } from "./definitions.mjs"
 import isHexColor from 'validator/lib/isHexColor.js'
 
 const VALID_PROJECT_COLUMN_ICONS = ['wave', 'email', 'question', 'issue', 'home', 'computer', 'photo', 'music', 'tv', 'completed', 'idea', 'agenda', 'website', 'decision']
@@ -29,10 +28,6 @@ export const createProjectEndpoint = createEndpoint(async (req) => {
     const { id: userId, role: userRole } = req.user
     let { name, description, imgUrl, isPrivate } = req.body
 
-    if (userRole === ROLE_VIEW) {
-        throw new Error('You don\'t have permission to create a project')
-    }
-
     const organisationId = await getOrganisationIdByUserId(userId)
     description = formatNullableInput(description)
     imgUrl = formatDefaultableInput(imgUrl)
@@ -56,13 +51,8 @@ export const createProjectEndpoint = createEndpoint(async (req) => {
 
 // accesss control middleware already checks to see if user can access project
 export const createProjectColumnEndpoint = createEndpoint(async (req) => {
-    const { role: userRole } = req.user
     let { name, icon, colour, column } = req.body
     const projectId = parseInt(req.query.projectId)
-
-    if (userRole === ROLE_VIEW) {
-        throw new Error('You don\'t have permission to create a project')
-    }
 
     if (!name) {
         throw new Error('Please provide a name')

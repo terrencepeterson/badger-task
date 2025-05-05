@@ -3,6 +3,7 @@ import express from "express"
 import cors from "cors"
 import { responseFormatter, sanitiseInput, authenticate } from './middleware.mjs'
 import { signupEndpoint, loginEndpoint, logoutEndpoint } from './api/auth.mjs'
+import { createRoleAccessControl } from './api/roleAccess.mjs'
 import {
     agendaEndpoint,
     agendaColumnEndpoint,
@@ -11,13 +12,20 @@ import {
     taskEndpoint,
     dashboardEndpoint
 } from './api/get.mjs'
+
 import {
     taskAccessControl,
     projectAccessControl,
     agendaColumnAccessControl,
     projectColumnAccessControl
 } from './api/attributeAccess.mjs'
-import { createOrganisationEndpoint, createProjectEndpoint, createProjectColumnEndpoint, createAgendaColumnEndpoint } from './api/post.mjs'
+
+import {
+    createOrganisationEndpoint,
+    createProjectEndpoint,
+    createProjectColumnEndpoint,
+    createAgendaColumnEndpoint,
+} from './api/post.mjs'
 
 const app = express()
 const { server_host: host, server_port: port } = process.env
@@ -45,8 +53,8 @@ app.post('/login', loginEndpoint)
 app.get('/logout', logoutEndpoint)
 
 app.post('/organisation', authenticate, createOrganisationEndpoint)
-app.post('/project', authenticate, createProjectEndpoint)
-app.post('/project-column', authenticate, projectAccessControl, createProjectColumnEndpoint)
+app.post('/project', authenticate, createRoleAccessControl, createProjectEndpoint)
+app.post('/project-column', authenticate, createRoleAccessControl, projectAccessControl, createProjectColumnEndpoint)
 app.post('/agenda-column', authenticate, createAgendaColumnEndpoint)
 
 app.listen(port, host, () => {
