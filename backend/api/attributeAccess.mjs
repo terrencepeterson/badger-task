@@ -44,7 +44,7 @@ export async function removeAccessControl(userId) {
     return hasDeleted
 }
 
-export async function addAccessControl(userId) {
+export async function addAccessControls(userId) {
     if (!userId && userId !== 0) { // checks for undefined as well
         throw new Error('Unauthorised - please login')
     }
@@ -108,6 +108,16 @@ function createAccessControlMiddleware(attributeKey, accessControlKey, errorAttr
 
         next()
     }
+}
+
+export async function addAttributeAccess(userId, accessControlKey, attribute) {
+    const redisKey = getRedisKey(userId, accessControlKey)
+    const hasAddedAttribute = await redisClient.sAdd(redisKey, attribute)
+    if (!hasAddedAttribute) {
+        throw new Error(`Failed to update ${accessControlKey} access controls`)
+    }
+
+    return true
 }
 
 export function getCanAccess(userId, accessControlKey, attribute) {

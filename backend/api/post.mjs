@@ -15,7 +15,8 @@ import {
     createChecklist
 } from "../db.mjs"
 import isHexColor from 'validator/lib/isHexColor.js'
-import { getIsValidAssignee } from "./attributeAccess.mjs"
+import { addAttributeAccess, getIsValidAssignee } from "./attributeAccess.mjs"
+import { ACCESS_CONTROL_COLUMN_AGENDA, ACCESS_CONTROL_COLUMN_PROJECTS, ACCESS_CONTROL_PROJECTS, ACCESS_CONTROL_TASKS } from "./definitions.mjs"
 
 const VALID_PROJECT_COLUMN_ICONS = ['wave', 'email', 'question', 'issue', 'home', 'computer', 'photo', 'music', 'tv', 'completed', 'idea', 'agenda', 'website', 'decision']
 
@@ -61,6 +62,8 @@ export const createProjectEndpoint = createEndpoint(async (req) => {
         throw new Error('Failed to add project')
     }
 
+    await addAttributeAccess(userId, ACCESS_CONTROL_PROJECTS, projectId.toString())
+
     return { message: 'Successfully added project', projectId }
 })
 
@@ -92,6 +95,8 @@ export const createProjectColumnEndpoint = createEndpoint(async (req) => {
         throw new Error('Failed to create project column')
     }
 
+    await addAttributeAccess(userId, ACCESS_CONTROL_COLUMN_PROJECTS, projectColumnId.toString())
+
     return { message: 'Successfully created project column', projectColumnId }
 })
 
@@ -117,6 +122,8 @@ export const createAgendaColumnEndpoint = createEndpoint(async (req) => {
     if (!agendaColumnId && agendaColumnId !== 0) {
         throw new Error('Failed to create agenda column')
     }
+
+    await addAttributeAccess(userId, ACCESS_CONTROL_COLUMN_AGENDA, agendaColumnId.toString())
 
     return { message: 'Successfully created agenda column', agendaColumnId }
 })
@@ -154,6 +161,8 @@ export const createTaskEndpoint = createEndpoint(async (req) => {
     if (!taskId && taskId !== 0) {
         throw new Error('Failed to create task')
     }
+
+    await addAttributeAccess(userId, ACCESS_CONTROL_TASKS, taskId.toString())
 
     return { message: 'Successfully created task', taskId }
 })

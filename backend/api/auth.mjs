@@ -6,7 +6,7 @@ import { getUserEmails, createUser, getUserByEmail } from "../db.mjs"
 import { createEndpoint, formatDefaultableInput, formatNullableInput } from "./utility.mjs"
 import { loggedOut } from '../standarisedResponses.mjs'
 import { cookieSettings } from "../middleware.mjs"
-import { addAccessControl, removeAccessControl } from "./attributeAccess.mjs"
+import { addAccessControls, removeAccessControl } from "./attributeAccess.mjs"
 import { ROLE_MEMBER } from './definitions.mjs'
 
 export const signupEndpoint = createEndpoint(async ({ body }) => {
@@ -84,7 +84,7 @@ export const loginEndpoint = createEndpoint(async (req, res) => {
             { expiresIn: +process.env.auth_session_seconds } // must convert to int here as string without unit defaults to millieseconds
         )
         res.setTokenCookie(token)
-        addAccessControl(user.id)
+        addAccessControls(user.id)
         return 'Successfully logged in!'
     } catch(e) {
         throw new Error('Currently unable to login')
