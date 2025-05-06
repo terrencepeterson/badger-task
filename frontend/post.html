@@ -148,6 +148,21 @@
             </form>
         </div>
 
+        <div style="margin-bottom: 3rem;">
+            <form id="create-checklist">
+                <h2>Create Checklist</h2>
+                <div>
+                    <label for="name">Name</label>
+                    <input type="text" name="name" value="" id="name">
+                </div>
+                <div>
+                    <label for="task-id">Task Id</label>
+                    <input type="number" name="taskId" value="" id="task-id">
+                </div>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+
         <div>
             <form id="data-picker-form">
                 <input type="date" id="birthday" name="date">
@@ -326,6 +341,29 @@
             let data = new FormData(e.target)
             data = Object.fromEntries(data)
             const res = await fetch(`${tagUrl}?${params}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+                credentials: 'include'
+            })
+            const parsedRes = await res.json()
+            console.log(parsedRes)
+        })
+
+        const checklistElement = document.querySelector('#create-checklist')
+        const checklistUrl = 'http://localhost:8001/checklist'
+        checklistElement.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            const taskId = checklistElement.querySelector('#task-id').value
+            const params = new URLSearchParams({
+                taskId
+            })
+
+            let data = new FormData(e.target)
+            data = Object.fromEntries(data)
+            const res = await fetch(`${checklistUrl}?${params}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

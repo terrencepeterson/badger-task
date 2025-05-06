@@ -11,7 +11,8 @@ import {
     getProjectColumnRows,
     createTask,
     createComment,
-    createTag
+    createTag,
+    createChecklist
 } from "../db.mjs"
 import isHexColor from 'validator/lib/isHexColor.js'
 import { getIsValidAssignee } from "./attributeAccess.mjs"
@@ -199,5 +200,21 @@ export const createTagEndpoint = createEndpoint(async (req) => {
     }
 
     return { message: 'Succesfully created new tag', tagId }
+})
+
+export const createChecklistEndpoint = createEndpoint(async (req) => {
+    const { taskId } = req.query
+    const { name } = req.body
+
+    if (!name) {
+        throw new Error('No name provided')
+    }
+
+    const checklistId = await createChecklist(name, taskId)
+    if (!checklistId && checklistId !== 0) {
+        throw new Error('Failed to add checklist')
+    }
+
+    return { message: 'Successfully added new checklist', checklistId }
 })
 

@@ -677,12 +677,16 @@ export function createTag(name, colour, project_id) {
     return generateInsert(TAG_TABLE, { name, colour, project_id })
 }
 
+export function createChecklist(name, task_id) {
+    return generateInsert(CHECKLIST_TABLE, {name, task_id})
+}
+
 // need this becuase we dynamically insert values - we don't know if something is going to be a default value or not
 // when paramerterising db query you need to define the default value in the VALUES list so can't use '?'
 // config = { <columnName>: value, ... }
 async function generateInsert(tableName, config) {
     const error = new Error(`Failed to create new ${tableName}`)
-    const columnNames = Object.keys(config).map(c => c !== 'row' && c !== 'column' ? c : '`' + c + '`') // adds backtick to reserved words
+    const columnNames = Object.keys(config).map(c => c !== 'row' && c !== 'column' ? c : `\`${c}\``) // adds backtick to reserved words
     const queryStringColumns = columnNames.join(', ')
     const values = Object.values(config)
     const queryStringValues = values.map(v => v === DEFAULT_DB_VALUE ? v : '?').join(', ')
