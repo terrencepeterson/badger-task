@@ -9,7 +9,7 @@ import {
     getChecklistByTaskId,
     getProjectTasks,
     getProjectColumnsByProjectId,
-    getProjectUsersByProjectId,
+    getProjectUsersWAssigneedTask,
     getProjectByProjectId,
     getAgendaTasks,
     getAgendaColumns,
@@ -78,7 +78,7 @@ export const projectEndpoint = createEndpoint(async (req) => {
 
     projectDetails.tasks = await getProjectTasks(projectId, req.user.id)
     projectDetails.columns = await getProjectColumnsByProjectId(projectId)
-    projectDetails.users = await getProjectUsersByProjectId(projectId)
+    projectDetails.users = await getProjectUsersWAssigneedTask(projectId)
     projectDetails.tags = await getProjectTags(projectId)
 
     return projectDetails
@@ -113,11 +113,11 @@ export const agendaColumnEndpoint = createEndpoint((req) => {
 })
 
 function columnRowTest(column, row) {
-    if (column === null || column === undefined || column === '') {
+    if (!column && column !== 0) {
         throw new Error('No column provide')
     }
 
-    if (row === null || row === undefined || row === '') {
+    if (!row && row !== 0) {
         throw new Error('No row provided')
     }
 }

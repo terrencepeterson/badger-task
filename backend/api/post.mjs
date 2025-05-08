@@ -14,7 +14,8 @@ import {
     createTag,
     createChecklist,
     updateUserProjectTable,
-    getAllUsersFromOrganisation
+    getAllUsersFromOrganisation,
+    getUserProjectAccess
 } from "../db.mjs"
 import isHexColor from 'validator/lib/isHexColor.js'
 import { addAttributeAccess, addMultipleAttributeAccess, getIsValidAssignee } from "./attributeAccess.mjs"
@@ -97,7 +98,7 @@ export const createProjectColumnEndpoint = createEndpoint(async (req) => {
     column = parseInt(column)
     if (isNaN(column)) {
         const currentColumns = await getProjectColumnColumns(projectId)
-        column = ++currentColumns[0] // currentColumns always returns with highest column first
+        column = currentColumns ? ++currentColumns[0] : 0 // currentColumns always returns with highest column first
     }
 
     const projectColumnId = await createProjectColumn(name, icon, colour, column, projectId)
@@ -105,7 +106,8 @@ export const createProjectColumnEndpoint = createEndpoint(async (req) => {
         throw new Error('Failed to create project column')
     }
 
-    await addAttributeAccess(userId, ACCESS_CONTROL_COLUMN_PROJECTS, projectColumnId.toString())
+    const accesssUsers = await getUserProjectAccess(projectId)
+    await addMultipleAttributeAccess(accesssUsers, ACCESS_CONTROL_COLUMN_PROJECTS, projectColumnId.toString())
 
     return { message: 'Successfully created project column', projectColumnId }
 })

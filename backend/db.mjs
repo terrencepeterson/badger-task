@@ -450,7 +450,8 @@ export async function getProjectColumnsByProjectId(projectId) {
     return columns
 }
 
-export function getProjectUsersByProjectId(projectId) {
+// gets users which have been assigned to a task in the project
+export function getProjectUsersWAssigneedTask(projectId) {
     return query(`
         SELECT DISTINCT
             u.id,
@@ -697,6 +698,33 @@ export function createTag(name, colour, project_id) {
 
 export function createChecklist(name, task_id) {
     return generateInsert(CHECKLIST_TABLE, {name, task_id})
+}
+
+// gets all of the users who can access a prject
+export async function getUserProjectAccess(projectId) {
+    let users = await query(`
+        (
+            SELECT u.id AS user_id
+            FROM user u
+            JOIN project p ON p.organisation_id = u.organisation_id
+            WHERE p.id = ? AND p.private = FALSE
+        )
+        UNION ALL
+        (
+            SELECT up.user_id
+            FROM user_project up
+            JOIN project p ON p.id = up.project_id
+            WHERE p.id = ? AND p.private = TRUE
+        );
+    `, [projectId, projectId])
+
+    users = users.length ? users.map(u => u.user_id) : null
+
+    if (!users) {
+        throw new Error('CRITICAL - no users are part of that project')
+    }
+
+    return users
 }
 
 // need this becuase we dynamically insert values - we don't know if something is going to be a default value or not
