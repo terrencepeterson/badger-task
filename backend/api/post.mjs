@@ -15,7 +15,8 @@ import {
     createChecklist,
     updateUserProjectTable,
     getAllUsersFromOrganisation,
-    getUserProjectAccess
+    getUserProjectAccess,
+    getProjectIdFromProjectColummId
 } from "../db.mjs"
 import isHexColor from 'validator/lib/isHexColor.js'
 import { addAttributeAccess, addMultipleAttributeAccess, getIsValidAssignee } from "./attributeAccess.mjs"
@@ -174,7 +175,9 @@ export const createTaskEndpoint = createEndpoint(async (req) => {
         throw new Error('Failed to create task')
     }
 
-    await addAttributeAccess(userId, ACCESS_CONTROL_TASKS, taskId.toString())
+    const projectId = await getProjectIdFromProjectColummId(projectColumnId)
+    const accesssUsers = await getUserProjectAccess(projectId)
+    await addMultipleAttributeAccess(accesssUsers, ACCESS_CONTROL_TASKS, taskId.toString())
 
     return { message: 'Successfully created task', taskId }
 })

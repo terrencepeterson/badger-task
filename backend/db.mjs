@@ -727,6 +727,16 @@ export async function getUserProjectAccess(projectId) {
     return users
 }
 
+export async function getProjectIdFromProjectColummId(projectColumnId) {
+    const projectId = await query(`
+        SELECT cp.project_id
+        FROM column_project cp
+        WHERE cp.id = ?;
+    `, [projectColumnId])
+
+    return projectId.length ? projectId[0].project_id : null
+}
+
 // need this becuase we dynamically insert values - we don't know if something is going to be a default value or not
 // when paramerterising db query you need to define the default value in the VALUES list so can't use '?'
 // config = { <columnName>: value, ... }
