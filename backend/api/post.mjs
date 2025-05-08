@@ -12,11 +12,13 @@ import {
     createTask,
     createComment,
     createTag,
-    createChecklist
+    createChecklist,
+    updateUserProjectTable,
+    getAllUsersFromOrganisation
 } from "../db.mjs"
 import isHexColor from 'validator/lib/isHexColor.js'
-import { addAttributeAccess, getIsValidAssignee } from "./attributeAccess.mjs"
-import { ACCESS_CONTROL_COLUMN_AGENDA, ACCESS_CONTROL_COLUMN_PROJECTS, ACCESS_CONTROL_PROJECTS, ACCESS_CONTROL_TASKS } from "./definitions.mjs"
+import { addAttributeAccess, addMultipleAttributeAccess, getIsValidAssignee } from "./attributeAccess.mjs"
+import { ACCESS_CONTROL_COLUMN_AGENDA, ACCESS_CONTROL_COLUMN_PROJECTS, ACCESS_CONTROL_PROJECTS, ACCESS_CONTROL_TASKS, ROLE_ADMIN } from "./definitions.mjs"
 
 const VALID_PROJECT_COLUMN_ICONS = ['wave', 'email', 'question', 'issue', 'home', 'computer', 'photo', 'music', 'tv', 'completed', 'idea', 'agenda', 'website', 'decision']
 
@@ -43,11 +45,15 @@ export const createOrganisationEndpoint = createEndpoint(async (req) => {
 export const createProjectEndpoint = createEndpoint(async (req) => {
     const { id: userId, role: userRole } = req.user
     let { name, description, imgUrl, isPrivate } = req.body
-
+    let accessControlUserIdsToUpdate
     const organisationId = await getOrganisationIdByUserId(userId)
     description = formatNullableInput(description)
     imgUrl = formatDefaultableInput(imgUrl)
     isPrivate = !!isPrivate
+
+    if (isPrivate && userRole !== ROLE_ADMIN) { // non admin users cannot create private projects
+        throw new Error('Unauthorised - only admin users can create private projects')
+    }
 
     if (!organisationId && organisationId !== 0) {
         throw new Error('You don\'t belong to an organisation')
@@ -62,7 +68,11 @@ export const createProjectEndpoint = createEndpoint(async (req) => {
         throw new Error('Failed to add project')
     }
 
-    await addAttributeAccess(userId, ACCESS_CONTROL_PROJECTS, projectId.toString())
+    accessControlUserIdsToUpdate = isPrivate ?
+        await updateUserProjectTable(organisationId, projectId) :
+        await getAllUsersFromOrganisation(organisationId)
+
+    await addMultipleAttributeAccess(accessControlUserIdsToUpdate, ACCESS_CONTROL_PROJECTS, projectId)
 
     return { message: 'Successfully added project', projectId }
 })

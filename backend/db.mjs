@@ -1,19 +1,21 @@
 import '@dotenvx/dotenvx/config'
 import mariadb from 'mariadb'
-import { DEFAULT_DB_VALUE } from './api/definitions.mjs'
-
-const ACTIVE_USER_TABLE = 'active_user'
-const USER_TABLE = 'user'
-const COLUMN_AGENDA_TABLE = 'column_agenda'
-const COLUMN_PROJECT_TABLE = 'column_project'
-const PROJECT_TABLE = 'project'
-const TASK_TABLE = 'task'
-const ORGANISATION_TABLE = 'organisation'
-const TAG_TABLE = 'tag'
-const TASK_TAG_TABLE = 'task_tag'
-const COMMENT_TABLE = 'comment'
-const CHECKLIST_TABLE = 'checklist'
-const TASK_COLUMN_AGENDA_TABLE = 'task_column_agenda'
+import {
+    DEFAULT_DB_VALUE,
+    ACTIVE_USER_TABLE,
+    USER_TABLE,
+    COLUMN_AGENDA_TABLE,
+    COLUMN_PROJECT_TABLE,
+    PROJECT_TABLE,
+    TASK_TABLE,
+    ORGANISATION_TABLE,
+    TAG_TABLE,
+    TASK_TAG_TABLE,
+    COMMENT_TABLE,
+    CHECKLIST_TABLE,
+    TASK_COLUMN_AGENDA_TABLE,
+    ROLE_ADMIN
+} from './api/definitions.mjs'
 
 const pool = mariadb.createPool({
     host: 'db',
@@ -109,6 +111,22 @@ export async function getUserByEmail(email) {
     `, [email])
 
     return user.length ? user[0] : null
+}
+
+export async function getAllUsersFromOrganisation(organisationId) {
+    let allUsers = await query(`
+        SELECT u.id
+        FROM \`user\` u
+        WHERE u.organisation_id = ?
+    `, [organisationId])
+
+    if (allUsers.length) {
+        allUsers = allUsers.map(u => u.id)
+    } else {
+        throw new Error('Critical - no users belong to the current organisation')
+    }
+
+    return allUsers
 }
 
 export function getProjectColumnColumns(projectId) {
@@ -706,6 +724,31 @@ async function generateInsert(tableName, config) {
     }
 
     return resultId
+}
+
+export async function updateUserProjectTable(organisationId, projectId) {
+    let admins = await query(`
+        SELECT u.id
+        FROM user u
+        WHERE u.organisation_id = ? AND u.\`role\` = '${ROLE_ADMIN}'
+    `, [organisationId])
+
+    if (!admins.length) {
+        throw new Error('Critical - No admin assigned to organisation')
+    }
+
+    const adminValues = admins.map(a => a.id)
+    const adminInsertValues = adminValues.map(adminId => `(${pool.escape(projectId)}, ${pool.escape(adminId)})`).join(', ')
+    const hasInsertedAdmins = await query(`
+        INSERT INTO user_project (project_id, user_id)
+        VALUES ${adminInsertValues}
+    `)
+
+    if (!hasInsertedAdmins || hasInsertedAdmins.affectedRows !== admins.length || hasInsertedAdmins.warningStatus !== 0) {
+        throw new Error('Failed to update user_project access table')
+    }
+
+    return adminValues
 }
 
 async function getColumnColumns(table, whereColumn, whereColumnParam) {

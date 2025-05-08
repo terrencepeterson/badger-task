@@ -120,6 +120,22 @@ export async function addAttributeAccess(userId, accessControlKey, attribute) {
     return true
 }
 
+export async function addMultipleAttributeAccess(userIds, accessControlKey, attributes) {
+    const redisKeys = userIds.map(id => getRedisKey(id, accessControlKey))
+    for (const [i, redisKey] of redisKeys.entries()) {
+        const keyExists = await redisClient.exists(redisKey)
+        if (!keyExists) {
+            continue
+        }
+
+        const attribute = Array.isArray(attributes) ? attributes[i] : attributes
+        const hasAddedAttribute = await redisClient.sAdd(redisKey, attribute.toString())
+        if (!hasAddedAttribute) {
+            throw new Error(`Failed to update ${redisKey}: ${attribute}`)
+        }
+    }
+}
+
 export function getCanAccess(userId, accessControlKey, attribute) {
     const redisKey = getRedisKey(userId, accessControlKey)
     return redisClient.sIsMember(redisKey, attribute)
