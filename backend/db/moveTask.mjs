@@ -8,21 +8,27 @@ export async function moveTaskWithinRow(taskId, symbol, biggerThan, lessThan, ro
     // change the rows of the affected tasks in the same column
     // move the current task to it's new row
     transactionQuery(async (conn) => {
-        const tempRowChanged = await conn.query(`
-            UPDATE ${TASK_TABLE}
-            SET project_row = -1
-            WHERE id = ?
-        `, [taskId])
-
-        console.log(tempRowChanged)
-
+        await disableCurrentTask(conn, taskId)
         await moveRows(conn, biggerThan, lessThan, taskId, projectColumnId, symbol)
-
         const tempRowRemoved = await conn.query(`
             UPDATE ${TASK_TABLE}
             SET project_row = ?
             WHERE id = ?
         `, [row, taskId])
+    })
+}
+
+export async function moveTaskToEndOfNewColumn(newRow, newProjectColumnId, taskId, oldProjectColumnId, currentRow) {
+    transactionQuery(async (conn) => {
+        await conn.query(`
+            UPDATE ${TASK_TABLE}
+            SET project_row = ?, project_column_id = ?
+            WHERE id = ?
+        `, [newRow, newProjectColumnId, taskId]) // move task to new column
+
+        const maxRow = await getMaxRow(conn, oldProjectColumnId)
+
+        await moveRows(conn, currentRow, maxRow, taskId, oldProjectColumnId, '-') // decrement tasks from old column
     })
 }
 
@@ -48,4 +54,22 @@ async function moveRows(conn, biggerThan, lessThan, taskId, projectColumnId, sym
             id != ? AND
             project_column_id = ?;
     `, [biggerThan + OFFSET_AMOUNT, lessThan + OFFSET_AMOUNT, taskId, projectColumnId])
+}
+
+async function disableCurrentTask(conn, taskId) {
+    const tempRowChanged = await conn.query(`
+        UPDATE ${TASK_TABLE}
+        SET project_row = -1
+        WHERE id = ?
+    `, [taskId])
+}
+
+async function getMaxRow(conn, projectColumnId) {
+    let maxRow = await conn.query(`
+        SELECT MAX(project_row) as max_row
+        FROM task
+        WHERE project_column_id = ?;
+    `, [projectColumnId])
+    maxRow = maxRow.length ? maxRow[0].max_row + 1 : 0
+    return maxRow
 }

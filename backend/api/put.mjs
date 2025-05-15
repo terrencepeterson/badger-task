@@ -1,8 +1,8 @@
 import { convertColumnToFrontName, createEndpoint, dateIsInFuture, jsDateToSqlDate } from "./utility.mjs"
 import { TASK_STATE_ACTIVE, TASK_STATE_COMPLETED, TASK_STATE_HOLD, TASK_TABLE } from "./definitions.mjs"
 import { getIsValidAssignee } from "./attributeAccess.mjs"
-import { generateUpdate, getIdByDifferentId } from "../db/db.mjs"
-import { moveTaskWithinRow } from "../db/moveTask.mjs"
+import { generateUpdate, getIdByDifferentId, getProjectColumnsByProjectId, getProjectColumnRows } from "../db/db.mjs"
+import { moveTaskToEndOfNewColumn, moveTaskWithinRow } from "../db/moveTask.mjs"
 
 function createPutEndpoint(validateAndFormatData, allowedColumnKeys, helperColumnKeys, table, updateIdKey) {
     return createEndpoint(async (req) => {
@@ -43,7 +43,7 @@ function createPutEndpoint(validateAndFormatData, allowedColumnKeys, helperColum
 export const updateTaskEndpoint = createPutEndpoint(
     taskFormatAndValidation,
     ['name', 'description', 'dueDate', 'state', 'projectRow', 'assignee', 'projectColumnId'],
-    ['currentRow', 'currentProjectColumnId'],
+    ['currentRow', 'currentProjectColumnId', 'projectId'],
     TASK_TABLE,
     'taskId'
 )
@@ -91,9 +91,15 @@ async function taskFormatAndValidation(allowedData, helperColumnData, taskId) {
         await moveTask(+taskId, +projectRow, +projectColumnId, +helperColumnData.currentRow, +helperColumnData.currentProjectColumnId)
     } else if (Object.hasOwn(allowedData, 'projectColumnId')) {
         // column change
-        // find the next highest project row
-        // update both the row and the projectcolumdid at the same time
-        // update the old column, anything above the currentRow needs decrementing
+        const projectColumns = await getProjectColumnsByProjectId(helperColumnData.projectId) ?? []
+        const projectColumnIds = projectColumns.map(c => c.id)
+        if (!projectColumnIds.includes(+projectColumnId)) {
+            throw new Error('The task cannot be assigned to the project column becuase it is not part of the same project')
+        }
+
+        const rows = await getProjectColumnRows(projectColumnId)
+        const newRow = rows.length ? ++rows[0] : 0
+        await moveTaskToEndOfNewColumn(+newRow, +projectColumnId, taskId, +helperColumnData.currentProjectColumnId, +helperColumnData.currentRow)
     }
     delete allowedData.projectRow
     delete allowedData.projectColumnId
