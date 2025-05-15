@@ -1,6 +1,7 @@
 import '@dotenvx/dotenvx/config'
 import express from "express"
 import cors from "cors"
+
 import { responseFormatter, sanitiseInput, authenticate } from './middleware.mjs'
 import { signupEndpoint, loginEndpoint, logoutEndpoint } from './api/auth.mjs'
 import { createRoleAccessControl } from './api/roleAccess.mjs'
@@ -30,6 +31,7 @@ import {
     createTagEndpoint,
     createChecklistEndpoint
 } from './api/post.mjs'
+import { updateTaskEndpoint } from './api/put.mjs'
 
 const app = express()
 const { server_host: host, server_port: port } = process.env
@@ -44,6 +46,7 @@ app.use(cors(corsOptions))
 app.use(responseFormatter)
 app.post('*', sanitiseInput)
 app.get('*', authenticate)
+app.put('*',  sanitiseInput, authenticate)
 
 app.get('/agenda-column', agendaColumnAccessControl, agendaColumnEndpoint)
 app.get('/agenda', agendaEndpoint)
@@ -64,6 +67,8 @@ app.post('/task', authenticate, projectColumnAccessControl, createTaskEndpoint)
 app.post('/comment', authenticate, taskAccessControl, createCommentEndpoint)
 app.post('/tag', authenticate, createRoleAccessControl, projectAccessControl, createTagEndpoint)
 app.post('/checklist', authenticate, createRoleAccessControl, taskAccessControl, createChecklistEndpoint)
+
+app.put('/task', createRoleAccessControl, taskAccessControl, updateTaskEndpoint)
 
 app.listen(port, host, () => {
     console.log(`${host} listening on port ${port}`)

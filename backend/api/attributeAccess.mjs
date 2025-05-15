@@ -1,5 +1,5 @@
 import '@dotenvx/dotenvx/config'
-import { getAgendaColumns, getProjectsAccess, getTaskAccess } from "../db.mjs"
+import { getAgendaColumns, getProjectsAccess, getTaskAccess } from "../db/db.mjs"
 import { createClient } from 'redis';
 import {
     ACCESS_CONTROL_COLUMN_AGENDA,

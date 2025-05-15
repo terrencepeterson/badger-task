@@ -16,11 +16,11 @@ import {
     updateUserProjectTable,
     getAllUsersFromOrganisation,
     getUserProjectAccess,
-    getProjectIdFromProjectColummId
-} from "../db.mjs"
+    getIdByDifferentId
+} from "../db/db.mjs"
 import isHexColor from 'validator/lib/isHexColor.js'
 import { addAttributeAccess, addMultipleAttributeAccess, getIsValidAssignee } from "./attributeAccess.mjs"
-import { ACCESS_CONTROL_COLUMN_AGENDA, ACCESS_CONTROL_COLUMN_PROJECTS, ACCESS_CONTROL_PROJECTS, ACCESS_CONTROL_TASKS, ROLE_ADMIN } from "./definitions.mjs"
+import { ACCESS_CONTROL_COLUMN_AGENDA, ACCESS_CONTROL_COLUMN_PROJECTS, ACCESS_CONTROL_PROJECTS, ACCESS_CONTROL_TASKS, COLUMN_PROJECT_TABLE, ROLE_ADMIN, TASK_TABLE } from "./definitions.mjs"
 
 const VALID_PROJECT_COLUMN_ICONS = ['wave', 'email', 'question', 'issue', 'home', 'computer', 'photo', 'music', 'tv', 'completed', 'idea', 'agenda', 'website', 'decision']
 
@@ -128,7 +128,7 @@ export const createAgendaColumnEndpoint = createEndpoint(async (req) => {
     column = parseInt(column)
     if (isNaN(column)) {
         const currentColumns = await getAgendaColumnColumns(userId)
-        column = ++currentColumns[0] // currentColumns always returns with highest column first
+        column = currentColumns.length ? ++currentColumns[0] : 0 // currentColumns always returns with highest column first
     }
 
     const agendaColumnId = await createAgendaColumn(name, colour, column, userId)
@@ -167,7 +167,7 @@ export const createTaskEndpoint = createEndpoint(async (req) => {
     projectRow = parseInt(projectRow)
     if (isNaN(projectRow)) {
         const rows = await getProjectColumnRows(projectColumnId)
-        projectRow = ++rows[0]
+        projectRow = rows.length ? ++rows[0] : 0
     }
 
     const taskId = await createTask(name, description, dueDate, projectRow, createdBy, assignee, projectColumnId)
@@ -175,7 +175,7 @@ export const createTaskEndpoint = createEndpoint(async (req) => {
         throw new Error('Failed to create task')
     }
 
-    const projectId = await getProjectIdFromProjectColummId(projectColumnId)
+    const projectId = await getIdByDifferentId('project_id', COLUMN_PROJECT_TABLE, 'id', projectColumnId)
     const accesssUsers = await getUserProjectAccess(projectId)
     await addMultipleAttributeAccess(accesssUsers, ACCESS_CONTROL_TASKS, taskId.toString())
 
@@ -226,6 +226,7 @@ export const createTagEndpoint = createEndpoint(async (req) => {
     return { message: 'Succesfully created new tag', tagId }
 })
 
+// already checks to user if user can access the task
 export const createChecklistEndpoint = createEndpoint(async (req) => {
     const { taskId } = req.query
     const { name } = req.body

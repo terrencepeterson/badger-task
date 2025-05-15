@@ -19,7 +19,7 @@ import {
     getProjectTags,
     getAgendaColumn,
     getProjectColumn
-} from "../db.mjs"
+} from "../db/db.mjs"
 import { createEndpoint } from "./utility.mjs"
 
 export const dashboardEndpoint = createEndpoint(async (req) => {

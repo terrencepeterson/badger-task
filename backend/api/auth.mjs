@@ -2,7 +2,7 @@ import '@dotenvx/dotenvx/config'
 import bcrypt from "bcryptjs"
 import isEmail from 'validator/lib/isEmail.js'
 import isStrongPassword from 'validator/lib/isStrongPassword.js'
-import { getUserEmails, createUser, getUserByEmail } from "../db.mjs"
+import { getUserEmails, createUser, getUserByEmail } from "../db/db.mjs"
 import { createEndpoint, formatDefaultableInput, formatNullableInput } from "./utility.mjs"
 import { loggedOut } from '../standarisedResponses.mjs'
 import { cookieSettings } from "../middleware.mjs"

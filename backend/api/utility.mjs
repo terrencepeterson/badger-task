@@ -60,7 +60,7 @@ export function dateIsInFuture(dateConfig) {
 }
 
 function createDateObject(dateConfig) {
-    if (!dateConfig) {
+    if (!dateConfig || typeof dateConfig !== 'object') {
         return null
     }
 
@@ -83,3 +83,9 @@ function createDateObject(dateConfig) {
 
     return new Date(year, month, day, hour, minute)
 }
+
+export function convertColumnToFrontName(column) {
+    const firstLetter = column.charAt(0).toUpperCase()
+    return firstLetter + column.replaceAll('_', ' ').substring(1)
+}
+
