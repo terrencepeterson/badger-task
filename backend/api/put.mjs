@@ -2,7 +2,7 @@ import { convertColumnToFrontName, createEndpoint, dateIsInFuture, jsDateToSqlDa
 import { TASK_STATE_ACTIVE, TASK_STATE_COMPLETED, TASK_STATE_HOLD, TASK_TABLE } from "./definitions.mjs"
 import { getIsValidAssignee } from "./attributeAccess.mjs"
 import { generateUpdate, getIdByDifferentId, getProjectColumnsByProjectId, getProjectColumnRows } from "../db/db.mjs"
-import { moveTaskToEndOfNewColumn, moveTaskWithinRow } from "../db/moveTask.mjs"
+import { moveTaskToEndOfNewColumn, moveTaskToNewColumn, moveTaskWithinColumn } from "../db/moveTask.mjs"
 
 function createPutEndpoint(validateAndFormatData, allowedColumnKeys, helperColumnKeys, table, updateIdKey) {
     return createEndpoint(async (req) => {
@@ -51,6 +51,13 @@ export const updateTaskEndpoint = createPutEndpoint(
 async function taskFormatAndValidation(allowedData, helperColumnData, taskId) {
     allowedData = { ...allowedData } // clone data to keep function pure - shallow clone fine only changes primitive data
     const { name, description, dueDate, state, assignee, projectRow, projectColumnId } = allowedData
+    const isValidColumn = async (newColumnId) => {
+        const projectColumns = await getProjectColumnsByProjectId(helperColumnData.projectId) ?? []
+        const projectColumnIds = projectColumns.map(c => c.id)
+        if (!projectColumnIds.includes(+newColumnId)) {
+            throw new Error('The task cannot be assigned to the project column becuase it is not part of the same project')
+        }
+    }
 
     if (Object.hasOwn(allowedData, 'name') && !name && name != 0) {
         throw new Error('Name is a required value and cannot be empty')
@@ -85,18 +92,14 @@ async function taskFormatAndValidation(allowedData, helperColumnData, taskId) {
 
     if (Object.hasOwn(allowedData, 'projectRow') && Object.hasOwn(allowedData, 'projectColumnId')) {
         // column & row change
-        // is it different from the last one
+        await isValidColumn(+projectColumnId)
+        await moveTaskToNewColumn(taskId, +helperColumnData.currentProjectColumnId, +helperColumnData.currentRow, +projectColumnId, +projectRow)
     } else if (Object.hasOwn(allowedData, 'projectRow')) {
         // row change
         await moveTask(+taskId, +projectRow, +projectColumnId, +helperColumnData.currentRow, +helperColumnData.currentProjectColumnId)
     } else if (Object.hasOwn(allowedData, 'projectColumnId')) {
         // column change
-        const projectColumns = await getProjectColumnsByProjectId(helperColumnData.projectId) ?? []
-        const projectColumnIds = projectColumns.map(c => c.id)
-        if (!projectColumnIds.includes(+projectColumnId)) {
-            throw new Error('The task cannot be assigned to the project column becuase it is not part of the same project')
-        }
-
+        await isValidColumn(+projectColumnId)
         const rows = await getProjectColumnRows(projectColumnId)
         const newRow = rows.length ? ++rows[0] : 0
         await moveTaskToEndOfNewColumn(+newRow, +projectColumnId, taskId, +helperColumnData.currentProjectColumnId, +helperColumnData.currentRow)
@@ -130,6 +133,6 @@ async function moveTask(taskId, newRow, column, currentRow, currentColumn) {
         symbol = '+'
     }
 
-    const hasMoved = await moveTaskWithinRow(taskId, symbol, sqlBiggerThan, sqlLessThan, newRow, currentColumn)
+    const hasMoved = await moveTaskWithinColumn(taskId, symbol, sqlBiggerThan, sqlLessThan, newRow, currentColumn)
 }
 
