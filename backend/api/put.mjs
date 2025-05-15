@@ -1,7 +1,8 @@
 import { convertColumnToFrontName, createEndpoint, dateIsInFuture, jsDateToSqlDate } from "./utility.mjs"
 import { TASK_STATE_ACTIVE, TASK_STATE_COMPLETED, TASK_STATE_HOLD, TASK_TABLE } from "./definitions.mjs"
 import { getIsValidAssignee } from "./attributeAccess.mjs"
-import { generateUpdate } from "../db/db.mjs"
+import { generateUpdate, getIdByDifferentId } from "../db/db.mjs"
+import { moveTaskWithinRow } from "../db/moveTask.mjs"
 
 function createPutEndpoint(validateAndFormatData, allowedColumnKeys, helperColumnKeys, table, updateIdKey) {
     return createEndpoint(async (req) => {
@@ -82,6 +83,47 @@ async function taskFormatAndValidation(allowedData, helperColumnData, taskId) {
         throw new Error('Invalid Assignee - they\'re not authorised to access the project for this task')
     }
 
+    if (Object.hasOwn(allowedData, 'projectRow') && Object.hasOwn(allowedData, 'projectColumnId')) {
+        // column & row change
+        // is it different from the last one
+    } else if (Object.hasOwn(allowedData, 'projectRow')) {
+        // row change
+        await moveTask(+taskId, +projectRow, +projectColumnId, +helperColumnData.currentRow, +helperColumnData.currentProjectColumnId)
+    } else if (Object.hasOwn(allowedData, 'projectColumnId')) {
+        // column change
+        // find the next highest project row
+        // update both the row and the projectcolumdid at the same time
+        // update the old column, anything above the currentRow needs decrementing
+    }
+    delete allowedData.projectRow
+    delete allowedData.projectColumnId
+
     return allowedData
+}
+
+async function moveTask(taskId, newRow, column, currentRow, currentColumn) {
+    if (column === currentColumn && newRow === currentRow) {
+        return
+    }
+
+    let sqlBiggerThan, sqlLessThan, symbol
+
+    if (newRow > currentRow) {
+        // going from (currentRow =) 1 to (newRow =) 3 then we need to change rows
+        // that are bigger than the currentRow (1) and less than the new newRow (newRow) + 1 (4)
+        // so rows 2 and 3 will get decremented
+        sqlBiggerThan = currentRow
+        sqlLessThan = newRow + 1
+        symbol = '-'
+    } else {
+        // going from (currentRow =) 5 to (newRow =) 3 then we need to change rows
+        // that are bigger than the new newRow (newRow) minus 1 (2) less than the current newRow (5)
+        // so rows 3 and 4 will get incremented
+        sqlBiggerThan = newRow - 1
+        sqlLessThan = currentRow
+        symbol = '+'
+    }
+
+    const hasMoved = await moveTaskWithinRow(taskId, symbol, sqlBiggerThan, sqlLessThan, newRow, currentColumn)
 }
 
