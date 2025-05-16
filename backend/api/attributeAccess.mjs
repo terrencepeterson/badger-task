@@ -83,7 +83,7 @@ export async function getIsValidAssignee(assignee, projectColumnId) {
     const assigneeProjectColumnExistsInCache = await doesExistInCache(assignee, ACCESS_CONTROL_COLUMN_PROJECTS)
 
     if (assigneeProjectColumnExistsInCache) {
-        isValidAssignee = await getCanAccess(assignee, ACCESS_CONTROL_COLUMN_PROJECTS, projectColumnId)
+        isValidAssignee = await getCanAccess(assignee, ACCESS_CONTROL_COLUMN_PROJECTS, projectColumnId.toString())
     } else {
         const assigneeProjectAccessControl = await getProjectsAccess(assignee)
         isValidAssignee = assigneeProjectAccessControl?.columnProjects.includes(projectColumnId)

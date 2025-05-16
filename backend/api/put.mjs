@@ -1,12 +1,11 @@
 import { convertColumnToFrontName, createEndpoint, dateIsInFuture, jsDateToSqlDate } from "./utility.mjs"
 import { TASK_STATE_ACTIVE, TASK_STATE_COMPLETED, TASK_STATE_HOLD, TASK_TABLE } from "./definitions.mjs"
 import { getIsValidAssignee } from "./attributeAccess.mjs"
-import { generateUpdate, getIdByDifferentId, getProjectColumnsByProjectId, getProjectColumnRows } from "../db/db.mjs"
+import { generateUpdate, getMoveTaskDetails } from "../db/db.mjs"
 import { moveTaskToEndOfNewColumn, moveTaskToNewColumn, moveTaskWithinColumn } from "../db/moveTask.mjs"
 
-function createPutEndpoint(validateAndFormatData, allowedColumnKeys, helperColumnKeys, table, updateIdKey) {
+function createPutEndpoint(validateAndFormatData, allowedColumnKeys, table, updateIdKey) {
     return createEndpoint(async (req) => {
-        const helperColumnData = Object.fromEntries(helperColumnKeys.map(k => [k, req.body[k]]))
         let allowedData = Object.fromEntries(
             Object.entries(req.body).
             filter(([columnName, val]) => allowedColumnKeys.includes(columnName))
@@ -15,17 +14,11 @@ function createPutEndpoint(validateAndFormatData, allowedColumnKeys, helperColum
         const updateId = req.query[updateIdKey]
         const successMessage = `Updated ${table}: ${allowedDataKeys.map(c => convertColumnToFrontName(c)).join(', ')}`
 
-        for (const colKey of helperColumnKeys) {
-            if (!Object.hasOwn(req.body, colKey) || !helperColumnData[colKey] && helperColumnData[colKey] !== 0) {
-                throw new Error(`Must provide a value for ${colKey}`)
-            }
-        }
-
         if (!allowedDataKeys.length) {
             throw new Error('No data provided')
         }
 
-        allowedData = await validateAndFormatData(allowedData, helperColumnData, updateId)
+        allowedData = await validateAndFormatData(allowedData, updateId)
         if (!Object.keys(allowedData).length) {
             // sometimes we perform the changes in the validateAndFormat - say for the custom move rows stuff
             return successMessage
@@ -43,18 +36,16 @@ function createPutEndpoint(validateAndFormatData, allowedColumnKeys, helperColum
 export const updateTaskEndpoint = createPutEndpoint(
     taskFormatAndValidation,
     ['name', 'description', 'dueDate', 'state', 'projectRow', 'assignee', 'projectColumnId'],
-    ['currentRow', 'currentProjectColumnId', 'projectId'],
     TASK_TABLE,
     'taskId'
 )
 
-async function taskFormatAndValidation(allowedData, helperColumnData, taskId) {
+async function taskFormatAndValidation(allowedData, taskId) {
     allowedData = { ...allowedData } // clone data to keep function pure - shallow clone fine only changes primitive data
     const { name, description, dueDate, state, assignee, projectRow, projectColumnId } = allowedData
-    const isValidColumn = async (newColumnId) => {
-        const projectColumns = await getProjectColumnsByProjectId(helperColumnData.projectId) ?? []
-        const projectColumnIds = projectColumns.map(c => c.id)
-        if (!projectColumnIds.includes(+newColumnId)) {
+    const helperColumnData = await getMoveTaskDetails(taskId, projectColumnId)
+    const isValidColumn = (newColumnId) => {
+        if (!helperColumnData.validProjectColumnIds.includes(newColumnId)) {
             throw new Error('The task cannot be assigned to the project column becuase it is not part of the same project')
         }
     }
@@ -90,19 +81,14 @@ async function taskFormatAndValidation(allowedData, helperColumnData, taskId) {
         throw new Error('Invalid Assignee - they\'re not authorised to access the project for this task')
     }
 
-    if (Object.hasOwn(allowedData, 'projectRow') && Object.hasOwn(allowedData, 'projectColumnId')) {
-        // column & row change
-        await isValidColumn(+projectColumnId)
-        await moveTaskToNewColumn(taskId, +helperColumnData.currentProjectColumnId, +helperColumnData.currentRow, +projectColumnId, +projectRow)
-    } else if (Object.hasOwn(allowedData, 'projectRow')) {
-        // row change
-        await moveTask(+taskId, +projectRow, +projectColumnId, +helperColumnData.currentRow, +helperColumnData.currentProjectColumnId)
-    } else if (Object.hasOwn(allowedData, 'projectColumnId')) {
-        // column change
-        await isValidColumn(+projectColumnId)
-        const rows = await getProjectColumnRows(projectColumnId)
-        const newRow = rows.length ? ++rows[0] : 0
-        await moveTaskToEndOfNewColumn(+newRow, +projectColumnId, taskId, +helperColumnData.currentProjectColumnId, +helperColumnData.currentRow)
+    if (Object.hasOwn(allowedData, 'projectRow') && Object.hasOwn(allowedData, 'projectColumnId')) { // column & row change
+        isValidColumn(+projectColumnId)
+        await moveTaskToNewColumn(taskId, helperColumnData.currentProjectColumnId, helperColumnData.currentRow, +projectColumnId, +projectRow, helperColumnData.maxRowCurrentColumn, helperColumnData.maxRowNewColumn)
+    } else if (Object.hasOwn(allowedData, 'projectRow')) { // row change
+        await moveTask(+taskId, +projectRow, +projectColumnId, helperColumnData.currentRow, helperColumnData.currentProjectColumnId)
+    } else if (Object.hasOwn(allowedData, 'projectColumnId')) { // column change
+        isValidColumn(+projectColumnId)
+        await moveTaskToEndOfNewColumn(++helperColumnData.maxRowNewColumn, +projectColumnId, taskId, helperColumnData.currentProjectColumnId, helperColumnData.currentRow, helperColumnData.maxRowCurrentColumn)
     }
     delete allowedData.projectRow
     delete allowedData.projectColumnId

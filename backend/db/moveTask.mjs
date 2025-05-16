@@ -18,7 +18,8 @@ export async function moveTaskWithinColumn(taskId, symbol, biggerThan, lessThan,
     })
 }
 
-export async function moveTaskToEndOfNewColumn(newRow, newProjectColumnId, taskId, oldProjectColumnId, currentRow) {
+export async function moveTaskToEndOfNewColumn(newRow, newProjectColumnId, taskId, oldProjectColumnId, currentRow, maxRow) {
+    console.log({newRow, newProjectColumnId, taskId, oldProjectColumnId, currentRow, maxRow})
     transactionQuery(async (conn) => {
         await conn.query(`
             UPDATE ${TASK_TABLE}
@@ -26,21 +27,24 @@ export async function moveTaskToEndOfNewColumn(newRow, newProjectColumnId, taskI
             WHERE id = ?
         `, [newRow, newProjectColumnId, taskId]) // move task to new column
 
-        const maxRow = await getMaxRow(conn, oldProjectColumnId)
-
-        await moveRows(conn, currentRow, maxRow, taskId, oldProjectColumnId, '-') // decrement tasks from old column
+        await moveRows(conn, currentRow, maxRow + 1, taskId, oldProjectColumnId, '-') // decrement tasks from old column
     })
 }
 
-export async function moveTaskToNewColumn(taskId, oldProjectColumnId, oldRow, newProjectColumnId, newRow) {
+export async function moveTaskToNewColumn(taskId, oldProjectColumnId, oldRow, newProjectColumnId, newRow, maxRowCurrentColumn, maxRowNewColumn) {
     transactionQuery(async (conn) => {
         await disableCurrentTask(conn, taskId)
-        const maxRowOldColumn = await getMaxRow(conn, oldProjectColumnId)
-        const moveTasksFromOldColumn = await moveRows(conn, oldRow, maxRowOldColumn, taskId, oldProjectColumnId, '-')
-        const maxRowNewColumn = await getMaxRow(conn, newProjectColumnId)
-        if ((maxRowNewColumn + 1) !== newRow) { // if it's the end of the column no need to move any tasks
+
+        if (oldRow !== maxRowCurrentColumn) { // if at end of oldColumn no need to move any tasks
+            console.log('moving tasks in old column')
+            const moveTasksFromOldColumn = await moveRows(conn, oldRow, maxRowCurrentColumn, taskId, oldProjectColumnId, '-')
+        }
+
+        if ((maxRowNewColumn + 1) !== newRow) { // if at end of the newColumn no need to move any tasks
+            console.log('moving tasks in new column')
             const moveTasksNewColumn = await moveRows(conn, newRow -1, maxRowNewColumn + 1, taskId, newProjectColumnId, '+')
         }
+
         const moveTask = await conn.query(`
             UPDATE ${TASK_TABLE}
             SET project_column_id = ?, project_row = ?
@@ -81,12 +85,3 @@ async function disableCurrentTask(conn, taskId) {
     `, [taskId])
 }
 
-async function getMaxRow(conn, projectColumnId) {
-    let maxRow = await conn.query(`
-        SELECT MAX(project_row) as max_row
-        FROM task
-        WHERE project_column_id = ?;
-    `, [projectColumnId])
-    maxRow = maxRow.length ? maxRow[0].max_row + 1 : 0
-    return maxRow
-}

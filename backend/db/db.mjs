@@ -754,6 +754,32 @@ export async function getIdByDifferentId(selectId, table, whereId, whereIdValue)
     return id.length ? id[0][selectId] : null
 }
 
+// { taskId: taskId, maxRowCurrentColumn: bool, maxRowNewColumn: newColumnId }
+export async function getMoveTaskDetails(taskId, newProjectColumnId = false) {
+    const queryParams = [taskId]
+    if (newProjectColumnId) {
+        queryParams.unshift(newProjectColumnId)
+    }
+
+    const [details] = await query(`
+        SELECT
+            t.project_row AS currentRow,
+            t.project_column_id AS currentProjectColumnId,
+            (SELECT MAX(project_row) FROM task WHERE project_column_id = t.project_column_id) AS maxRowCurrentColumn,
+            ${newProjectColumnId ? '(SELECT MAX(project_row) FROM task WHERE project_column_id = ?) AS maxRowNewColumn,' : ''}
+            GROUP_CONCAT(cp.id ORDER BY cp.id SEPARATOR ',') AS validProjectColumnIds
+        FROM task t
+        JOIN column_project pc ON t.project_column_id = pc.id
+        JOIN column_project cp ON cp.project_id = pc.project_id
+        WHERE t.id = ?
+        GROUP BY t.id, t.project_row, t.project_column_id;
+    `, queryParams)
+
+    details.validProjectColumnIds = details.validProjectColumnIds.split(',').map(id => parseInt(id))
+
+    return details
+}
+
 export async function generateUpdate(tableName, config, whereColumn, whereValue) {
     // config = { name: 'New task name', description: null, etc... }
     const configKeys = Object.keys(config)
