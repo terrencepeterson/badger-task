@@ -35,22 +35,31 @@ function createPutEndpoint(validateAndFormatData, allowedColumnKeys, table, upda
 
 export const updateTaskEndpoint = createPutEndpoint(
     taskFormatAndValidation,
-    ['name', 'description', 'dueDate', 'state', 'projectRow', 'assignee', 'projectColumnId'],
+    ['name', 'description', 'dueDate', 'state', 'newProjectRow', 'assignee', 'newProjectColumnId'],
     TASK_TABLE,
     'taskId'
 )
 
 async function taskFormatAndValidation(allowedData, taskId) {
     allowedData = { ...allowedData } // clone data to keep function pure - shallow clone fine only changes primitive data
-    const { name, description, dueDate, state, assignee, projectRow, projectColumnId } = allowedData
-    const helperColumnData = await getMoveTaskDetails(taskId, projectColumnId)
-    const isValidColumn = (newColumnId) => {
-        if (!helperColumnData.validProjectColumnIds.includes(newColumnId)) {
-            throw new Error('The task cannot be assigned to the project column becuase it is not part of the same project')
+    const { name, description, dueDate, state, assignee, newProjectRow, newProjectColumnId } = allowedData
+    const { currentProjectColumnId,
+        currentProjectRow,
+        maxRowCurrentColumn,
+        maxRowNewColumn,
+        validProjectColumnIds
+    } = await getMoveTaskDetails(taskId, newProjectColumnId)
+
+    const isValidRow = (row, highestRow) => {
+        if (isNaN(row) || row.trim && row.trim() === '') {
+            throw new Error('Please provide a valid number for the new project row')
+        }
+        if (row < 0 || row > highestRow) {
+            throw new Error('Invalid row - please provide a value that is bigger than 0 and no bigger than the maximum current row')
         }
     }
 
-    if (Object.hasOwn(allowedData, 'name') && !name && name != 0) {
+    if (Object.hasOwn(allowedData, 'name') && !name && name !== 0) {
         throw new Error('Name is a required value and cannot be empty')
     }
 
@@ -77,48 +86,40 @@ async function taskFormatAndValidation(allowedData, taskId) {
         throw new Error('Invalid state provided')
     }
 
-    if (Object.hasOwn(allowedData, 'assignee') && !await getIsValidAssignee(assignee, helperColumnData.currentProjectColumnId)) {
+    if (Object.hasOwn(allowedData, 'assignee') && !await getIsValidAssignee(assignee, currentProjectColumnId)) {
         throw new Error('Invalid Assignee - they\'re not authorised to access the project for this task')
     }
 
-    if (Object.hasOwn(allowedData, 'projectRow') && Object.hasOwn(allowedData, 'projectColumnId')) { // column & row change
-        isValidColumn(+projectColumnId)
-        await moveTaskToNewColumn(taskId, helperColumnData.currentProjectColumnId, helperColumnData.currentRow, +projectColumnId, +projectRow, helperColumnData.maxRowCurrentColumn, helperColumnData.maxRowNewColumn)
-    } else if (Object.hasOwn(allowedData, 'projectRow')) { // row change
-        await moveTask(+taskId, +projectRow, +projectColumnId, helperColumnData.currentRow, helperColumnData.currentProjectColumnId)
-    } else if (Object.hasOwn(allowedData, 'projectColumnId')) { // column change
-        isValidColumn(+projectColumnId)
-        await moveTaskToEndOfNewColumn(++helperColumnData.maxRowNewColumn, +projectColumnId, taskId, helperColumnData.currentProjectColumnId, helperColumnData.currentRow, helperColumnData.maxRowCurrentColumn)
+    if (newProjectColumnId === currentProjectColumnId) { // moving in the same column
+        delete allowedData.newProjectColumnId
     }
-    delete allowedData.projectRow
-    delete allowedData.projectColumnId
+
+    if (Object.hasOwn(allowedData, 'newProjectColumnId') && !validProjectColumnIds.includes(newProjectColumnId)) {
+        throw new Error('The task cannot be assigned to the project column becuase it is not part of the same project')
+    }
+
+    if (Object.hasOwn(allowedData, 'newProjectRow') && Object.hasOwn(allowedData, 'newProjectColumnId')) { // column & row change
+        isValidRow(newProjectRow, maxRowNewColumn - 1)
+        await moveTaskToNewColumn(taskId, currentProjectColumnId, currentProjectRow, newProjectColumnId, newProjectRow, maxRowCurrentColumn, maxRowNewColumn)
+    }
+    else if (Object.hasOwn(allowedData, 'newProjectRow')) { // row change
+        isValidRow(newProjectRow, maxRowCurrentColumn - 1)
+        if (newProjectRow === currentProjectRow) {
+            throw new Error('Provide a new row value - this value matches the current row')
+        }
+
+        if (newProjectRow > currentProjectRow) {
+            await moveTaskWithinColumn(taskId, '-', currentProjectRow, newProjectRow + 1, newProjectRow, currentProjectColumnId)
+        } else {
+            await moveTaskWithinColumn(taskId, '+', newProjectRow - 1, currentProjectRow, newProjectRow, currentProjectColumnId)
+        }
+    }
+    else if (Object.hasOwn(allowedData, 'newProjectColumnId')) { // column change
+        await moveTaskToEndOfNewColumn(maxRowNewColumn, newProjectColumnId, taskId, currentProjectColumnId, currentProjectRow, maxRowCurrentColumn)
+    }
+    delete allowedData.newProjectRow
+    delete allowedData.newProjectColumnId
 
     return allowedData
-}
-
-async function moveTask(taskId, newRow, column, currentRow, currentColumn) {
-    if (column === currentColumn && newRow === currentRow) {
-        return
-    }
-
-    let sqlBiggerThan, sqlLessThan, symbol
-
-    if (newRow > currentRow) {
-        // going from (currentRow =) 1 to (newRow =) 3 then we need to change rows
-        // that are bigger than the currentRow (1) and less than the new newRow (newRow) + 1 (4)
-        // so rows 2 and 3 will get decremented
-        sqlBiggerThan = currentRow
-        sqlLessThan = newRow + 1
-        symbol = '-'
-    } else {
-        // going from (currentRow =) 5 to (newRow =) 3 then we need to change rows
-        // that are bigger than the new newRow (newRow) minus 1 (2) less than the current newRow (5)
-        // so rows 3 and 4 will get incremented
-        sqlBiggerThan = newRow - 1
-        sqlLessThan = currentRow
-        symbol = '+'
-    }
-
-    const hasMoved = await moveTaskWithinColumn(taskId, symbol, sqlBiggerThan, sqlLessThan, newRow, currentColumn)
 }
 

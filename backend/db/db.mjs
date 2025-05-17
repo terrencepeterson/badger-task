@@ -776,6 +776,8 @@ export async function getMoveTaskDetails(taskId, newProjectColumnId = false) {
     `, queryParams)
 
     details.validProjectColumnIds = details.validProjectColumnIds.split(',').map(id => parseInt(id))
+    details.maxRowCurrentColumn++
+    details.maxRowNewColumn++
 
     return details
 }
