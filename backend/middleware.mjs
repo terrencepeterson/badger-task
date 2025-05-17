@@ -66,6 +66,10 @@ export function sanitiseInput(req, res, next) {
             req.body[key] = value.trim()
         }
 
+        if (!isNaN(value) && value.trim() !== '') { // isNaN('  ') returns false so must check for blank space too
+            req.body[key] = Number(value)
+        }
+
         if (UNSANITARISABLE_FIELDS.includes(key)) {
             continue
         }
