@@ -2,7 +2,7 @@ import { convertColumnToFrontName, createEndpoint, dateIsInFuture, jsDateToSqlDa
 import { TASK_STATE_ACTIVE, TASK_STATE_COMPLETED, TASK_STATE_HOLD, TASK_TABLE } from "./definitions.mjs"
 import { getIsValidAssignee } from "./attributeAccess.mjs"
 import { generateUpdate, getMoveTaskDetails } from "../db/db.mjs"
-import { moveTaskToEndOfNewColumn, moveTaskToNewColumn, moveTaskWithinColumn } from "../db/moveTask.mjs"
+import { moveTaskToEndOfNewProjectColumn, moveTaskToNewProjectColumn, moveTaskWithinProjectColumn } from "../db/moveTask.mjs"
 
 function createPutEndpoint(validateAndFormatData, allowedColumnKeys, table, updateIdKey) {
     return createEndpoint(async (req) => {
@@ -100,7 +100,7 @@ async function taskFormatAndValidation(allowedData, taskId) {
 
     if (Object.hasOwn(allowedData, 'newProjectRow') && Object.hasOwn(allowedData, 'newProjectColumnId')) { // column & row change
         isValidRow(newProjectRow, maxRowNewColumn - 1)
-        await moveTaskToNewColumn(taskId, currentProjectColumnId, currentProjectRow, newProjectColumnId, newProjectRow, maxRowCurrentColumn, maxRowNewColumn)
+        await moveTaskToNewProjectColumn(taskId, currentProjectColumnId, currentProjectRow, newProjectColumnId, newProjectRow, maxRowCurrentColumn, maxRowNewColumn)
     }
     else if (Object.hasOwn(allowedData, 'newProjectRow')) { // row change
         isValidRow(newProjectRow, maxRowCurrentColumn - 1)
@@ -109,13 +109,13 @@ async function taskFormatAndValidation(allowedData, taskId) {
         }
 
         if (newProjectRow > currentProjectRow) {
-            await moveTaskWithinColumn(taskId, '-', currentProjectRow, newProjectRow + 1, newProjectRow, currentProjectColumnId)
+            await moveTaskWithinProjectColumn(taskId, '-', currentProjectRow, newProjectRow + 1, newProjectRow, currentProjectColumnId)
         } else {
-            await moveTaskWithinColumn(taskId, '+', newProjectRow - 1, currentProjectRow, newProjectRow, currentProjectColumnId)
+            await moveTaskWithinProjectColumn(taskId, '+', newProjectRow - 1, currentProjectRow, newProjectRow, currentProjectColumnId)
         }
     }
     else if (Object.hasOwn(allowedData, 'newProjectColumnId')) { // column change
-        await moveTaskToEndOfNewColumn(maxRowNewColumn, newProjectColumnId, taskId, currentProjectColumnId, currentProjectRow, maxRowCurrentColumn)
+        await moveTaskToEndOfNewProjectColumn(maxRowNewColumn, newProjectColumnId, taskId, currentProjectColumnId, currentProjectRow, maxRowCurrentColumn)
     }
     delete allowedData.newProjectRow
     delete allowedData.newProjectColumnId
