@@ -754,30 +754,52 @@ export async function getIdByDifferentId(selectId, table, whereId, whereIdValue)
     return id.length ? id[0][selectId] : null
 }
 
-// { taskId: taskId, maxRowCurrentColumn: bool, maxRowNewColumn: newColumnId }
-export async function getMoveTaskDetails(taskId, newProjectColumnId = false) {
-    const queryParams = [taskId]
+// newProjectColumnId and newAgendaColumnId are bools
+export async function getMoveTaskDetails({ taskId, userId, newProjectColumnId, newAgendaColumnId }) {
+    const queryParams = [userId, taskId]
+
+    if (newAgendaColumnId) {
+        queryParams.unshift(newAgendaColumnId)
+    }
+
     if (newProjectColumnId) {
         queryParams.unshift(newProjectColumnId)
     }
 
     const [details] = await query(`
         SELECT
-            t.project_row AS currentRow,
+            t.project_row AS currentProjectRow,
             t.project_column_id AS currentProjectColumnId,
-            (SELECT MAX(project_row) FROM task WHERE project_column_id = t.project_column_id) AS maxRowCurrentColumn,
-            ${newProjectColumnId ? '(SELECT MAX(project_row) FROM task WHERE project_column_id = ?) AS maxRowNewColumn,' : ''}
-            GROUP_CONCAT(cp.id ORDER BY cp.id SEPARATOR ',') AS validProjectColumnIds
+            tca.row AS currentAgendaRow,
+            tca.column_agenda_id  as currentAgendaColumnId,
+            (SELECT MAX(project_row) FROM task WHERE project_column_id = t.project_column_id) AS maxRowCurrentProjectColumn,
+            (SELECT MAX(row) FROM task_column_agenda tca2 WHERE tca2.column_agenda_id = tca.column_agenda_id ) AS maxRowCurrentAgendaColumn,
+            ${newProjectColumnId ? '(SELECT MAX(project_row) FROM task WHERE project_column_id = ?) AS maxRowNewProjectColumn,' : ''}
+            ${newAgendaColumnId ? '(SELECT MAX(row) FROM task_column_agenda tca2 WHERE tca2.column_agenda_id = ? ) AS maxRowNewAgendaColumn,' : ''}
+            GROUP_CONCAT(DISTINCT cp.id ORDER BY cp.id SEPARATOR ',') AS validProjectColumnIds,
+            GROUP_CONCAT(DISTINCT ca.id ORDER BY ca.id SEPARATOR ',') AS validAgendaColumnIds
         FROM task t
+        LEFT JOIN column_agenda ca ON ca.user_id = ?
         JOIN column_project pc ON t.project_column_id = pc.id
         JOIN column_project cp ON cp.project_id = pc.project_id
+        LEFT JOIN task_column_agenda tca ON tca.task_id = t.id
         WHERE t.id = ?
         GROUP BY t.id, t.project_row, t.project_column_id;
     `, queryParams)
 
-    details.validProjectColumnIds = details.validProjectColumnIds.split(',').map(id => parseInt(id))
-    details.maxRowCurrentColumn++
-    details.maxRowNewColumn++
+    details.validProjectColumnIds = details.validProjectColumnIds.split(',').map(id => Number(id))
+    details.validAgendaColumnIds = details.validAgendaColumnIds ? details.validAgendaColumnIds.split(',').map(id => Number(id)) : []
+    details.maxRowCurrentProjectColumn++
+    if (details.maxRowCurrentAgendaColumn) {
+        details.maxRowCurrentAgendaColumn++
+    }
+
+    if (details.maxRowNewProjectColumn) {
+        details.maxRowNewProjectColumn++
+    }
+    if (details.maxRowNewAgendaColumn) {
+        details.maxRowNewAgendaColumn++
+    }
 
     return details
 }

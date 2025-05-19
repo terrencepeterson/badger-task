@@ -47,7 +47,6 @@ export async function moveTaskToEndOfNewColumn(newRow, newProjectColumnId, taskI
 
 export async function moveTaskToNewColumn(taskId, oldProjectColumnId, oldRow, newProjectColumnId, newRow, maxRowCurrentColumn, maxRowNewColumn, activeTable) {
     const { rowColumn, taskIdColumn, columnIdColumn } = columnKeys[activeTable]
-    console.log()
     transactionQuery(async (conn) => {
         await disableCurrentTask(conn, taskId, activeTable)
 

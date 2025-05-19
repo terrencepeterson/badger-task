@@ -18,7 +18,7 @@ function createPutEndpoint(validateAndFormatData, allowedColumnKeys, table, upda
             throw new Error('No data provided')
         }
 
-        allowedData = await validateAndFormatData(allowedData, updateId)
+        allowedData = await validateAndFormatData(allowedData, updateId, req.user.id)
         if (!Object.keys(allowedData).length) {
             // sometimes we perform the changes in the validateAndFormat - say for the custom move rows stuff
             return successMessage
@@ -35,20 +35,37 @@ function createPutEndpoint(validateAndFormatData, allowedColumnKeys, table, upda
 
 export const updateTaskEndpoint = createPutEndpoint(
     taskFormatAndValidation,
-    ['name', 'description', 'dueDate', 'state', 'newProjectRow', 'assignee', 'newProjectColumnId'],
+    ['name', 'description', 'dueDate', 'state', 'newProjectRow', 'assignee', 'newProjectColumnId', 'newAgendaRow', 'newAgendaColumnId'],
     TASK_TABLE,
     'taskId'
 )
 
-async function taskFormatAndValidation(allowedData, taskId) {
+async function taskFormatAndValidation(allowedData, taskId, userId) {
     allowedData = { ...allowedData } // clone data to keep function pure - shallow clone fine only changes primitive data
-    const { name, description, dueDate, state, assignee, newProjectRow, newProjectColumnId } = allowedData
-    const { currentProjectColumnId,
+    const {
+        name,
+        description,
+        dueDate,
+        state,
+        assignee,
+        newProjectRow,
+        newProjectColumnId,
+        newAgendaRow,
+        newAgendaColumnId
+    } = allowedData
+
+    const {
+        currentProjectColumnId,
         currentProjectRow,
-        maxRowCurrentColumn,
-        maxRowNewColumn,
-        validProjectColumnIds
-    } = await getMoveTaskDetails(taskId, newProjectColumnId)
+        currentAgendaColumnId,
+        currentAgendaRow,
+        maxRowCurrentProjectColumn,
+        maxRowNewProjectColumn,
+        validProjectColumnIds,
+        validAgendaColumnIds,
+        maxRowCurrentAgendaColumn,
+        maxRowNewAgendaColumn
+    } = await getMoveTaskDetails({ taskId, userId, newProjectColumnId, newAgendaColumnId })
 
     const isValidRow = (row, highestRow) => {
         if (isNaN(row) || row.trim && row.trim() === '') {
@@ -99,11 +116,11 @@ async function taskFormatAndValidation(allowedData, taskId) {
     }
 
     if (Object.hasOwn(allowedData, 'newProjectRow') && Object.hasOwn(allowedData, 'newProjectColumnId')) { // column & row change
-        isValidRow(newProjectRow, maxRowNewColumn - 1)
-        await moveTaskToNewColumn(taskId, currentProjectColumnId, currentProjectRow, newProjectColumnId, newProjectRow, maxRowCurrentColumn, maxRowNewColumn, TASK_TABLE)
+        isValidRow(newProjectRow, maxRowNewProjectColumn - 1)
+        await moveTaskToNewColumn(taskId, currentProjectColumnId, currentProjectRow, newProjectColumnId, newProjectRow, maxRowCurrentProjectColumn, maxRowNewProjectColumn, TASK_TABLE)
     }
     else if (Object.hasOwn(allowedData, 'newProjectRow')) { // row change
-        isValidRow(newProjectRow, maxRowCurrentColumn - 1)
+        isValidRow(newProjectRow, maxRowCurrentProjectColumn - 1)
         if (newProjectRow === currentProjectRow) {
             throw new Error('Provide a new row value - this value matches the current row')
         }
@@ -115,11 +132,13 @@ async function taskFormatAndValidation(allowedData, taskId) {
         }
     }
     else if (Object.hasOwn(allowedData, 'newProjectColumnId')) { // column change
-        await moveTaskToEndOfNewColumn(maxRowNewColumn, newProjectColumnId, taskId, currentProjectColumnId, currentProjectRow, maxRowCurrentColumn, TASK_TABLE)
+        await moveTaskToEndOfNewColumn(maxRowNewProjectColumn, newProjectColumnId, taskId, currentProjectColumnId, currentProjectRow, maxRowCurrentProjectColumn, TASK_TABLE)
     }
+
     delete allowedData.newProjectRow
     delete allowedData.newProjectColumnId
-
+    delete allowedData.newAgendaRow
+    delete allowedData.newAgendaColumnId
 
     return allowedData
 }
