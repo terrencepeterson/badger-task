@@ -1,5 +1,5 @@
 import { transactionQuery } from "./db.mjs"
-import { COLUMN_AGENDA_TABLE, TASK_TABLE } from "../api/definitions.mjs"
+import { TASK_COLUMN_AGENDA_TABLE, TASK_TABLE } from "../api/definitions.mjs"
 const OFFSET_AMOUNT = 1000000
 
 const columnKeys = {
@@ -8,7 +8,7 @@ const columnKeys = {
         taskIdColumn: 'id',
         columnIdColumn: 'project_column_id'
     },
-    [COLUMN_AGENDA_TABLE]: {
+    [TASK_COLUMN_AGENDA_TABLE]: {
         rowColumn: '`row`',
         taskIdColumn: 'task_id',
         columnIdColumn: 'column_agenda_id'
@@ -32,37 +32,53 @@ export async function moveTaskWithinColumn(taskId, symbol, biggerThan, lessThan,
     })
 }
 
-export async function moveTaskToEndOfNewColumn(newRow, newProjectColumnId, taskId, oldProjectColumnId, currentRow, maxRow, activeTable) {
+export async function moveTaskToEndOfNewColumn(newRow, newColumnId, taskId, oldColumnId, currentRow, maxRow, activeTable) {
+    console.log({newRow, newColumnId, taskId, oldColumnId, currentRow, maxRow, activeTable})
     const { rowColumn, taskIdColumn, columnIdColumn } = columnKeys[activeTable]
     transactionQuery(async (conn) => {
         await conn.query(`
             UPDATE ${activeTable}
             SET ${rowColumn} = ?, ${columnIdColumn} = ?
             WHERE ${taskIdColumn} = ?
-        `, [newRow, newProjectColumnId, taskId]) // move task to new column
+        `, [newRow, newColumnId, taskId]) // move task to new column
 
-        await moveRows(conn, currentRow, maxRow, taskId, oldProjectColumnId, '-', activeTable) // decrement tasks from old column
+        if (currentRow || currentRow === 0) {
+            await moveRows(conn, currentRow, maxRow, taskId, oldColumnId, '-', activeTable) // decrement tasks from old column
+        }
     })
 }
 
-export async function moveTaskToNewColumn(taskId, oldProjectColumnId, oldRow, newProjectColumnId, newRow, maxRowCurrentColumn, maxRowNewColumn, activeTable) {
+export async function moveTaskToNewColumn(taskId, oldColumnId, oldRow, newColumnId, newRow, maxRowCurrentColumn, maxRowNewColumn, activeTable) {
     const { rowColumn, taskIdColumn, columnIdColumn } = columnKeys[activeTable]
     transactionQuery(async (conn) => {
         await disableCurrentTask(conn, taskId, activeTable)
 
         if (oldRow !== (maxRowCurrentColumn - 1)) { // if at end of oldColumn no need to move any tasks
-            await moveRows(conn, oldRow, maxRowCurrentColumn, taskId, oldProjectColumnId, '-', activeTable) // move roms from old column
+            await moveRows(conn, oldRow, maxRowCurrentColumn, taskId, oldColumnId, '-', activeTable) // move roms from old column
         }
 
         if ((maxRowNewColumn) !== newRow) { // if at end of the newColumn no need to move any tasks
-            await moveRows(conn, newRow -1, maxRowNewColumn, taskId, newProjectColumnId, '+', activeTable) // move rows in new column
+            await moveRows(conn, newRow -1, maxRowNewColumn, taskId, newColumnId, '+', activeTable) // move rows in new column
         }
 
         await conn.query(`
-            UPDATE ${TASK_TABLE}
+            UPDATE ${activeTable}
             SET ${columnIdColumn} = ?, ${rowColumn} = ?
             WHERE ${taskIdColumn} = ?
-        `, [newProjectColumnId, newRow, taskId])
+        `, [newColumnId, newRow, taskId])
+    })
+}
+
+export async function addTaskToAgendaColumn(taskId, newColumnId, newRow, maxRowNewColumn, activeTable) {
+    transactionQuery(async (conn) => {
+        if (newRow !== maxRowNewColumn) { // if it's at the end of the column no need to move any rows from the column
+            await moveRows(conn, newRow -1, maxRowNewColumn, taskId, newColumnId, '+', activeTable) // move rows in new column
+        }
+
+        await conn.query(`
+            INSERT INTO task_column_agenda (task_id, column_agenda_id, \`row\`)
+            VALUES (?, ?, ?)
+        `, [taskId, newColumnId, newRow])
     })
 }
 

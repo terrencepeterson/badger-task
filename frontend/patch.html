@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title></title>
+        <link href="css/style.css" rel="stylesheet">
+    </head>
+    <body>
+        <div>
+            <h2>Update Task</h2>
+            <form id="update-task">
+                <div>
+                    <label for="name">Name</label>
+                    <input type="text" name="name" value="" id="name">
+                </div>
+                <div>
+                    <label for="description">Description</label>
+                    <input type="text" name="description" value="" id="description">
+                </div>
+                <div>
+                    <label for="due-date">Due Date</label>
+                    <input type="text" name="dueDate" value="" id="due-date">
+                </div>
+                <div>
+                    <label for="state">State</label>
+                    <input type="text" name="state" value="" id="state">
+                </div>
+                <div>
+                    <label for="assignee">Assignee</label>
+                    <input type="number" name="assignee" value="" id="assignee">
+                </div>
+                <div>
+                    <label for="task-id">Task id</label>
+                    <input type="number" name="taskId" value="272" id="task-id">
+                </div>
+                <div>
+                    <label for="new-project-row">New Project Row</label>
+                    <input type="text" name="newProjectRow" value="" id="new-project-row">
+                </div>
+                <div>
+                    <label for="new-project-column">New Project Column</label>
+                    <input type="text" name="newProjectColumnId" value="" id="new-project-column">
+                </div>
+                <div>
+                    <label for="new-agenda-row">New Agenda Row</label>
+                    <input type="text" name="newAgendaRow" value="" id="new-agenda-row">
+                </div>
+                <div>
+                    <label for="new-agenda-column">New Agenda Column</label>
+                    <input type="text" name="newAgendaColumnId" value="" id="new-agenda-column">
+                </div>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+    </body>
+    <script>
+        const updateTaskElement = document.querySelector('#update-task')
+        const taskUrl = 'http://localhost:8001/task'
+        updateTaskElement.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            console.log(e.target)
+            const urlParams = new URLSearchParams({
+                taskId: e.target.querySelector('#task-id')?.value
+            })
+
+            let data = new FormData(e.target)
+            data = Object.fromEntries(data)
+            data = Object.fromEntries(Object.entries(data).filter(([key, value]) => value))
+            console.log(data)
+            const res = await fetch(`${taskUrl}?${urlParams}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+                credentials: 'include'
+            })
+            const resData = await res.json()
+            console.log(resData)
+        })
+    </script>
+</html>

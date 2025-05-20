@@ -1,8 +1,8 @@
 import { convertColumnToFrontName, createEndpoint, dateIsInFuture, jsDateToSqlDate } from "./utility.mjs"
-import { TASK_STATE_ACTIVE, TASK_STATE_COMPLETED, TASK_STATE_HOLD, TASK_TABLE } from "./definitions.mjs"
+import { TASK_STATE_ACTIVE, TASK_STATE_COMPLETED, TASK_STATE_HOLD, TASK_TABLE, TASK_COLUMN_AGENDA_TABLE } from "./definitions.mjs"
 import { getIsValidAssignee } from "./attributeAccess.mjs"
 import { generateUpdate, getMoveTaskDetails } from "../db/db.mjs"
-import { moveTaskToNewColumn, moveTaskWithinColumn, moveTaskToEndOfNewColumn } from "../db/moveTask.mjs"
+import { moveTaskToNewColumn, moveTaskWithinColumn, moveTaskToEndOfNewColumn, addTaskToAgendaColumn } from "../db/moveTask.mjs"
 
 function createPutEndpoint(validateAndFormatData, allowedColumnKeys, table, updateIdKey) {
     return createEndpoint(async (req) => {
@@ -72,7 +72,7 @@ async function taskFormatAndValidation(allowedData, taskId, userId) {
             throw new Error('Please provide a valid number for the new project row')
         }
         if (row < 0 || row > highestRow) {
-            throw new Error('Invalid row - please provide a value that is bigger than 0 and no bigger than the maximum current row')
+            throw new Error(`Invalid row - please provide a value that is bigger than 0 and no bigger than ${highestRow}`)
         }
     }
 
@@ -112,7 +112,7 @@ async function taskFormatAndValidation(allowedData, taskId, userId) {
     }
 
     if (Object.hasOwn(allowedData, 'newProjectColumnId') && !validProjectColumnIds.includes(newProjectColumnId)) {
-        throw new Error('The task cannot be assigned to the project column becuase it is not part of the same project')
+        throw new Error('Please provide a valid project column')
     }
 
     if (Object.hasOwn(allowedData, 'newProjectRow') && Object.hasOwn(allowedData, 'newProjectColumnId')) { // column & row change
@@ -133,6 +133,41 @@ async function taskFormatAndValidation(allowedData, taskId, userId) {
     }
     else if (Object.hasOwn(allowedData, 'newProjectColumnId')) { // column change
         await moveTaskToEndOfNewColumn(maxRowNewProjectColumn, newProjectColumnId, taskId, currentProjectColumnId, currentProjectRow, maxRowCurrentProjectColumn, TASK_TABLE)
+    }
+
+    if (Object.hasOwn(allowedData, 'newAgendaColumnId') && !validAgendaColumnIds.includes(newAgendaColumnId)) {
+        throw new Error('Please provide a valid agenda column')
+    }
+
+    if (Object.hasOwn(allowedData, 'newAgendaRow') && Object.hasOwn(allowedData, 'newAgendaColumnId')) {
+        isValidRow(newAgendaRow, maxRowNewAgendaColumn)
+        if (!currentAgendaRow && currentAgendaRow !== 0) {
+            await addTaskToAgendaColumn(taskId, newAgendaColumnId, newAgendaRow, maxRowNewAgendaColumn, TASK_COLUMN_AGENDA_TABLE)
+        } else {
+            await moveTaskToNewColumn(taskId, currentAgendaColumnId, currentAgendaRow, newAgendaColumnId, newAgendaRow, maxRowCurrentAgendaColumn, maxRowNewAgendaColumn, TASK_COLUMN_AGENDA_TABLE)
+        }
+    }
+    else if (Object.hasOwn(allowedData, 'newAgendaRow')) {
+        if (!currentAgendaRow && currentAgendaRow !== 0) {
+            throw new Error('Task isn\'t assigned to an agenda column - please provide an agenda column')
+        }
+        if (newAgendaRow === currentAgendaRow) {
+            throw new Error('The new agenda row matches the current agenda row - please provide a new value')
+        }
+        isValidRow(newAgendaRow, maxRowCurrentAgendaColumn - 1)
+
+        if (newAgendaRow > currentAgendaRow) {
+            await moveTaskWithinColumn(taskId, '-', currentAgendaRow, newAgendaRow + 1, newAgendaRow, currentAgendaColumnId, TASK_COLUMN_AGENDA_TABLE)
+        } else {
+            await moveTaskWithinColumn(taskId, '+', newAgendaRow - 1, currentAgendaRow, newAgendaRow, currentAgendaColumnId, TASK_COLUMN_AGENDA_TABLE)
+        }
+    }
+    else if (Object.hasOwn(allowedData, 'newAgendaColumnId')) {
+        if (!currentAgendaRow && currentAgendaRow !== 0) {
+            await addTaskToAgendaColumn(taskId, newAgendaColumnId, maxRowNewAgendaColumn, maxRowNewAgendaColumn, TASK_COLUMN_AGENDA_TABLE)
+        } else {
+            await moveTaskToEndOfNewColumn(maxRowNewAgendaColumn, newAgendaColumnId, taskId, currentAgendaColumnId, currentAgendaRow, maxRowCurrentAgendaColumn, TASK_COLUMN_AGENDA_TABLE)
+        }
     }
 
     delete allowedData.newProjectRow
