@@ -1,37 +1,8 @@
 import { convertColumnToFrontName, createEndpoint, dateIsInFuture, jsDateToSqlDate } from "./utility.mjs"
-import { TASK_STATE_ACTIVE, TASK_STATE_COMPLETED, TASK_STATE_HOLD, TASK_TABLE, TASK_COLUMN_AGENDA_TABLE } from "./definitions.mjs"
+import { TASK_STATE_ACTIVE, TASK_STATE_COMPLETED, TASK_STATE_HOLD, TASK_TABLE, TASK_COLUMN_AGENDA_TABLE, ORGANISATION_TABLE } from "./definitions.mjs"
 import { getIsValidAssignee } from "./attributeAccess.mjs"
 import { generateUpdate, getMoveTaskDetails } from "../db/db.mjs"
 import { moveTaskToNewColumn, moveTaskWithinColumn, moveTaskToEndOfNewColumn, addTaskToAgendaColumn } from "../db/moveTask.mjs"
-
-function createPutEndpoint(validateAndFormatData, allowedColumnKeys, table, updateIdKey) {
-    return createEndpoint(async (req) => {
-        let allowedData = Object.fromEntries(
-            Object.entries(req.body).
-            filter(([columnName, val]) => allowedColumnKeys.includes(columnName))
-        )
-        const allowedDataKeys = Object.keys(allowedData)
-        const updateId = req.query[updateIdKey]
-        const successMessage = `Updated ${table}: ${allowedDataKeys.map(c => convertColumnToFrontName(c)).join(', ')}`
-
-        if (!allowedDataKeys.length) {
-            throw new Error('No data provided')
-        }
-
-        allowedData = await validateAndFormatData(allowedData, updateId, req.user.id)
-        if (!Object.keys(allowedData).length) {
-            // sometimes we perform the changes in the validateAndFormat - say for the custom move rows stuff
-            return successMessage
-        }
-
-        const data = await generateUpdate(table, allowedData, 'id', updateId)
-        if (!data) {
-            throw new Error(`Failed to update ${convertColumnToFrontName(table)}`)
-        }
-
-        return successMessage
-    })
-}
 
 export const updateTaskEndpoint = createPutEndpoint(
     taskFormatAndValidation,
@@ -176,5 +147,49 @@ async function taskFormatAndValidation(allowedData, taskId, userId) {
     delete allowedData.newAgendaColumnId
 
     return allowedData
+}
+
+export const updateOrganisationEndpoint = createPutEndpoint(
+    organisationFormatAndValidation,
+    ['name'],
+    ORGANISATION_TABLE,
+    'organisationId'
+)
+
+function organisationFormatAndValidation(allowedData, organsiationId, userId) {
+    if (Object.hasOwn(allowedData, 'name') && !allowedData.name && allowedData.name !== 0) {
+        throw new Error('Invalid organisation name - please provide a value')
+    }
+
+    return allowedData
+}
+
+function createPutEndpoint(validateAndFormatData, allowedColumnKeys, table, updateIdKey) {
+    return createEndpoint(async (req) => {
+        let allowedData = Object.fromEntries(
+            Object.entries(req.body).
+            filter(([columnName, val]) => allowedColumnKeys.includes(columnName))
+        )
+        const allowedDataKeys = Object.keys(allowedData)
+        const updateId = req.query[updateIdKey]
+        const successMessage = `Updated ${table}: ${allowedDataKeys.map(c => convertColumnToFrontName(c)).join(', ')}`
+
+        if (!allowedDataKeys.length) {
+            throw new Error('No data provided')
+        }
+
+        allowedData = await validateAndFormatData(allowedData, updateId, req.user.id)
+        if (!Object.keys(allowedData).length) {
+            // sometimes we perform the changes in the validateAndFormat - say for the custom move rows stuff
+            return successMessage
+        }
+
+        const data = await generateUpdate(table, allowedData, 'id', updateId)
+        if (!data) {
+            throw new Error(`Failed to update ${convertColumnToFrontName(table)}`)
+        }
+
+        return successMessage
+    })
 }
 
