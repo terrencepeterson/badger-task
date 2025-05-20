@@ -6,6 +6,7 @@ export const ACCESS_CONTROL_COLUMN_AGENDA = 'columnAgenda'
 export const ACCESS_CONTROL_TASKS = 'tasks'
 export const ACCESS_CONTROL_PROJECTS = 'projects'
 export const ACCESS_CONTROL_COLUMN_PROJECTS = 'columnProjects'
+export const ACCESS_CONTROL_ORGANISATION = 'organisation'
 
 export const DEFAULT_DB_VALUE = 'default'
 

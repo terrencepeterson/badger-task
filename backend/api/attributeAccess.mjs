@@ -1,11 +1,12 @@
 import '@dotenvx/dotenvx/config'
-import { getAgendaColumns, getProjectsAccess, getTaskAccess } from "../db/db.mjs"
+import { getAgendaColumns, getOrganisationIdByUserId, getProjectsAccess, getTaskAccess } from "../db/db.mjs"
 import { createClient } from 'redis';
 import {
     ACCESS_CONTROL_COLUMN_AGENDA,
     ACCESS_CONTROL_TASKS,
     ACCESS_CONTROL_PROJECTS,
-    ACCESS_CONTROL_COLUMN_PROJECTS
+    ACCESS_CONTROL_COLUMN_PROJECTS,
+    ACCESS_CONTROL_ORGANISATION
 } from './definitions.mjs'
 
 const redisClient = await createClient({
@@ -18,13 +19,15 @@ export const taskAccessControl = createAccessControlMiddleware('taskId', ACCESS_
 export const projectAccessControl = createAccessControlMiddleware('projectId', ACCESS_CONTROL_PROJECTS, 'project')
 export const agendaColumnAccessControl = createAccessControlMiddleware('column', ACCESS_CONTROL_COLUMN_AGENDA, 'agenda column')
 export const projectColumnAccessControl = createAccessControlMiddleware('column', ACCESS_CONTROL_COLUMN_PROJECTS, 'project column')
+export const organisationAccessControl = createAccessControlMiddleware('organisationId', ACCESS_CONTROL_ORGANISATION, 'organisation')
 
 export async function removeAccessControl(userId) {
     const keys = [
         getRedisKey(userId, ACCESS_CONTROL_TASKS),
         getRedisKey(userId, ACCESS_CONTROL_PROJECTS),
         getRedisKey(userId, ACCESS_CONTROL_COLUMN_PROJECTS),
-        getRedisKey(userId, ACCESS_CONTROL_COLUMN_AGENDA)
+        getRedisKey(userId, ACCESS_CONTROL_COLUMN_AGENDA),
+        getRedisKey(userId, ACCESS_CONTROL_ORGANISATION)
     ]
 
     // if user doesn't have any values for a set then it doesn't get added to redis
@@ -50,7 +53,7 @@ export async function addAccessControls(userId) {
     }
 
     const expirationTime = process.env.auth_session_seconds
-    const addSet = async (userId, attributeType, accessData, expireTime) => {
+    const addSet = async (userId, attributeType, accessData) => {
         // if a user doesn't belong to an organisation empty data can be passed in here
         // can't store empty so we don't add it to redis at all
         if (!accessData.length) {
@@ -59,7 +62,7 @@ export async function addAccessControls(userId) {
         const redisKey = getRedisKey(userId, attributeType)
         const importMulti = redisClient.multi()
         importMulti.sAdd(redisKey, accessData)
-        importMulti.expire(redisKey, expireTime)
+        importMulti.expire(redisKey, expirationTime)
         const [ rowsAffected, success ] = await importMulti.exec()
         return success
     }
@@ -68,11 +71,14 @@ export async function addAccessControls(userId) {
     const projectsAndProjectColumns = await getProjectsAccess(userId)
     let agendaColumns = await getAgendaColumns(userId)
     agendaColumns = agendaColumns.map(ac => `${ac.id}`) // must convert ot string for redis!
+    let organisationId = await getOrganisationIdByUserId(userId)
+    organisationId = organisationId.toString()
 
-    if (!await addSet(userId, ACCESS_CONTROL_TASKS, tasks, expirationTime) ||
-        !await addSet(userId,  ACCESS_CONTROL_PROJECTS, projectsAndProjectColumns.projects, expirationTime) ||
-        !await addSet(userId, ACCESS_CONTROL_COLUMN_PROJECTS, projectsAndProjectColumns.columnProjects, expirationTime) ||
-        !await addSet(userId, ACCESS_CONTROL_COLUMN_AGENDA, agendaColumns, expirationTime)
+    if (!await addSet(userId, ACCESS_CONTROL_TASKS, tasks) ||
+        !await addSet(userId,  ACCESS_CONTROL_PROJECTS, projectsAndProjectColumns.projects) ||
+        !await addSet(userId, ACCESS_CONTROL_COLUMN_PROJECTS, projectsAndProjectColumns.columnProjects) ||
+        !await addSet(userId, ACCESS_CONTROL_COLUMN_AGENDA, agendaColumns) ||
+        !await addSet(userId, ACCESS_CONTROL_ORGANISATION, organisationId)
     ) {
         throw new Error('Failed to add access control')
     }
