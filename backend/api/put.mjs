@@ -1,7 +1,14 @@
 import { convertColumnToFrontName, createEndpoint, dateIsInFuture, jsDateToSqlDate } from "./utility.mjs"
-import { TASK_STATE_ACTIVE, TASK_STATE_COMPLETED, TASK_STATE_HOLD, TASK_TABLE, TASK_COLUMN_AGENDA_TABLE, ORGANISATION_TABLE } from "./definitions.mjs"
-import { getIsValidAssignee } from "./attributeAccess.mjs"
-import { generateUpdate, getMoveTaskDetails } from "../db/db.mjs"
+import { TASK_STATE_ACTIVE, TASK_STATE_COMPLETED, TASK_STATE_HOLD, TASK_TABLE, TASK_COLUMN_AGENDA_TABLE, ORGANISATION_TABLE, PROJECT_TABLE, ACCESS_CONTROL_PROJECTS } from "./definitions.mjs"
+import { getIsValidAssignee, addMultipleAttributeAccess, removeMultipleAttributeAccess } from "./attributeAccess.mjs"
+import {
+    generateUpdate,
+    getEditTaskHelperColumns,
+    getEditProjectHelperColumns,
+    getAllUsersFromOrganisation,
+    disableProjectPrivateStatus,
+    enableProjectPrivateStatus
+} from "../db/db.mjs"
 import { moveTaskToNewColumn, moveTaskWithinColumn, moveTaskToEndOfNewColumn, addTaskToAgendaColumn } from "../db/moveTask.mjs"
 
 export const updateTaskEndpoint = createPutEndpoint(
@@ -10,6 +17,55 @@ export const updateTaskEndpoint = createPutEndpoint(
     TASK_TABLE,
     'taskId'
 )
+
+export const updateOrganisationEndpoint = createPutEndpoint(
+    organisationFormatAndValidation,
+    ['name'],
+    ORGANISATION_TABLE,
+    'organisationId'
+)
+
+export const updateProjectEndpoint = createPutEndpoint(
+    projectFormatAndValidation,
+    ['name', 'description', 'isPrivate'],
+    PROJECT_TABLE,
+    'projectId'
+)
+
+async function projectFormatAndValidation(allowedData, projectId, userId) {
+    allowedData = { ...allowedData }
+    let { name, description, isPrivate } = allowedData
+    const { currentPrivateStatus, organisationId } = await getEditProjectHelperColumns(projectId)
+    isPrivate = !!isPrivate
+
+    if (Object.hasOwn(allowedData, 'name') && !name && name !== 0) {
+        throw new Error('Name cannont be empty - please provide a valid value')
+    }
+
+    console.log(allowedData)
+    if (Object.hasOwn(allowedData, 'description') && !description && description !== 0) {
+        allowedData.description = null
+    }
+
+    if (typeof isPrivate !== 'boolean') {
+        throw new Error('Incorrect value for isPrivate')
+    }
+
+    if (Object.hasOwn(allowedData, 'isPrivate') && isPrivate !== currentPrivateStatus) {
+        const allUsersFromOrganisation = await getAllUsersFromOrganisation(organisationId)
+        if (!isPrivate) {
+            await disableProjectPrivateStatus(projectId)
+            await addMultipleAttributeAccess(allUsersFromOrganisation, ACCESS_CONTROL_PROJECTS, projectId)
+        } else {
+            const userIdsToKeepAccess = await enableProjectPrivateStatus(projectId, organisationId)
+            const userIdsToRemoveAccess = allUsersFromOrganisation.filter(uId => !userIdsToKeepAccess.includes(uId))
+            await removeMultipleAttributeAccess(userIdsToRemoveAccess, ACCESS_CONTROL_PROJECTS, projectId)
+        }
+    }
+
+    delete allowedData.isPrivate
+    return allowedData
+}
 
 async function taskFormatAndValidation(allowedData, taskId, userId) {
     allowedData = { ...allowedData } // clone data to keep function pure - shallow clone fine only changes primitive data
@@ -36,7 +92,7 @@ async function taskFormatAndValidation(allowedData, taskId, userId) {
         validAgendaColumnIds,
         maxRowCurrentAgendaColumn,
         maxRowNewAgendaColumn
-    } = await getMoveTaskDetails({ taskId, userId, newProjectColumnId, newAgendaColumnId })
+    } = await getEditTaskHelperColumns({ taskId, userId, newProjectColumnId, newAgendaColumnId })
 
     const isValidRow = (row, highestRow) => {
         if (isNaN(row) || row.trim && row.trim() === '') {
@@ -148,13 +204,6 @@ async function taskFormatAndValidation(allowedData, taskId, userId) {
 
     return allowedData
 }
-
-export const updateOrganisationEndpoint = createPutEndpoint(
-    organisationFormatAndValidation,
-    ['name'],
-    ORGANISATION_TABLE,
-    'organisationId'
-)
 
 function organisationFormatAndValidation(allowedData, organsiationId, userId) {
     if (Object.hasOwn(allowedData, 'name') && !allowedData.name && allowedData.name !== 0) {

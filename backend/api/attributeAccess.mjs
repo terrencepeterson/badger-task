@@ -127,6 +127,15 @@ export async function addAttributeAccess(userId, accessControlKey, attribute) {
 }
 
 export async function addMultipleAttributeAccess(userIds, accessControlKey, attributes) {
+    await addRemoveMultipleAttributeAccess(userIds, accessControlKey, attributes, 'Add')
+}
+
+export async function removeMultipleAttributeAccess(userIds, accessControlKey, attributes) {
+    await addRemoveMultipleAttributeAccess(userIds, accessControlKey, attributes, 'Rem')
+}
+
+async function addRemoveMultipleAttributeAccess(userIds, accessControlKey, attributes, type) {
+    // type must be Add or Rem
     const redisKeys = userIds.map(id => getRedisKey(id, accessControlKey))
     for (const [i, redisKey] of redisKeys.entries()) {
         const keyExists = await redisClient.exists(redisKey)
@@ -135,7 +144,7 @@ export async function addMultipleAttributeAccess(userIds, accessControlKey, attr
         }
 
         const attribute = Array.isArray(attributes) ? attributes[i] : attributes
-        const hasAddedAttribute = await redisClient.sAdd(redisKey, attribute.toString())
+        const hasAddedAttribute = await redisClient[`s${type}`](redisKey, attribute.toString())
         if (!hasAddedAttribute) {
             throw new Error(`Failed to update ${redisKey}: ${attribute}`)
         }

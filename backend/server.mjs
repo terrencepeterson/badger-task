@@ -5,6 +5,7 @@ import cors from "cors"
 import { responseFormatter, sanitiseInput, authenticate } from './middleware.mjs'
 import { signupEndpoint, loginEndpoint, logoutEndpoint } from './api/auth.mjs'
 import { adminRoleAccessControl, createRoleAccessControl } from './api/roleAccess.mjs'
+
 import {
     agendaEndpoint,
     agendaColumnEndpoint,
@@ -32,7 +33,8 @@ import {
     createTagEndpoint,
     createChecklistEndpoint
 } from './api/post.mjs'
-import { updateOrganisationEndpoint, updateTaskEndpoint } from './api/put.mjs'
+
+import { updateOrganisationEndpoint, updateProjectEndpoint, updateTaskEndpoint } from './api/put.mjs'
 
 const app = express()
 const { server_host: host, server_port: port } = process.env
@@ -71,6 +73,7 @@ app.post('/checklist', authenticate, createRoleAccessControl, taskAccessControl,
 
 app.put('/task', createRoleAccessControl, taskAccessControl, updateTaskEndpoint)
 app.put('/organisation', adminRoleAccessControl, organisationAccessControl, updateOrganisationEndpoint)
+app.put('/project', adminRoleAccessControl, projectAccessControl, updateProjectEndpoint)
 
 app.listen(port, host, () => {
     console.log(`${host} listening on port ${port}`)

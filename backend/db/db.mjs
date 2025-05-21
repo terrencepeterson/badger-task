@@ -109,6 +109,21 @@ export async function createUser(name, email, description, role, password, img_u
     return user[0]
 }
 
+export async function getEditProjectHelperColumns(projectId) {
+    const editProjectHelperColumns = await query(`
+        SELECT private, organisation_id
+        FROM project
+        WHERE id = ?
+    `, [projectId])
+
+    if (editProjectHelperColumns && editProjectHelperColumns.length) {
+        return {
+            currentPrivateStatus: !!editProjectHelperColumns[0].private,
+            organisationId: editProjectHelperColumns[0].organisation_id
+        }
+    }
+}
+
 // always called when a user is added
 function addDefaultAgenda(userId) {
     return query(`
@@ -755,7 +770,7 @@ export async function getIdByDifferentId(selectId, table, whereId, whereIdValue)
 }
 
 // newProjectColumnId and newAgendaColumnId are bools
-export async function getMoveTaskDetails({ taskId, userId, newProjectColumnId, newAgendaColumnId }) {
+export async function getEditTaskHelperColumns({ taskId, userId, newProjectColumnId, newAgendaColumnId }) {
     const queryParams = [userId, taskId]
 
     if (newAgendaColumnId) {
@@ -802,6 +817,39 @@ export async function getMoveTaskDetails({ taskId, userId, newProjectColumnId, n
     }
 
     return details
+}
+
+export async function disableProjectPrivateStatus(projectId) {
+    transactionQuery(async (conn) => {
+        const isNonPrivate = await conn.query(`
+            UPDATE project
+            SET private = 0
+            WHERE id = ?;
+        `, [projectId])
+
+        if (isNonPrivate.affectedRows !== 1 || isNonPrivate.warningStatus !== 0) {
+            throw new Error('Failed to disable the private status of the project')
+        }
+
+        const hasDeletedUserProject = await conn.query(`
+            DELETE FROM user_project
+            WHERE project_id = ?;
+        `, [projectId])
+    })
+}
+
+export async function enableProjectPrivateStatus(projectId, organisationId) {
+    const isPrivate = await query(`
+        UPDATE project
+        SET private = 1
+        WHERE id = ?;
+    `, [projectId])
+
+    if (isPrivate.affectedRows !== 1 || isPrivate.warningStatus !== 0) {
+        throw new Error('Failed to enable the private status of the project')
+    }
+
+    return await updateUserProjectTable(organisationId, projectId)
 }
 
 export async function generateUpdate(tableName, config, whereColumn, whereValue) {
