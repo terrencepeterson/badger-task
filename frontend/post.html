@@ -229,6 +229,7 @@
             e.preventDefault()
             let data = new FormData(e.target)
             data = Object.fromEntries(data)
+            console.log(data)
             const res = await fetch(createProjectUrl, {
                 method: "POST",
                 headers: {
@@ -242,7 +243,7 @@
         })
 
         const projectColumnElement = document.querySelector('#create-project-column')
-        const createProjectColumnUrl = 'http://localhost:8001/project-column'
+        const createProjectColumnUrl = 'http://localhost:8001/project/column'
         projectColumnElement.addEventListener('submit', async (e) => {
             e.preventDefault()
             const projectId = projectColumnElement.querySelector('#project-id').value
@@ -265,7 +266,7 @@
         })
 
         const agendaColumnElement = document.querySelector('#create-agenda-column')
-        const createAgendaColumnUrl = 'http://localhost:8001/agenda-column'
+        const createAgendaColumnUrl = 'http://localhost:8001/agenda/column'
         agendaColumnElement.addEventListener('submit', async (e) => {
             e.preventDefault()
 
@@ -288,12 +289,14 @@
         taskElement.addEventListener('submit', async (e) => {
             e.preventDefault()
             const projectColumnId = taskElement.querySelector('#project-column-id').value
+            console.log(projectColumnId)
             const params = new URLSearchParams({
                 column: projectColumnId
             })
 
             let data = new FormData(e.target)
             data = Object.fromEntries(data)
+            console.log(data)
             const res = await fetch(`${taskUrl}?${params}`, {
                 method: "POST",
                 headers: {
@@ -307,7 +310,7 @@
         })
 
         const commentElement = document.querySelector('#create-comment')
-        const commentUrl = 'http://localhost:8001/comment'
+        const commentUrl = 'http://localhost:8001/task/comment'
         commentElement.addEventListener('submit', async (e) => {
             e.preventDefault()
             const taskId = commentElement.querySelector('#task-id').value
@@ -330,7 +333,7 @@
         })
 
         const tagElement = document.querySelector('#create-tag')
-        const tagUrl = 'http://localhost:8001/tag'
+        const tagUrl = 'http://localhost:8001/project/tag'
         tagElement.addEventListener('submit', async (e) => {
             e.preventDefault()
             const projectId = tagElement.querySelector('#project-id').value
@@ -353,7 +356,7 @@
         })
 
         const checklistElement = document.querySelector('#create-checklist')
-        const checklistUrl = 'http://localhost:8001/checklist'
+        const checklistUrl = 'http://localhost:8001/task/checklist'
         checklistElement.addEventListener('submit', async (e) => {
             e.preventDefault()
             const taskId = checklistElement.querySelector('#task-id').value

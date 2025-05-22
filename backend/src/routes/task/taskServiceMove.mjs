@@ -1,5 +1,5 @@
-import { transactionQuery } from "./db.mjs"
-import { TASK_COLUMN_AGENDA_TABLE, TASK_TABLE } from "../api/definitions.mjs"
+import { transactionQuery } from "../../db.mjs"
+import { TASK_COLUMN_AGENDA_TABLE, TASK_TABLE } from "../../definitions.mjs"
 const OFFSET_AMOUNT = 1000000
 
 const columnKeys = {

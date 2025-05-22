@@ -1,73 +1,85 @@
-import { convertColumnToFrontName, createEndpoint, dateIsInFuture, jsDateToSqlDate } from "./utility.mjs"
-import { TASK_STATE_ACTIVE, TASK_STATE_COMPLETED, TASK_STATE_HOLD, TASK_TABLE, TASK_COLUMN_AGENDA_TABLE, ORGANISATION_TABLE, PROJECT_TABLE, ACCESS_CONTROL_PROJECTS } from "./definitions.mjs"
-import { getIsValidAssignee, addMultipleAttributeAccess, removeMultipleAttributeAccess } from "./attributeAccess.mjs"
+import { createEndpoint, dateIsInFuture, jsDateToSqlDate, formatNullableInput, createPutEndpoint } from "../../utility.mjs"
+import { TASK_TABLE, ACCESS_CONTROL_TASKS, COLUMN_PROJECT_TABLE, TASK_STATE_HOLD, TASK_STATE_COMPLETED, TASK_STATE_ACTIVE } from "../../definitions.mjs"
+import { getProjectColumnRows, getUserProjectAccess } from "../project/projectService.mjs"
+import { getIsValidAssignee, addMultipleAttributeAccess } from "../../accessControl/attributeAccess.mjs"
+import { getIdByDifferentId } from "../../db.mjs"
+import { moveTaskToNewColumn, moveTaskToEndOfNewColumn, moveTaskWithinColumn, addTaskToAgendaColumn } from "./taskServiceMove.mjs"
 import {
-    generateUpdate,
+    getTaskById,
+    getCommentsByTaskId,
+    getTagsByTaskId,
+    getChecklistByTaskId,
+    createTask,
     getEditTaskHelperColumns,
-    getEditProjectHelperColumns,
-    getAllUsersFromOrganisation,
-    disableProjectPrivateStatus,
-    enableProjectPrivateStatus
-} from "../db/db.mjs"
-import { moveTaskToNewColumn, moveTaskWithinColumn, moveTaskToEndOfNewColumn, addTaskToAgendaColumn } from "../db/moveTask.mjs"
+    createComment,
+    createChecklist
+} from "./taskService.mjs"
 
-export const updateTaskEndpoint = createPutEndpoint(
-    taskFormatAndValidation,
+export const taskEndpoint = createEndpoint(async (req) => {
+    const { taskId } = req.query
+
+    if (!taskId) {
+        throw new Error('No task ID provided')
+    }
+
+    const task = await getTaskById(taskId, req.user.id)
+    if (!task || !task.taskId) {
+        throw new Error('Task not found with specified ID')
+    }
+
+    task.comments = await getCommentsByTaskId(taskId)
+    task.tags = await getTagsByTaskId(taskId)
+    task.checklist = await getChecklistByTaskId(taskId)
+
+    return task
+})
+
+export const createTaskEndpoint = createEndpoint(async (req) => {
+    let { name, description, projectRow, assignee, dueDate } = req.body
+    const projectColumnId = req.query.column
+    const createdBy = req.user.id
+    description = formatNullableInput(description)
+    assignee = formatNullableInput(assignee)
+
+    if (!name) {
+        throw new Error('Please provide a name')
+    }
+
+    if (assignee && !await getIsValidAssignee(assignee, projectColumnId)) {
+        throw new Error('Invalid Assignee - they\'re not authorised to access the project that this task is being created in')
+    }
+
+    if (dueDate && !dateIsInFuture(dueDate)) {
+        throw new Error('Invalid due date - please provide a date that is in the future')
+    }
+    dueDate = jsDateToSqlDate(dueDate)
+
+    projectRow = parseInt(projectRow)
+    if (isNaN(projectRow)) {
+        const rows = await getProjectColumnRows(projectColumnId)
+        projectRow = rows.length ? ++rows[0] : 0
+    }
+
+    const taskId = await createTask(name, description, dueDate, projectRow, createdBy, assignee, projectColumnId)
+    if (!taskId && taskId !== 0) {
+        throw new Error('Failed to create task')
+    }
+
+    const projectId = await getIdByDifferentId('project_id', COLUMN_PROJECT_TABLE, 'id', projectColumnId)
+    const accesssUsers = await getUserProjectAccess(projectId)
+    await addMultipleAttributeAccess(accesssUsers, ACCESS_CONTROL_TASKS, taskId.toString())
+
+    return { message: 'Successfully created task', taskId }
+})
+
+export const editTaskEndpoint = createPutEndpoint(
+    editTaskFormatValidation,
     ['name', 'description', 'dueDate', 'state', 'newProjectRow', 'assignee', 'newProjectColumnId', 'newAgendaRow', 'newAgendaColumnId'],
     TASK_TABLE,
     'taskId'
 )
 
-export const updateOrganisationEndpoint = createPutEndpoint(
-    organisationFormatAndValidation,
-    ['name'],
-    ORGANISATION_TABLE,
-    'organisationId'
-)
-
-export const updateProjectEndpoint = createPutEndpoint(
-    projectFormatAndValidation,
-    ['name', 'description', 'isPrivate'],
-    PROJECT_TABLE,
-    'projectId'
-)
-
-async function projectFormatAndValidation(allowedData, projectId, userId) {
-    allowedData = { ...allowedData }
-    let { name, description, isPrivate } = allowedData
-    const { currentPrivateStatus, organisationId } = await getEditProjectHelperColumns(projectId)
-    isPrivate = !!isPrivate
-
-    if (Object.hasOwn(allowedData, 'name') && !name && name !== 0) {
-        throw new Error('Name cannont be empty - please provide a valid value')
-    }
-
-    console.log(allowedData)
-    if (Object.hasOwn(allowedData, 'description') && !description && description !== 0) {
-        allowedData.description = null
-    }
-
-    if (typeof isPrivate !== 'boolean') {
-        throw new Error('Incorrect value for isPrivate')
-    }
-
-    if (Object.hasOwn(allowedData, 'isPrivate') && isPrivate !== currentPrivateStatus) {
-        const allUsersFromOrganisation = await getAllUsersFromOrganisation(organisationId)
-        if (!isPrivate) {
-            await disableProjectPrivateStatus(projectId)
-            await addMultipleAttributeAccess(allUsersFromOrganisation, ACCESS_CONTROL_PROJECTS, projectId)
-        } else {
-            const userIdsToKeepAccess = await enableProjectPrivateStatus(projectId, organisationId)
-            const userIdsToRemoveAccess = allUsersFromOrganisation.filter(uId => !userIdsToKeepAccess.includes(uId))
-            await removeMultipleAttributeAccess(userIdsToRemoveAccess, ACCESS_CONTROL_PROJECTS, projectId)
-        }
-    }
-
-    delete allowedData.isPrivate
-    return allowedData
-}
-
-async function taskFormatAndValidation(allowedData, taskId, userId) {
+async function editTaskFormatValidation(allowedData, taskId, userId) {
     allowedData = { ...allowedData } // clone data to keep function pure - shallow clone fine only changes primitive data
     const {
         name,
@@ -130,6 +142,7 @@ async function taskFormatAndValidation(allowedData, taskId, userId) {
         throw new Error('Invalid state provided')
     }
 
+    console.log({assignee, currentProjectColumnId})
     if (Object.hasOwn(allowedData, 'assignee') && !await getIsValidAssignee(assignee, currentProjectColumnId)) {
         throw new Error('Invalid Assignee - they\'re not authorised to access the project for this task')
     }
@@ -205,40 +218,36 @@ async function taskFormatAndValidation(allowedData, taskId, userId) {
     return allowedData
 }
 
-function organisationFormatAndValidation(allowedData, organsiationId, userId) {
-    if (Object.hasOwn(allowedData, 'name') && !allowedData.name && allowedData.name !== 0) {
-        throw new Error('Invalid organisation name - please provide a value')
+export const createChecklistEndpoint = createEndpoint(async (req) => {
+    const { taskId } = req.query
+    const { name } = req.body
+
+    if (!name) {
+        throw new Error('No name provided')
     }
 
-    return allowedData
-}
+    const checklistId = await createChecklist(name, taskId)
+    if (!checklistId && checklistId !== 0) {
+        throw new Error('Failed to add checklist')
+    }
 
-function createPutEndpoint(validateAndFormatData, allowedColumnKeys, table, updateIdKey) {
-    return createEndpoint(async (req) => {
-        let allowedData = Object.fromEntries(
-            Object.entries(req.body).
-            filter(([columnName, val]) => allowedColumnKeys.includes(columnName))
-        )
-        const allowedDataKeys = Object.keys(allowedData)
-        const updateId = req.query[updateIdKey]
-        const successMessage = `Updated ${table}: ${allowedDataKeys.map(c => convertColumnToFrontName(c)).join(', ')}`
+    return { message: 'Successfully added new checklist', checklistId }
+})
 
-        if (!allowedDataKeys.length) {
-            throw new Error('No data provided')
-        }
+export const createCommentEndpoint = createEndpoint(async (req) => {
+    const { id: createdBy } = req.user
+    const { text } = req.body
+    const { taskId } = req.query
 
-        allowedData = await validateAndFormatData(allowedData, updateId, req.user.id)
-        if (!Object.keys(allowedData).length) {
-            // sometimes we perform the changes in the validateAndFormat - say for the custom move rows stuff
-            return successMessage
-        }
+    if (!text) {
+        throw new Error('No text provided for comment')
+    }
 
-        const data = await generateUpdate(table, allowedData, 'id', updateId)
-        if (!data) {
-            throw new Error(`Failed to update ${convertColumnToFrontName(table)}`)
-        }
+    const comment = await createComment(text, taskId, createdBy)
 
-        return successMessage
-    })
-}
+    if (!comment) {
+        throw new Error('Failed to create comment')
+    }
 
+    return { message: 'Successfully created comment', comment }
+})

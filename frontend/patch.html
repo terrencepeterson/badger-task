@@ -53,13 +53,48 @@
                 <button type="submit">Submit</button>
             </form>
         </div>
+        <div>
+            <h2>update organisation</h2>
+            <form id="update-organisation">
+                <div>
+                    <label for="organisation-name">name</label>
+                    <input type="text" name="name" value="" id="organisation-name">
+                </div>
+                <div>
+                    <label for="organisation-id">organisation id</label>
+                    <input type="text" name="organisationid" value="" id="organisation-id">
+                </div>
+                <button type="submit">submit</button>
+            </form>
+        </div>
+        <div>
+            <h2>Update Project</h2>
+            <form id="update-project">
+                <div>
+                    <label for="project-name">name</label>
+                    <input type="text" name="name" value="" id="project-name">
+                </div>
+                <div>
+                    <label for="project-description">description</label>
+                    <input type="text" name="description" value="" id="project-description">
+                </div>
+                <div>
+                    <label for="project-private">is private</label>
+                    <input type="checkbox" name="isPrivate" value="" id="project-private">
+                </div>
+                <div>
+                    <label for="project-id">project id</label>
+                    <input type="text" name="projectId" value="" id="project-id">
+                </div>
+                <button type="submit">submit</button>
+            </form>
+        </div>
     </body>
     <script>
         const updateTaskElement = document.querySelector('#update-task')
         const taskUrl = 'http://localhost:8001/task'
         updateTaskElement.addEventListener('submit', async (e) => {
             e.preventDefault()
-            console.log(e.target)
             const urlParams = new URLSearchParams({
                 taskId: e.target.querySelector('#task-id')?.value
             })
@@ -69,6 +104,51 @@
             data = Object.fromEntries(Object.entries(data).filter(([key, value]) => value))
             console.log(data)
             const res = await fetch(`${taskUrl}?${urlParams}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+                credentials: 'include'
+            })
+            const resData = await res.json()
+            console.log(resData)
+        })
+
+        const updateOrganisationElement = document.querySelector('#update-organisation')
+        const updateOrganisationUrl = 'http://localhost:8001/organisation'
+        updateOrganisationElement.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            const urlParams = new URLSearchParams({
+                organisationId: e.target.querySelector('#organisation-id').value
+            })
+
+            let data = new FormData(e.target)
+            data = Object.fromEntries(data)
+            const res = await fetch(`${updateOrganisationUrl}?${urlParams}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+                credentials: 'include'
+            })
+            const resData = await res.json()
+            console.log(resData)
+        })
+
+        const updateProjectElement = document.querySelector('#update-project')
+        const updateProjectUrl = 'http://localhost:8001/project'
+        updateProjectElement.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            const urlParams = new URLSearchParams({
+                projectId: e.target.querySelector('#project-id').value
+            })
+
+            let data = new FormData(e.target)
+            data = Object.fromEntries(data)
+            data = Object.fromEntries(Object.entries(data).filter(([key, value]) => value))
+            const res = await fetch(`${updateProjectUrl}?${urlParams}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",

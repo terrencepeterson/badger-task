@@ -62,23 +62,25 @@ export function responseFormatter (req, res, next) {
 export function sanitiseInput(req, res, next) {
     for (const key in req.body) {
         const value = req.body[key]
-        if (!DONT_TRIM_INPUT.includes(key) && typeof value === 'string') {
-            req.body[key] = value.trim()
-        }
-
-        if (!isNaN(value) && value.trim() !== '') { // isNaN('  ') returns false so must check for blank space too
-            req.body[key] = Number(value)
-        }
-
-        if (UNSANITARISABLE_FIELDS.includes(key)) {
+        if (typeof value !== 'string') {
             continue
         }
 
-        const clean = DOMPurify.sanitize(value, { USE_PROFILES: { html: true } })
+        if (!UNSANITARISABLE_FIELDS.includes(key)) {
+            const clean = DOMPurify.sanitize(value, { USE_PROFILES: { html: true } })
 
-        if (value !== clean) {
-            res.error('Malacious content provided', 400)
-            return
+            if (value !== clean) {
+                res.error('Malacious content provided', 400)
+                return
+            }
+        }
+
+        if (!DONT_TRIM_INPUT.includes(key)) {
+            req.body[key] = value.trim()
+        }
+
+        if (value.trim() !== '' && !isNaN(value)) {
+            req.body[key] = Number(value)
         }
     }
 

@@ -1,4 +1,5 @@
 import { DEFAULT_DB_VALUE } from "./definitions.mjs"
+import { generateUpdate } from "./db.mjs"
 // creates an async wrapper around an endpoint
 // instead of having the below in all endpoints
 //try {
@@ -29,6 +30,35 @@ export function createEndpoint(getData, checkUser = true) {
             res.error(e.message)
         }
     }
+}
+
+export function createPutEndpoint(validateAndFormatData, allowedColumnKeys, table, updateIdKey) {
+    return createEndpoint(async (req) => {
+        let allowedData = Object.fromEntries(
+            Object.entries(req.body).
+            filter(([columnName, val]) => allowedColumnKeys.includes(columnName))
+        )
+        const allowedDataKeys = Object.keys(allowedData)
+        const updateId = req.query[updateIdKey]
+        const successMessage = `Updated ${table}: ${allowedDataKeys.map(c => convertColumnToFrontName(c)).join(', ')}`
+
+        if (!allowedDataKeys.length) {
+            throw new Error('No data provided')
+        }
+
+        allowedData = await validateAndFormatData(allowedData, updateId, req.user.id)
+        if (!Object.keys(allowedData).length) {
+            // sometimes we perform the changes in the validateAndFormat - say for the custom move rows stuff
+            return successMessage
+        }
+
+        const data = await generateUpdate(table, allowedData, 'id', updateId)
+        if (!data) {
+            throw new Error(`Failed to update ${convertColumnToFrontName(table)}`)
+        }
+
+        return successMessage
+    })
 }
 
 export function formatNullableInput(input) {
@@ -84,7 +114,7 @@ function createDateObject(dateConfig) {
     return new Date(year, month, day, hour, minute)
 }
 
-export function convertColumnToFrontName(column) {
+function convertColumnToFrontName(column) {
     const firstLetter = column.charAt(0).toUpperCase()
     return firstLetter + column.replaceAll('_', ' ').substring(1)
 }

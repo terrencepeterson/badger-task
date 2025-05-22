@@ -26,3 +26,5 @@ export const TASK_COLUMN_AGENDA_TABLE = 'task_column_agenda'
 export const TASK_STATE_ACTIVE = 'active'
 export const TASK_STATE_COMPLETED = 'completed'
 export const TASK_STATE_HOLD = 'hold'
+export const VALID_PROJECT_COLUMN_ICONS = ['wave', 'email', 'question', 'issue', 'home', 'computer', 'photo', 'music', 'tv', 'completed', 'idea', 'agenda', 'website', 'decision']
+

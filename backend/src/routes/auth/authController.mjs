@@ -2,12 +2,12 @@ import '@dotenvx/dotenvx/config'
 import bcrypt from "bcryptjs"
 import isEmail from 'validator/lib/isEmail.js'
 import isStrongPassword from 'validator/lib/isStrongPassword.js'
-import { getUserEmails, createUser, getUserByEmail } from "../db/db.mjs"
-import { createEndpoint, formatDefaultableInput, formatNullableInput } from "./utility.mjs"
-import { loggedOut } from '../standarisedResponses.mjs'
-import { cookieSettings } from "../middleware.mjs"
-import { addAccessControls, removeAccessControl } from "./attributeAccess.mjs"
-import { ROLE_MEMBER } from './definitions.mjs'
+import { getUserEmails, createUser, getUserByEmail } from "./authService.mjs"
+import { createEndpoint, formatDefaultableInput, formatNullableInput } from "../../utility.mjs"
+import { loggedOut } from '../../standarisedResponses.mjs'
+import { cookieSettings } from "../../middleware.mjs"
+import { addAccessControls, removeAccessControl } from "../../accessControl/attributeAccess.mjs"
+import { ROLE_MEMBER } from '../../definitions.mjs'
 
 export const signupEndpoint = createEndpoint(async ({ body }) => {
     const { name, email, password, confirmPassword } = body // required fields

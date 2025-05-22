@@ -13,7 +13,7 @@
     <form id="login-form" method="POST" style="margin-bottom: 1rem;">
         <div>
             <label for="email">Email</label>
-            <input type="email" name="email" id="email" value="test2@test.com" required>
+            <input type="email" name="email" id="email" value="test5@test.com" required>
         </div>
         <div>
             <label for="password">Password</label>
@@ -77,7 +77,7 @@
 </body>
 
 <script>
-    const loginUrl = 'http://localhost:8001/login'
+    const loginUrl = 'http://localhost:8001/auth/login'
     const form = document.querySelector('#login-form')
     form.addEventListener('submit', async (e) => {
         e.preventDefault()
@@ -95,7 +95,7 @@
         console.log(parsedRes)
     })
 
-    const logoutUrl = 'http://localhost:8001/logout'
+    const logoutUrl = 'http://localhost:8001/auth/logout'
     const logoutButton = document.querySelector('#logout')
     logoutButton.addEventListener('click', async () => {
         let headers = new Headers();
@@ -112,7 +112,7 @@
 
     let batchNumber = 0
     const lastInput = document.querySelector('#last-id')
-    const dataUrl = 'http://localhost:8001/dashboard'
+    const dataUrl = 'http://localhost:8001/user/dashboard'
     const button = document.querySelector('#get-data')
     button.addEventListener('click', async () => {
         let headers = new Headers();
@@ -170,7 +170,7 @@
     const columnAgendaIdElement = document.querySelector('#column-agenda-id')
     const columnAgendaRowElement = document.querySelector('#column-row')
     const agendaColumnButtonElement = document.querySelector('.get-agenda-column')
-    const agendaColumnUrl = 'http://localhost:8001/agenda-column'
+    const agendaColumnUrl = 'http://localhost:8001/agenda/column'
     agendaColumnButtonElement.addEventListener('click', async (e) => {
         const params = new URLSearchParams({
             column: columnAgendaIdElement.value,
@@ -185,7 +185,7 @@
     const columnProjectIdElement = document.querySelector('#project-column-id')
     const columnProjectRowElement = document.querySelector('#project-column-row')
     const projectColumnButtonElement = document.querySelector('.get-project-column')
-    const projectColumnUrl = 'http://localhost:8001/project-column'
+    const projectColumnUrl = 'http://localhost:8001/project/column'
     projectColumnButtonElement.addEventListener('click', async (e) => {
         const params = new URLSearchParams({
             column: columnProjectIdElement.value,

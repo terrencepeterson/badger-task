@@ -1,4 +1,5 @@
-import { ROLE_ADMIN, ROLE_MEMBER } from "./definitions.mjs"
+import { ROLE_ADMIN, ROLE_MEMBER } from "../definitions.mjs"
+import { unauthorised } from "../standarisedResponses.mjs"
 
 export const adminRoleAccessControl = createRoleAccessControlMiddleware(ROLE_ADMIN)
 export const createRoleAccessControl = createRoleAccessControlMiddleware([ROLE_MEMBER, ROLE_ADMIN])
@@ -16,7 +17,7 @@ function createRoleAccessControlMiddleware(roles) {
             }
         }
 
-        res.error('You don\'t have the correct permisions', 403)
+        res.error(unauthorised.messaage, unauthorised.code)
     }
 }
 
