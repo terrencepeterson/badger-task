@@ -4,10 +4,11 @@ import { getAgendaColumnEndpoint, getAgendaEndpoint, createAgendaColumnEndpoint 
 import { authenticate } from "../../middleware.mjs"
 
 const router = Router()
+router.use(authenticate)
 
 router.get('/column', agendaColumnAccessControl, getAgendaColumnEndpoint)
 router.get('/', getAgendaEndpoint)
-router.post('/column', authenticate, createAgendaColumnEndpoint)
+router.post('/column', createAgendaColumnEndpoint)
 
 export default router
 

@@ -5,8 +5,9 @@ import { authenticate } from "../../middleware.mjs"
 import { adminRoleAccessControl } from "../../accessControl/roleAccess.mjs"
 
 const router = Router()
+router.use(authenticate)
 
-router.post('/', authenticate, createOrganisationEndpoint)
+router.post('/', createOrganisationEndpoint)
 router.put('/', adminRoleAccessControl, organisationAccessControl, editOrganisationEndpoint)
 
 export default router

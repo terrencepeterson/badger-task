@@ -1,6 +1,6 @@
 import express from "express"
 import cors from "cors"
-import { responseFormatter, sanitiseInput, authenticate } from "./middleware.mjs"
+import { responseFormatter, sanitiseInput } from "./middleware.mjs"
 
 import organisationRouter from './routes/organisation/organisationRoutes.mjs'
 import authRouter from './routes/auth/authRoutes.mjs'
@@ -19,8 +19,7 @@ app.use(express.json())
 app.use(cors(corsOptions))
 app.use(responseFormatter)
 app.post('*', sanitiseInput)
-app.get('*', authenticate)
-app.put('*',  sanitiseInput, authenticate)
+app.put('*',  sanitiseInput)
 
 app.use('/organisation', organisationRouter)
 app.use('/auth', authRouter)

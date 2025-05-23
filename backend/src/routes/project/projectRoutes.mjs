@@ -12,13 +12,14 @@ import {
 } from "./projectController.mjs"
 
 const router = Router()
+router.use(authenticate)
 
 router.get('/', projectAccessControl, getProjectEndpoint)
-router.post('/',  authenticate, createRoleAccessControl, createProjectEndpoint)
+router.post('/', createRoleAccessControl, createProjectEndpoint)
 router.put('/', adminRoleAccessControl, projectAccessControl, updateProjectEndpoint)
 router.get('/column', projectColumnAccessControl, getProjectColumnEndpoint)
-router.post('/column',  authenticate, createRoleAccessControl, projectAccessControl, createProjectColumnEndpoint)
-router.post('/tag', authenticate, createRoleAccessControl, projectAccessControl, createTagEndpoint)
+router.post('/column', createRoleAccessControl, projectAccessControl, createProjectColumnEndpoint)
+router.post('/tag', createRoleAccessControl, projectAccessControl, createTagEndpoint)
 
 export default router
 
