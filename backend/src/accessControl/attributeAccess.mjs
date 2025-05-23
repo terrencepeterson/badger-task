@@ -21,8 +21,8 @@ const redisClient = await createClient({
 
 export const taskAccessControl = createAccessControlMiddleware('taskId', ACCESS_CONTROL_TASKS, 'task')
 export const projectAccessControl = createAccessControlMiddleware('projectId', ACCESS_CONTROL_PROJECTS, 'project')
-export const agendaColumnAccessControl = createAccessControlMiddleware('column', ACCESS_CONTROL_COLUMN_AGENDA, 'agenda column')
-export const projectColumnAccessControl = createAccessControlMiddleware('column', ACCESS_CONTROL_COLUMN_PROJECTS, 'project column')
+export const agendaColumnAccessControl = createAccessControlMiddleware('agendaColumnId', ACCESS_CONTROL_COLUMN_AGENDA, 'agenda column')
+export const projectColumnAccessControl = createAccessControlMiddleware('projectColumnId', ACCESS_CONTROL_COLUMN_PROJECTS, 'project column')
 export const organisationAccessControl = createAccessControlMiddleware('organisationId', ACCESS_CONTROL_ORGANISATION, 'organisation')
 
 export async function removeAccessControl(userId) {
@@ -102,9 +102,10 @@ export async function getIsValidAssignee(assignee, projectColumnId) {
     return isValidAssignee
 }
 
-function createAccessControlMiddleware(attributeKey, accessControlKey, errorAttributeType) {
+function createAccessControlMiddleware(attributeKey, accessControlKey) {
     return async function(req, res, next) {
-        const attribute = req.query[attributeKey]
+        console.log(req.params)
+        const attribute = req.params[attributeKey]
         if (!attribute && attribute !== 0) {
             res.error(`Please provide a ${attributeKey}`)
             return

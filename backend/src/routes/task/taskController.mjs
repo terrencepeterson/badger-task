@@ -16,7 +16,7 @@ import {
 } from "./taskService.mjs"
 
 export const taskEndpoint = createEndpoint(async (req) => {
-    const { taskId } = req.query
+    const { taskId } = req.params
 
     if (!taskId) {
         throw new Error('No task ID provided')

@@ -39,7 +39,7 @@ export function createPutEndpoint(validateAndFormatData, allowedColumnKeys, tabl
             filter(([columnName, val]) => allowedColumnKeys.includes(columnName))
         )
         const allowedDataKeys = Object.keys(allowedData)
-        const updateId = req.query[updateIdKey]
+        const updateId = req.params[updateIdKey]
         const successMessage = `Updated ${table}: ${allowedDataKeys.map(c => convertColumnToFrontName(c)).join(', ')}`
 
         if (!allowedDataKeys.length) {

@@ -14,10 +14,10 @@ import {
 const router = Router()
 router.use(authenticate)
 
-router.get('/', projectAccessControl, getProjectEndpoint)
+router.get('/:projectId', projectAccessControl, getProjectEndpoint)
 router.post('/', createRoleAccessControl, createProjectEndpoint)
-router.put('/', adminRoleAccessControl, projectAccessControl, updateProjectEndpoint)
-router.get('/column', projectColumnAccessControl, getProjectColumnEndpoint)
+router.put('/:projectId', adminRoleAccessControl, projectAccessControl, updateProjectEndpoint)
+router.get('/column/:projectColumnId', projectColumnAccessControl, getProjectColumnEndpoint)
 router.post('/column', createRoleAccessControl, projectAccessControl, createProjectColumnEndpoint)
 router.post('/tag', createRoleAccessControl, projectAccessControl, createTagEndpoint)
 

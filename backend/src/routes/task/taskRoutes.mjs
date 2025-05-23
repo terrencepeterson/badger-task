@@ -7,9 +7,9 @@ import { createRoleAccessControl } from "../../accessControl/roleAccess.mjs"
 const router = Router()
 router.use(authenticate)
 
-router.get('/', taskAccessControl, taskEndpoint)
+router.get('/:taskId', taskAccessControl, taskEndpoint)
 router.post('/', projectColumnAccessControl, createTaskEndpoint)
-router.put('/', createRoleAccessControl, taskAccessControl, editTaskEndpoint)
+router.put('/:taskId', createRoleAccessControl, taskAccessControl, editTaskEndpoint)
 router.post('/checklist', createRoleAccessControl, taskAccessControl, createChecklistEndpoint)
 router.post('/comment', taskAccessControl, createCommentEndpoint)
 

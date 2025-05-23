@@ -30,7 +30,7 @@ export const updateProjectEndpoint = createPutEndpoint(
 )
 
 export const getProjectEndpoint = createEndpoint(async (req) => {
-    const { projectId } = req.query
+    const projectId = req.params.projectId
 
     if (!projectId) {
         throw new Error('No project id provided')
@@ -119,7 +119,9 @@ async function projectFormatAndValidation(allowedData, projectId, userId) {
 }
 
 export const getProjectColumnEndpoint = createEndpoint((req) => {
-    const { column, row } = req.query
+    const { projectColumnId: column } = req.params
+    const { row } = req.query
+
     if (!column && column !== 0) {
         throw new Error('No column provide')
     }

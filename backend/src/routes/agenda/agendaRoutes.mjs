@@ -6,7 +6,7 @@ import { authenticate } from "../../middleware.mjs"
 const router = Router()
 router.use(authenticate)
 
-router.get('/column', agendaColumnAccessControl, getAgendaColumnEndpoint)
+router.get('/column/:agendaColumnId', agendaColumnAccessControl, getAgendaColumnEndpoint)
 router.get('/', getAgendaEndpoint)
 router.post('/column', createAgendaColumnEndpoint)
 

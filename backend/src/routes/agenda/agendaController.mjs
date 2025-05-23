@@ -28,7 +28,9 @@ export const getAgendaEndpoint = createEndpoint(async (req) => {
 })
 
 export const getAgendaColumnEndpoint = createEndpoint((req) => {
-    const { column, row } = req.query
+    const { agendaColumnId: column } = req.params
+    const { row } = req.query
+
     if (!column && column !== 0) {
         throw new Error('No column provide')
     }

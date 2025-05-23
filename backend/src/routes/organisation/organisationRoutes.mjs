@@ -8,7 +8,7 @@ const router = Router()
 router.use(authenticate)
 
 router.post('/', createOrganisationEndpoint)
-router.put('/', adminRoleAccessControl, organisationAccessControl, editOrganisationEndpoint)
+router.put('/:organisationId', adminRoleAccessControl, organisationAccessControl, editOrganisationEndpoint)
 
 export default router
 
