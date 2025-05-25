@@ -42,8 +42,8 @@ export function responseFormatter (req, res, next) {
         const cookieHeader = req.headers.cookie
         const cookies = cookieHeader
             ? Object.fromEntries(
-                  cookieHeader.split('; ').map(cookie => cookie.split('='))
-              )
+                cookieHeader.split('; ').map(cookie => cookie.split('='))
+            )
             : {}
 
         const authToken = cookies[process.env.auth_token_cookie_name]
@@ -60,27 +60,28 @@ export function responseFormatter (req, res, next) {
 }
 
 export function sanitiseInput(req, res, next) {
-    for (const key in req.body) {
-        const value = req.body[key]
-        if (typeof value !== 'string') {
-            continue
+    const sanitiseTypes = ['body', 'params', 'query']
+    const containMalaciousCode = (value, key) => {
+        if (UNSANITARISABLE_FIELDS.includes(key) || typeof value !== 'string') {
+            return false
         }
 
-        if (!UNSANITARISABLE_FIELDS.includes(key)) {
-            const clean = DOMPurify.sanitize(value, { USE_PROFILES: { html: true } })
+        const clean = DOMPurify.sanitize(value, { USE_PROFILES: { html: true } })
 
-            if (value !== clean) {
-                res.error('Malacious content provided', 400)
+        if (value !== clean) {
+            res.error('Malacious content provided', 400)
+            return true
+        }
+
+        return false
+    }
+
+    for (const type of sanitiseTypes) {
+        for (const name in req[type]) {
+            const value = req[type][name]
+            if (containMalaciousCode(value, name)) {
                 return
             }
-        }
-
-        if (!DONT_TRIM_INPUT.includes(key)) {
-            req.body[key] = value.trim()
-        }
-
-        if (value.trim() !== '' && !isNaN(value)) {
-            req.body[key] = Number(value)
         }
     }
 
