@@ -104,7 +104,6 @@ export async function getIsValidAssignee(assignee, projectColumnId) {
 
 function createAccessControlMiddleware(attributeKey, accessControlKey) {
     return async function(req, res, next) {
-        console.log(req.params)
         const attribute = req.params[attributeKey]
         if (!attribute && attribute !== 0) {
             res.error(`Please provide a ${attributeKey}`)
@@ -158,7 +157,7 @@ async function addRemoveMultipleAttributeAccess(userIds, accessControlKey, attri
 
 export function getCanAccess(userId, accessControlKey, attribute) {
     const redisKey = getRedisKey(userId, accessControlKey)
-    return redisClient.sIsMember(redisKey, attribute)
+    return redisClient.sIsMember(redisKey, attribute.toString())
 }
 
 function doesExistInCache(userId, accessControlKey) {

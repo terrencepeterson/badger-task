@@ -119,12 +119,12 @@ function convertColumnToFrontName(column) {
     return firstLetter + column.replaceAll('_', ' ').substring(1)
 }
 
-export function createParamsSchema(paramNames) {
+export function createIdSchema(paramNames) {
     if (!Array.isArray(paramNames)) {
         paramNames = [paramNames]
     }
 
-    const zConfigObject = Object.fromEntries(paramNames.map(paramName => [paramName, z.coerce.number().int().positive()]))
+    const zConfigObject = Object.fromEntries(paramNames.map(paramName => [paramName, z.coerce.number().int().min(0)]))
     return z.object(zConfigObject)
 }
 

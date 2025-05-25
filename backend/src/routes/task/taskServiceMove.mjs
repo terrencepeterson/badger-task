@@ -33,7 +33,6 @@ export async function moveTaskWithinColumn(taskId, symbol, biggerThan, lessThan,
 }
 
 export async function moveTaskToEndOfNewColumn(newRow, newColumnId, taskId, oldColumnId, currentRow, maxRow, activeTable) {
-    console.log({newRow, newColumnId, taskId, oldColumnId, currentRow, maxRow, activeTable})
     const { rowColumn, taskIdColumn, columnIdColumn } = columnKeys[activeTable]
     transactionQuery(async (conn) => {
         await conn.query(`

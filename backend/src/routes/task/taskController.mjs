@@ -142,7 +142,6 @@ async function editTaskFormatValidation(allowedData, taskId, userId) {
         throw new Error('Invalid state provided')
     }
 
-    console.log({assignee, currentProjectColumnId})
     if (Object.hasOwn(allowedData, 'assignee') && !await getIsValidAssignee(assignee, currentProjectColumnId)) {
         throw new Error('Invalid Assignee - they\'re not authorised to access the project for this task')
     }

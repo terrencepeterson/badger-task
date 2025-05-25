@@ -18,13 +18,12 @@ import {
 } from "./projectService.mjs"
 import isHexColor from 'validator/lib/isHexColor.js'
 import { getOrganisationIdByUserId, getAllUsersFromOrganisation } from "../organisation/organisationService.mjs"
-import { formatNullableInput, formatDefaultableInput } from "../../utility.mjs"
 import { ROLE_ADMIN, ACCESS_CONTROL_PROJECTS, PROJECT_TABLE, VALID_PROJECT_COLUMN_ICONS, ACCESS_CONTROL_COLUMN_PROJECTS } from "../../definitions.mjs"
 import { addMultipleAttributeAccess, removeMultipleAttributeAccess } from "../../accessControl/attributeAccess.mjs"
 
 export const updateProjectEndpoint = createPutEndpoint(
     projectFormatAndValidation,
-    ['name', 'description', 'isPrivate'],
+    ['name', 'description', 'imgUrl', 'isPrivate'],
     PROJECT_TABLE,
     'projectId'
 )
@@ -54,9 +53,6 @@ export const createProjectEndpoint = createEndpoint(async (req) => {
     let { name, description, imgUrl, isPrivate } = req.body
     let accessControlUserIdsToUpdate
     const organisationId = await getOrganisationIdByUserId(userId)
-    description = formatNullableInput(description)
-    imgUrl = formatDefaultableInput(imgUrl)
-    isPrivate = !!isPrivate
 
     if (isPrivate && userRole !== ROLE_ADMIN) { // non admin users cannot create private projects
         throw new Error('Unauthorised - only admin users can create private projects')
@@ -64,10 +60,6 @@ export const createProjectEndpoint = createEndpoint(async (req) => {
 
     if (!organisationId && organisationId !== 0) {
         throw new Error('You don\'t belong to an organisation')
-    }
-
-    if (!name) {
-        throw new Error('Please provide a name')
     }
 
     const projectId = await createProject(userId, organisationId, name, description, isPrivate, imgUrl)
@@ -86,21 +78,8 @@ export const createProjectEndpoint = createEndpoint(async (req) => {
 
 async function projectFormatAndValidation(allowedData, projectId, userId) {
     allowedData = { ...allowedData }
-    let { name, description, isPrivate } = allowedData
+    let { isPrivate } = allowedData
     const { currentPrivateStatus, organisationId } = await getEditProjectHelperColumns(projectId)
-    isPrivate = !!isPrivate
-
-    if (Object.hasOwn(allowedData, 'name') && !name && name !== 0) {
-        throw new Error('Name cannont be empty - please provide a valid value')
-    }
-
-    if (Object.hasOwn(allowedData, 'description') && !description && description !== 0) {
-        allowedData.description = null
-    }
-
-    if (typeof isPrivate !== 'boolean') {
-        throw new Error('Incorrect value for isPrivate')
-    }
 
     if (Object.hasOwn(allowedData, 'isPrivate') && isPrivate !== currentPrivateStatus) {
         const allUsersFromOrganisation = await getAllUsersFromOrganisation(organisationId)
@@ -134,26 +113,11 @@ export const getProjectColumnEndpoint = createEndpoint((req) => {
 })
 
 export const createProjectColumnEndpoint = createEndpoint(async (req) => {
-    let { name, icon, colour, column } = req.body
-    const projectId = parseInt(req.query.projectId)
+    let { name, icon, colour } = req.body
+    const { projectId } = req.params
 
-    if (!name) {
-        throw new Error('Please provide a name')
-    }
-
-    if (!VALID_PROJECT_COLUMN_ICONS.includes(icon)) {
-        throw new Error('Invalid icon')
-    }
-
-    if (!isHexColor(colour)) {
-        throw new Error('Invalid colour')
-    }
-
-    column = parseInt(column)
-    if (isNaN(column)) {
-        const currentColumns = await getProjectColumnColumns(projectId)
-        column = currentColumns ? ++currentColumns[0] : 0 // currentColumns always returns with highest column first
-    }
+    const currentColumns = await getProjectColumnColumns(projectId)
+    const column = currentColumns ? ++currentColumns[0] : 0 // currentColumns always returns with highest column first
 
     const projectColumnId = await createProjectColumn(name, icon, colour, column, projectId)
     if (!projectColumnId && projectColumnId !== 0) {
@@ -168,19 +132,7 @@ export const createProjectColumnEndpoint = createEndpoint(async (req) => {
 
 export const createTagEndpoint = createEndpoint(async (req) => {
     const { name, colour } = req.body
-    const { projectId } = req.query
-
-    if (!name) {
-        throw new Error('No name provided')
-    }
-
-    if (!colour) {
-        throw new Error('No colour provided')
-    }
-
-    if (!isHexColor(colour)) {
-        throw new Error('The colour provided is not a valid hex colour')
-    }
+    const { projectId } = req.params
 
     const tagId = await createTag(name, colour, projectId)
     if (!tagId && tagId !== 0) {
