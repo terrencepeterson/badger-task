@@ -44,23 +44,10 @@ export const getAgendaColumnEndpoint = createEndpoint((req) => {
 
 export const createAgendaColumnEndpoint = createEndpoint(async (req) => {
     const { id: userId } = req.user
-    let { name, colour, column } = req.body
+    const currentColumns = await getAgendaColumnColumns(userId)
+    const column = currentColumns.length ? ++currentColumns[0] : 0 // currentColumns always returns with highest column first
 
-    if (!name) {
-        throw new Error('Please provide a name')
-    }
-
-    if (!isHexColor(colour)) {
-        throw new Error('Invalid colour')
-    }
-
-    column = parseInt(column)
-    if (isNaN(column)) {
-        const currentColumns = await getAgendaColumnColumns(userId)
-        column = currentColumns.length ? ++currentColumns[0] : 0 // currentColumns always returns with highest column first
-    }
-
-    const agendaColumnId = await createAgendaColumn(name, colour, column, userId)
+    const agendaColumnId = await createAgendaColumn(req.body.name, req.body.colour, column, userId)
     if (!agendaColumnId && agendaColumnId !== 0) {
         throw new Error('Failed to create agenda column')
     }
