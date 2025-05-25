@@ -1,14 +1,14 @@
-import DOMPurify from "isomorphic-dompurify";
+import { ZodError } from "zod/v4"
+import DOMPurify from "isomorphic-dompurify"
 import { unauthenticated } from "./standarisedResponses.mjs"
-const UNSANITARISABLE_FIELDS = ['dueDate']
-const DONT_TRIM_INPUT = ['password', 'confirmPassword']
+const UNSANITARISABLE_FIELDS = []
 export const cookieSettings = {
     httpOnly: true,
     secure: true,
     partitioned: true
 }
 
-export function responseFormatter (req, res, next) {
+export function responseFormatter(req, res, next) {
     res.setTokenCookie = (token) => {
         // seperated this out as when clearing cookie you don't need maxAge
         const maxAgeSetting = { maxAge: 24 * 60 * 60 * 1000 }
@@ -98,9 +98,28 @@ export async function authenticate(req, res, next) {
         }
         next()
     } catch (e) {
-        res.error(e.message, unauthenticated.code, {redirect: true, url: unauthenticated.url})
+        res.error(e.message, unauthenticated.code, { redirect: true, url: unauthenticated.url })
         req.user = null // not sure if necessary here but i feel hacker could send a user property in the request
         return
+    }
+}
+
+export function validate(schemas) {
+    return function(req, res, next) {
+        for (const [key, schema] of Object.entries(schemas)) {
+            try {
+                req[key] = schema.parse(req[key])
+            } catch (err) {
+                if (err instanceof ZodError) {
+                    const invalidInputs = err.issues.map(e => e.path[0]).join(', ')
+                    const errors = err.issues.map(e => `${e.path[0]}: ${e.message}`)
+                    return res.error(`Invalid data, please provide the correct data for: ${invalidInputs}`, 400, errors)
+                }
+
+                return res.error('Internal server error', 500)
+            }
+        }
+        next()
     }
 }
 

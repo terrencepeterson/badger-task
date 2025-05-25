@@ -1,3 +1,4 @@
+import { z } from "zod/v4"
 import { DEFAULT_DB_VALUE } from "./definitions.mjs"
 import { generateUpdate } from "./db.mjs"
 // creates an async wrapper around an endpoint
@@ -20,14 +21,13 @@ export function createEndpoint(getData, checkUser = true) {
             if (typeof data === 'object') {
                 const successMessage = data.message
                 delete data.message
-                res.success(successMessage, data)
-                return
+                return res.success(successMessage, data)
             }
 
-            res.success(data)
+            return res.success(data)
         } catch (e) {
             console.log(e)
-            res.error(e.message)
+            return res.error(e.message)
         }
     }
 }
@@ -117,5 +117,14 @@ function createDateObject(dateConfig) {
 function convertColumnToFrontName(column) {
     const firstLetter = column.charAt(0).toUpperCase()
     return firstLetter + column.replaceAll('_', ' ').substring(1)
+}
+
+export function createParamsSchema(paramNames) {
+    if (!Array.isArray(paramNames)) {
+        paramNames = [paramNames]
+    }
+
+    const zConfigObject = Object.fromEntries(paramNames.map(paramName => [paramName, z.coerce.number().int().positive()]))
+    return z.object(zConfigObject)
 }
 
