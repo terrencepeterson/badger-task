@@ -9,4 +9,5 @@ export const nameValidation = z.string().trim().min(1)
 export const hexColourValidation = z.string().trim().regex(hexColourRegex, 'Invalid hex colour')
 export const imgUrlValidation = z.string().trim().regex(imageTypesRegex, 'Invalid file type - please provide a .jpg, .jpeg, .png or .svg image')
 export const nullableStringValidation = z.union([z.string().trim().min(1), z.null()], 'Invalid input type, please provide a string (that is at least one character long) or null').default(null)
+export const emailValidation = z.string().min(1, "Please provide a value for email").email("Invalid email address")
 

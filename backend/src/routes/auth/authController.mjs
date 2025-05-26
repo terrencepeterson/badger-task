@@ -1,44 +1,30 @@
 import '@dotenvx/dotenvx/config'
 import bcrypt from "bcryptjs"
-import isEmail from 'validator/lib/isEmail.js'
-import isStrongPassword from 'validator/lib/isStrongPassword.js'
-import { getUserEmails, createUser, getUserByEmail } from "./authService.mjs"
-import { createEndpoint, formatDefaultableInput, formatNullableInput } from "../../utility.mjs"
+import { createUser, getUserByEmail } from "./authService.mjs"
+import { createEndpoint } from "../../utility.mjs"
 import { loggedOut } from '../../standarisedResponses.mjs'
 import { cookieSettings } from "../../middleware.mjs"
 import { addAccessControls, removeAccessControl } from "../../accessControl/attributeAccess.mjs"
 import { ROLE_MEMBER } from '../../definitions.mjs'
 
 export const signupEndpoint = createEndpoint(async ({ body }) => {
-    const { name, email, password, confirmPassword } = body // required fields
-    const description = formatNullableInput(body.description)
-    const imgUrl = formatDefaultableInput(body.imgUrl)
-
-    if (!name.trim() || !email.trim() || !password || !confirmPassword) {
-        throw new Error('Missing field, please enter values for all required fields')
-    }
+    const { name, email, password, confirmPassword, description, imgUrl } = body // required fields
 
     if (password !== confirmPassword) {
         throw new Error('Passsword and confirm password do not match')
     }
 
-    if (!isStrongPassword(password)) {
-        throw new Error('Please enter a password that is at least 8 characters long and contains at least 1 uppercase letter, 1 symbol and 1 number')
-    }
-
-    if (!isEmail(email)) {
-        throw new Error('Please enter a valid email')
-    }
-
-    const userEmails = await getUserEmails()
-    if (userEmails.includes(email)) {
+    if (await getUserByEmail(email)) {
         throw new Error('A user already exists with the provided email, please use a different email address')
     }
 
     const salt = await bcrypt.genSalt(10);
-    const hash = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    const user = await createUser(name, email, description, ROLE_MEMBER, hash, imgUrl)
+    const user = await createUser(name, email, description, ROLE_MEMBER, hashedPassword, imgUrl)
+    if (!user) {
+        throw new Error('Failed to create user')
+    }
 
     return user
 }, false)
@@ -58,15 +44,10 @@ export const loginEndpoint = createEndpoint(async (req, res) => {
         throw new Error('An account is already logged in')
     }
 
-    if (!email.trim() || !password) {
-        throw new Error('Please enter a email and password')
-    }
-
-    if (!isEmail(email)) {
-        throw new Error('Please enter a valid email address')
-    }
-
-    const user = await getUserByEmail(email)
+    // i still validate the email and password in here rather than with zod
+    // i would have had to use super refine and attach the user data to the context
+    // and then put that back onto req body... not worth it here
+    const user = await getUserByEmail(email, true)
     if (!user) {
         throw new Error('Account does not exist, please sign up or contact administration')
     }

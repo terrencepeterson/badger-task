@@ -1,19 +1,5 @@
 import { generateInsert, query } from "../../db.mjs"
-import { USER_TABLE, COLUMN_AGENDA_TABLE, ACTIVE_USER_TABLE } from "../../definitions.mjs"
-
-export async function getUserEmails() {
-
-    const emails = await query(`
-        SELECT email
-        FROM ${ACTIVE_USER_TABLE};
-    `)
-
-    if (!emails || !emails.length) {
-        return []
-    }
-
-    return emails.map(e => e.email)
-}
+import { USER_TABLE, COLUMN_AGENDA_TABLE } from "../../definitions.mjs"
 
 export async function createUser(name, email, description, role, password, img_url) {
     const userId = await generateInsert(USER_TABLE, { name, email, description, role, password, img_url })
@@ -26,9 +12,9 @@ export async function createUser(name, email, description, role, password, img_u
     return user[0]
 }
 
-export async function getUserByEmail(email) {
+export async function getUserByEmail(email, includePassword = false) {
     const user = await query(`
-        SELECT id, email, password, role
+        SELECT id, email, ${ includePassword ? 'password, ' : '' } role
         FROM ${USER_TABLE} where email = ?
     `, [email])
 
