@@ -5,7 +5,7 @@ import { getProjectsByUserId } from "../project/projectService.mjs"
 import { getTagsByUserId } from "../project/projectService.mjs"
 
 export const dashboardEndpoint = createEndpoint(async (req) => {
-    const batchNumber =  +req.query.batchNumber
+    const { batchNumber } =  req.query
     const { id: userId } = req.user
 
     let dashboardData = {}
