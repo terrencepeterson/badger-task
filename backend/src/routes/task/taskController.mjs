@@ -18,12 +18,8 @@ import {
 export const taskEndpoint = createEndpoint(async (req) => {
     const { taskId } = req.params
 
-    if (!taskId) {
-        throw new Error('No task ID provided')
-    }
-
     const task = await getTaskById(taskId, req.user.id)
-    if (!task || !task.taskId) {
+    if (!task) {
         throw new Error('Task not found with specified ID')
     }
 
@@ -35,30 +31,16 @@ export const taskEndpoint = createEndpoint(async (req) => {
 })
 
 export const createTaskEndpoint = createEndpoint(async (req) => {
-    let { name, description, projectRow, assignee, dueDate } = req.body
-    const projectColumnId = req.query.column
+    let { name, description, assignee, dueDate, projectColumnId } = req.body
     const createdBy = req.user.id
-    description = formatNullableInput(description)
-    assignee = formatNullableInput(assignee)
 
-    if (!name) {
-        throw new Error('Please provide a name')
-    }
-
-    if (assignee && !await getIsValidAssignee(assignee, projectColumnId)) {
+    if ((assignee || assignee === 0) && !await getIsValidAssignee(assignee, projectColumnId.toString())) {
         throw new Error('Invalid Assignee - they\'re not authorised to access the project that this task is being created in')
     }
 
-    if (dueDate && !dateIsInFuture(dueDate)) {
-        throw new Error('Invalid due date - please provide a date that is in the future')
-    }
-    dueDate = jsDateToSqlDate(dueDate)
-
-    projectRow = parseInt(projectRow)
-    if (isNaN(projectRow)) {
-        const rows = await getProjectColumnRows(projectColumnId)
-        projectRow = rows.length ? ++rows[0] : 0
-    }
+    // projects always get put to the bottom of the row
+    const rows = await getProjectColumnRows(projectColumnId)
+    const projectRow = rows.length ? ++rows[0] : 0
 
     const taskId = await createTask(name, description, dueDate, projectRow, createdBy, assignee, projectColumnId)
     if (!taskId && taskId !== 0) {
@@ -72,20 +54,16 @@ export const createTaskEndpoint = createEndpoint(async (req) => {
     return { message: 'Successfully created task', taskId }
 })
 
-export const editTaskEndpoint = createPutEndpoint(
-    editTaskFormatValidation,
+export const updateTaskEndpoint = createPutEndpoint(
+    updateTaskFormatValidation,
     ['name', 'description', 'dueDate', 'state', 'newProjectRow', 'assignee', 'newProjectColumnId', 'newAgendaRow', 'newAgendaColumnId'],
     TASK_TABLE,
     'taskId'
 )
 
-async function editTaskFormatValidation(allowedData, taskId, userId) {
+async function updateTaskFormatValidation(allowedData, taskId, userId) {
     allowedData = { ...allowedData } // clone data to keep function pure - shallow clone fine only changes primitive data
     const {
-        name,
-        description,
-        dueDate,
-        state,
         assignee,
         newProjectRow,
         newProjectColumnId,
@@ -115,31 +93,9 @@ async function editTaskFormatValidation(allowedData, taskId, userId) {
         }
     }
 
-    if (Object.hasOwn(allowedData, 'name') && !name && name !== 0) {
-        throw new Error('Name is a required value and cannot be empty')
-    }
-
-    if (Object.hasOwn(allowedData, 'description') && !description && description !== 0) {
-        allowedData.description = null
-    }
-
     if (Object.hasOwn(allowedData, 'dueDate')) {
-        if (!dueDate) {
-            allowedData.due_date = null
-        } else if (dueDate && !dateIsInFuture(dueDate)) {
-            throw new Error('Invalid due date - please provide a date that is in the future')
-        } else {
-            allowedData.due_date = jsDateToSqlDate(dueDate)
-        }
+        allowedData.due_date = allowedData.dueDate
         delete allowedData.dueDate
-    }
-
-    if (Object.hasOwn(allowedData, 'state') &&
-        state !== TASK_STATE_ACTIVE &&
-        state !== TASK_STATE_COMPLETED &&
-        state !== TASK_STATE_HOLD
-    ) {
-        throw new Error('Invalid state provided')
     }
 
     if (Object.hasOwn(allowedData, 'assignee') && !await getIsValidAssignee(assignee, currentProjectColumnId)) {
@@ -218,12 +174,8 @@ async function editTaskFormatValidation(allowedData, taskId, userId) {
 }
 
 export const createChecklistEndpoint = createEndpoint(async (req) => {
-    const { taskId } = req.query
-    const { name } = req.body
-
-    if (!name) {
-        throw new Error('No name provided')
-    }
+    const { name, } = req.body
+    const { taskId } = req.params
 
     const checklistId = await createChecklist(name, taskId)
     if (!checklistId && checklistId !== 0) {
@@ -235,18 +187,14 @@ export const createChecklistEndpoint = createEndpoint(async (req) => {
 
 export const createCommentEndpoint = createEndpoint(async (req) => {
     const { id: createdBy } = req.user
-    const { text } = req.body
-    const { taskId } = req.query
-
-    if (!text) {
-        throw new Error('No text provided for comment')
-    }
+    const { text, } = req.body
+    const { taskId } = req.params
 
     const comment = await createComment(text, taskId, createdBy)
-
     if (!comment) {
         throw new Error('Failed to create comment')
     }
 
     return { message: 'Successfully created comment', comment }
 })
+

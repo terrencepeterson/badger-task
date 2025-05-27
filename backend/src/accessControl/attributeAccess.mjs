@@ -93,7 +93,7 @@ export async function getIsValidAssignee(assignee, projectColumnId) {
     const assigneeProjectColumnExistsInCache = await doesExistInCache(assignee, ACCESS_CONTROL_COLUMN_PROJECTS)
 
     if (assigneeProjectColumnExistsInCache) {
-        isValidAssignee = await getCanAccess(assignee, ACCESS_CONTROL_COLUMN_PROJECTS, projectColumnId.toString())
+        isValidAssignee = await getCanAccess(assignee, ACCESS_CONTROL_COLUMN_PROJECTS, projectColumnId)
     } else {
         const assigneeProjectAccessControl = await getProjectsAccess(assignee)
         isValidAssignee = assigneeProjectAccessControl?.columnProjects.includes(projectColumnId)
@@ -104,7 +104,8 @@ export async function getIsValidAssignee(assignee, projectColumnId) {
 
 function createAccessControlMiddleware(attributeKey, accessControlKey) {
     return async function(req, res, next) {
-        const attribute = req.params[attributeKey]
+        // come back to this, is it safe to check both, or should i hard code where the value should be coming from and pass it in as an argument?
+        const attribute = req.params[attributeKey] || req.body[attributeKey]
         if (!attribute && attribute !== 0) {
             res.error(`Please provide a ${attributeKey}`)
             return

@@ -13,7 +13,7 @@ const signupBodySchema = z.object({
     name: nameValidation,
     email: emailValidation,
     password: z.string().regex(passwordRegex, 'Invalid password - password must contain at at least 1 lowercase letter, 1 uppercase letter, 1 number and 1 symbol and be a minimum of 8 characters long'),
-    description: nullableStringValidation,
+    description: nullableStringValidation.default(null),
     imgUrl: imgUrlValidation.default(DEFAULT_DB_VALUE),
     confirmPassword: z.string()
 })
