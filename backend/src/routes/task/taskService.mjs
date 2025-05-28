@@ -190,3 +190,13 @@ export function createChecklist(name, task_id) {
 export function createComment(text, task_id, created_by) {
     return generateInsert(COMMENT_TABLE, { text, task_id, created_by })
 }
+
+export async function doesTaskIdMatchChecklist(taskId, checklistId) {
+    const doesMatch = await query(`
+        SELECT id FROM checklist
+        WHERE id = ? AND task_id = ?
+    `, [checklistId, taskId])
+
+    return !!doesMatch.length
+}
+

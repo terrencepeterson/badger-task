@@ -105,11 +105,12 @@ export async function authenticate(req, res, next) {
 }
 
 export function validate(schemas) {
-    return function(req, res, next) {
+    return async function(req, res, next) {
         for (const [key, schema] of Object.entries(schemas)) {
             try {
-                req[key] = schema.parse(req[key])
+                req[key] = await schema.parseAsync(req[key])
             } catch (err) {
+                console.log(err)
                 if (err instanceof ZodError) {
                     const invalidInputs = err.issues.map(e => e.path[0]).join(', ')
                     const errors = err.issues.map(e => `${e.path[0]}: ${e.message}`)

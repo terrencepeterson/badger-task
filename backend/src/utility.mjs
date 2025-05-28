@@ -48,7 +48,10 @@ export function createPutEndpoint(validateAndFormatData, allowedColumnKeys, tabl
             throw new Error('No data provided')
         }
 
-        allowedData = await validateAndFormatData(allowedData, updateId, req.user.id)
+        if (validateAndFormatData) { // for the more simple updates we don't need to format or validate or perform any direct inserts separately
+            allowedData = await validateAndFormatData(allowedData, updateId, req.user.id)
+        }
+
         if (!Object.keys(allowedData).length) {
             // sometimes we perform the changes in the validateAndFormat - say for the custom move rows stuff
             return successMessage

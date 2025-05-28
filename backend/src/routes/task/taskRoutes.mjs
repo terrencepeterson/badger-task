@@ -1,9 +1,9 @@
 import { Router } from "express"
 import { projectColumnAccessControl, taskAccessControl } from "../../accessControl/attributeAccess.mjs"
-import { createTaskEndpoint, taskEndpoint, updateTaskEndpoint, createChecklistEndpoint, createCommentEndpoint } from "./taskController.mjs"
+import { createTaskEndpoint, taskEndpoint, updateTaskEndpoint, createChecklistEndpoint, createCommentEndpoint, updateChecklistEndpoint } from "./taskController.mjs"
 import { authenticate, validate } from "../../middleware.mjs"
 import { createRoleAccessControl } from "../../accessControl/roleAccess.mjs"
-import { createChecklistSchema, createCommnentSchema, createTaskSchema, getTaskSchema, updateTaskSchema } from "./taskSchema.mjs"
+import { createChecklistSchema, createCommnentSchema, createTaskSchema, getTaskSchema, updateChecklistSchema, updateTaskSchema } from "./taskSchema.mjs"
 
 const router = Router()
 router.use(authenticate)
@@ -13,6 +13,7 @@ router.post('/', validate(createTaskSchema), projectColumnAccessControl, createT
 router.put('/:taskId', validate(updateTaskSchema), createRoleAccessControl, taskAccessControl, updateTaskEndpoint)
 router.post('/:taskId/checklist', validate(createChecklistSchema), createRoleAccessControl, taskAccessControl, createChecklistEndpoint)
 router.post('/:taskId/comment', validate(createCommnentSchema), taskAccessControl, createCommentEndpoint)
+router.put('/:taskId/checklist/:checklistId', validate(updateChecklistSchema), createRoleAccessControl, taskAccessControl, updateChecklistEndpoint)
 
 export default router
 

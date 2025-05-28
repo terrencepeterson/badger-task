@@ -1,5 +1,5 @@
 import { createEndpoint, dateIsInFuture, jsDateToSqlDate, formatNullableInput, createPutEndpoint } from "../../utility.mjs"
-import { TASK_TABLE, ACCESS_CONTROL_TASKS, COLUMN_PROJECT_TABLE, TASK_STATE_HOLD, TASK_STATE_COMPLETED, TASK_STATE_ACTIVE } from "../../definitions.mjs"
+import { TASK_TABLE, ACCESS_CONTROL_TASKS, COLUMN_PROJECT_TABLE, TASK_STATE_HOLD, TASK_STATE_COMPLETED, TASK_STATE_ACTIVE, CHECKLIST_TABLE } from "../../definitions.mjs"
 import { getProjectColumnRows, getUserProjectAccess } from "../project/projectService.mjs"
 import { getIsValidAssignee, addMultipleAttributeAccess } from "../../accessControl/attributeAccess.mjs"
 import { getIdByDifferentId } from "../../db.mjs"
@@ -197,4 +197,11 @@ export const createCommentEndpoint = createEndpoint(async (req) => {
 
     return { message: 'Successfully created comment', comment }
 })
+
+export const updateChecklistEndpoint = createPutEndpoint(
+    false,
+    ['state', 'name'],
+    CHECKLIST_TABLE,
+    'checklistId'
+)
 
