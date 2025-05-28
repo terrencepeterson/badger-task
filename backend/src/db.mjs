@@ -2,8 +2,6 @@ import '@dotenvx/dotenvx/config'
 import mariadb from 'mariadb'
 import {
     DEFAULT_DB_VALUE,
-    COMMENT_TABLE,
-    CHECKLIST_TABLE,
 } from '../src/definitions.mjs'
 
 export const pool = mariadb.createPool({
@@ -52,8 +50,6 @@ export async function transactionQuery(queries) {
     }
 }
 
-
-
 //const projectId = await getIdByDifferentId('project_id', COLUMN_PROJECT_TABLE, 'id', projectColumnId)
 export async function getIdByDifferentId(selectId, table, whereId, whereIdValue) {
     const id = await query(`
@@ -64,8 +60,6 @@ export async function getIdByDifferentId(selectId, table, whereId, whereIdValue)
 
     return id.length ? id[0][selectId] : null
 }
-
-// newProjectColumnId and newAgendaColumnId are bools
 
 export async function generateUpdate(tableName, config, whereColumn, whereValue) {
     // config = { name: 'New task name', description: null, etc... }
@@ -116,7 +110,6 @@ export async function generateInsert(tableName, config) {
     return resultId
 }
 
-
 export async function getColumnColumns(table, whereColumn, whereColumnParam) {
     const column = await query(`
         SELECT \`column\`
@@ -126,6 +119,19 @@ export async function getColumnColumns(table, whereColumn, whereColumnParam) {
     `, [whereColumnParam])
 
     return column.length ? column.map(c => c.column) : false
+}
+//
+// this is needed becuase when we peform access control on the endponts where we don't store their values in the cache
+// (checklist, comment, tag, etc...) we need to rely on their 'parentId' for access control, an issue here...
+// when updating a comment a user could give us a taskId they have access to and then pass a completly different comment id
+// that doesn't actually match the taskId. So we use this function to check to see if the resource ids match
+export async function doIdsMatch(table, childId, parentIdColumnName, parentId) {
+    const doesMatch = await query(`
+        SELECT id from ${table}
+        WHERE id = ? AND ${parentIdColumnName} = ?
+    `, [childId, parentId])
+
+    return !!doesMatch.length
 }
 
 process.on('SIGINT', async () => {
