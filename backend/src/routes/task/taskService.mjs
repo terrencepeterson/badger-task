@@ -175,6 +175,8 @@ export async function getEditTaskHelperColumns({ taskId, userId, newProjectColum
 
     if (details.maxRowNewProjectColumn || details.maxRowNewProjectColumn === 0) {
         details.maxRowNewProjectColumn++
+    } else if ((newProjectColumnId || newProjectColumnId === 0) && !details.maxRowNewProjectColumn) {
+        details.maxRowNewProjectColumn = 0
     }
 
     if (details.maxRowNewAgendaColumn || details.maxRowNewAgendaColumn === 0) {
