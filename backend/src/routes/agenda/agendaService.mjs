@@ -1,5 +1,6 @@
-import { query, mapTags, generateInsert, getColumnColumns } from "../../db.mjs"
+import { query, transactionQuery, mapTags, generateInsert, getColumnColumns } from "../../db.mjs"
 import { COLUMN_AGENDA_TABLE } from "../../definitions.mjs"
+const OFFSET_AMOUNT = 1000000
 
 export function getAgendaTasks(userId) {
     return query(`
@@ -142,5 +143,49 @@ export function createAgendaColumn(name, colour, column, user_id) {
 
 export function getAgendaColumnColumns(userId) {
     return getColumnColumns(COLUMN_AGENDA_TABLE, 'user_id', userId)
+}
+
+export async function getColumnByAgendaColumnId(agendaColumnId) {
+    let helperData = await query(`
+        SELECT \`column\` as currentColumn
+        FROM column_agenda
+        WHERE id = ?
+    `, [agendaColumnId])
+
+    return helperData.length ? helperData[0].currentColumn : false
+}
+
+export async function moveAgendaColumn(columnAgendaId, newColumn, biggerThan, lessThan, symbol, userId) {
+    transactionQuery(async (conn) => {
+        await conn.query(`
+            UPDATE column_agenda
+            SET \`column\` = -1
+            WHERE id = ?
+        `, [columnAgendaId, userId])
+
+        await conn.query(`
+            UPDATE column_agenda
+            SET \`column\` = \`column\` + ?
+            WHERE \`column\` > ?
+            AND \`column\` < ?
+            AND id != ?
+            AND user_id = ?
+        `, [OFFSET_AMOUNT, biggerThan, lessThan, columnAgendaId, userId])
+
+        await conn.query(`
+            UPDATE column_agenda
+            SET \`column\` = \`column\` - ?
+            WHERE \`column\` > ?
+            AND \`column\` < ?
+            AND id != ?
+            AND user_id = ?
+        `, [(symbol === '+') ? OFFSET_AMOUNT - 1 : OFFSET_AMOUNT + 1, biggerThan + OFFSET_AMOUNT, lessThan + OFFSET_AMOUNT, columnAgendaId, userId])
+
+        await conn.query(`
+            UPDATE column_agenda
+            SET \`column\` = ${newColumn}
+            WHERE id = ?
+        `, [columnAgendaId])
+    })
 }
 

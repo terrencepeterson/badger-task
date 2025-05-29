@@ -89,21 +89,82 @@
                 <button type="submit">submit</button>
             </form>
         </div>
+
+        <div>
+            <h2>Update checklist</h2>
+            <form id="update-checklist-form">
+                <div>
+                    <label for="name">Name</label>
+                    <input type="text" name="name" value="">
+                </div>
+                <div>
+                    <label for="state">state</label>
+                    <input type="text" name="state" value="">
+                </div>
+                <div>
+                    <label for="task-id">taskId</label>
+                    <input type="text" name="taskId" value="" class="task-id">
+                </div>
+                <div>
+                    <label for="checklist-id">checklistId</label>
+                    <input type="text" name="checklistId" value="" id="checklist-id" class="checklist-id">
+                </div>
+                <button type="submit">submit</button>
+            </form>
+        </div>
+
+        <div>
+            <h2>Update comment</h2>
+            <form id="update-comment-form">
+                <div>
+                    <label for="name">Text</label>
+                    <input type="text" name="text" value="">
+                </div>
+                <div>
+                    <label for="task-id">taskId</label>
+                    <input type="text" name="taskId" value="" class="task-id">
+                </div>
+                <div>
+                    <label for="comment-id">commentId</label>
+                    <input type="text" name="commentId" value="" id="comment-id" class="comment-id">
+                </div>
+                <button type="submit">submit</button>
+            </form>
+        </div>
+
+        <div>
+            <h2>Update agenda column</h2>
+            <form id="update-agenda-column-form">
+                <div>
+                    <label for="name">Name</label>
+                    <input type="text" name="name" value="" id="name">
+                </div>
+                <div>
+                    <label for="colour">colour</label>
+                    <input type="text" name="colour" value="" id="colour" class="colour">
+                </div>
+                <div>
+                    <label for="column">column</label>
+                    <input type="text" name="column" value="" id="column" class="column">
+                </div>
+                <div>
+                    <label for="agendaColumnId">agendaColumnId</label>
+                    <input type="text" name="agendaColumnId" value="" class="agenda-column-id">
+                </div>
+                <button type="submit">submit</button>
+            </form>
+        </div>
     </body>
     <script>
         const updateTaskElement = document.querySelector('#update-task')
         const taskUrl = 'http://localhost:8001/task'
         updateTaskElement.addEventListener('submit', async (e) => {
             e.preventDefault()
-            const urlParams = new URLSearchParams({
-                taskId: e.target.querySelector('#task-id')?.value
-            })
-
             let data = new FormData(e.target)
             data = Object.fromEntries(data)
             data = Object.fromEntries(Object.entries(data).filter(([key, value]) => value))
-            console.log(data)
-            const res = await fetch(`${taskUrl}?${urlParams}`, {
+            const url = `${taskUrl}/${e.target.querySelector('#task-id')?.value}`
+            const res = await fetch(url, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -119,13 +180,10 @@
         const updateOrganisationUrl = 'http://localhost:8001/organisation'
         updateOrganisationElement.addEventListener('submit', async (e) => {
             e.preventDefault()
-            const urlParams = new URLSearchParams({
-                organisationId: e.target.querySelector('#organisation-id').value
-            })
-
+            const url = `${updateOrganisationUrl}/${e.target.querySelector('#organisation-id').value}`
             let data = new FormData(e.target)
             data = Object.fromEntries(data)
-            const res = await fetch(`${updateOrganisationUrl}?${urlParams}`, {
+            const res = await fetch(`${url}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -141,14 +199,12 @@
         const updateProjectUrl = 'http://localhost:8001/project'
         updateProjectElement.addEventListener('submit', async (e) => {
             e.preventDefault()
-            const urlParams = new URLSearchParams({
-                projectId: e.target.querySelector('#project-id').value
-            })
-
+            const url = `${updateProjectUrl}/${e.target.querySelector('#project-id').value}`
             let data = new FormData(e.target)
             data = Object.fromEntries(data)
             data = Object.fromEntries(Object.entries(data).filter(([key, value]) => value))
-            const res = await fetch(`${updateProjectUrl}?${urlParams}`, {
+            console.log(data)
+            const res = await fetch(url, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -159,5 +215,52 @@
             const resData = await res.json()
             console.log(resData)
         })
+
+        const BASE_URL = 'http://localhost:8001/'
+        function addPutListener(formSelector, idSelectors, paramsUrl) {
+            const form = document.querySelector(formSelector)
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault()
+                let url = paramsUrl
+
+                Object.entries(idSelectors).forEach(([key, selector]) => {
+                    const value = e.target.querySelector(selector).value
+                    url = url.replace(`$${key}`, value)
+                })
+                console.log(url)
+
+                let data = new FormData(e.target)
+                data = Object.fromEntries(data)
+                data = Object.fromEntries(Object.entries(data).filter(([key, value]) => value))
+                const res = await fetch(`${BASE_URL}${url}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(data),
+                    credentials: 'include'
+                })
+                const resData = await res.json()
+                console.log(resData)
+            })
+        }
+
+        addPutListener(
+            '#update-checklist-form',
+            { taskId: '.task-id', checklistId: '.checklist-id'},
+            'task/$taskId/checklist/$checklistId'
+        )
+
+        addPutListener(
+            '#update-comment-form',
+            { taskId: '.task-id', commentId: '.comment-id'},
+            'task/$taskId/comment/$commentId'
+        )
+
+        addPutListener(
+            '#update-agenda-column-form',
+            { agendaColumnId: '.agenda-column-id'},
+            'agenda/column/$agendaColumnId'
+        )
     </script>
 </html>

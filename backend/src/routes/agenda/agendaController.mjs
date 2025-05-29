@@ -1,7 +1,8 @@
-import { createEndpoint } from "../../utility.mjs"
+import { createEndpoint, createPutEndpoint } from "../../utility.mjs"
 import { addAttributeAccess } from "../../accessControl/attributeAccess.mjs"
-import { ACCESS_CONTROL_COLUMN_AGENDA } from "../../definitions.mjs"
-import isHexColor from 'validator/lib/isHexColor.js'
+import { ACCESS_CONTROL_COLUMN_AGENDA, COLUMN_AGENDA_TABLE } from "../../definitions.mjs"
+import { getColumnByAgendaColumnId, moveAgendaColumn } from "./agendaService.mjs"
+
 import {
     getAgendaTags,
     getAgendaTasks,
@@ -56,4 +57,37 @@ export const createAgendaColumnEndpoint = createEndpoint(async (req) => {
 
     return { message: 'Successfully created agenda column', agendaColumnId }
 })
+
+export const updateAgendaColumnEndpoint = createPutEndpoint(
+    updateAgendaColumnFormat,
+    ['name', 'colour', 'column'],
+    COLUMN_AGENDA_TABLE,
+    'agendaColumnId'
+)
+
+async function updateAgendaColumnFormat(allowedData, columnAgendaId, userId) {
+    const { column: newColumn } = allowedData
+
+    if (Object.hasOwn(allowedData, 'column')) {
+        let currentColumn = await getColumnByAgendaColumnId(columnAgendaId)
+
+        if (!currentColumn && currentColumn !== 0) {
+            throw new Error('Unable to update agenda column')
+        }
+
+        if (currentColumn === newColumn) {
+            throw new Error('Please provide a new value for column')
+        }
+
+        if (newColumn < currentColumn) {
+            await moveAgendaColumn(columnAgendaId, newColumn, newColumn - 1, currentColumn, '+', userId)
+        } else {
+            await moveAgendaColumn(columnAgendaId, newColumn, currentColumn, newColumn + 1, '-', userId)
+        }
+
+        delete allowedData.column
+    }
+
+    return allowedData
+}
 
