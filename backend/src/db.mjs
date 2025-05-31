@@ -126,8 +126,11 @@ export async function deleteRow(table, id) {
     const hasDeleted = await query(`
         DELETE FROM ${pool.escapeId(table)} WHERE id = ?
     `, [id])
+    if (!hasDeleted || hasDeleted.affectedRows !== 1 || hasDeleted.warningStatus !== 0) {
+        throw new Error('Failed to delete row')
+    }
 
-    console.log(hasDeleted)
+    return true
 }
 
 export async function getColumnColumns(table, whereColumn, whereColumnParam) {

@@ -1,6 +1,6 @@
 import { z } from "zod/v4"
 import { DEFAULT_DB_VALUE } from "./definitions.mjs"
-import { generateUpdate, doIdsMatch } from "./db.mjs"
+import { generateUpdate, doIdsMatch, deleteRow } from "./db.mjs"
 import { idValidation } from "./validation.mjs"
 
 // creates an async wrapper around an endpoint
@@ -63,6 +63,12 @@ export function createPutEndpoint(validateAndFormatData, allowedColumnKeys, tabl
         }
 
         return successMessage
+    })
+}
+
+export function createDeleteEndpoint(table, idKey) {
+    return createEndpoint((req) => {
+        return deleteRow(table, req.params[idKey])
     })
 }
 

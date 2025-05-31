@@ -11,13 +11,15 @@ import {
     createProjectColumnEndpoint,
     createTagEndpoint,
     updateProjectColumnEndpoint,
-    updateTagEndpoint
+    updateTagEndpoint,
+    deleteTagEndpoint
 } from "./projectController.mjs"
 
 import {
     createProjectColumnSchema,
     createProjectSchema,
     createTagSchema,
+    deleteTagSchema,
     getProjectColumnSchema,
     getProjectSchema,
     updateProjectColumnSchema,
@@ -33,9 +35,10 @@ router.post('/', validate(createProjectSchema), createRoleAccessControl, createP
 router.put('/:projectId', validate(updateProjectSchema), adminRoleAccessControl, projectAccessControl, updateProjectEndpoint)
 router.get('/:projectId/column/:projectColumnId', validate(getProjectColumnSchema), projectColumnAccessControl, getProjectColumnEndpoint)
 router.post('/:projectId/column', validate(createProjectColumnSchema), createRoleAccessControl, projectAccessControl, createProjectColumnEndpoint)
-router.post('/:projectId/tag', validate(createTagSchema) , createRoleAccessControl, projectAccessControl, createTagEndpoint)
 router.put('/:projectId/column/:projectColumnId', validate(updateProjectColumnSchema), projectColumnAccessControl, updateProjectColumnEndpoint)
+router.post('/:projectId/tag', validate(createTagSchema) , createRoleAccessControl, projectAccessControl, createTagEndpoint)
 router.put('/:projectId/tag/:tagId', validate(updateTagSchema), createRoleAccessControl, projectAccessControl, updateTagEndpoint)
+router.delete('/:projectId/tag/:tagId', validate(deleteTagSchema), createRoleAccessControl, projectAccessControl, deleteTagEndpoint)
 
 export default router
 

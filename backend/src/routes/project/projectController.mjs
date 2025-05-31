@@ -1,4 +1,4 @@
-import { createEndpoint, createPutEndpoint } from "../../utility.mjs"
+import { createDeleteEndpoint, createEndpoint, createPutEndpoint } from "../../utility.mjs"
 import {
     getProjectTasks,
     getProjectColumnsByProjectId,
@@ -182,4 +182,6 @@ export const updateTagEndpoint = createPutEndpoint(
     TAG_TABLE,
     'tagId'
 )
+
+export const deleteTagEndpoint = createDeleteEndpoint(TAG_TABLE, 'tagId')
 
