@@ -233,4 +233,5 @@ function updateCommentFormat(allowedData) {
 }
 
 export const deleteCommentEndpoint = createDeleteEndpoint(COMMENT_TABLE, 'commentId')
+export const deleteChecklistEndpoint = createDeleteEndpoint(CHECKLIST_TABLE, 'checklistId')
 

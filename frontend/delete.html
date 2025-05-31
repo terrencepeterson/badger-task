@@ -9,9 +9,45 @@
     <body>
         <div>
             <div>
-                <h2>Delete Agenda Column</h2>
-                <button type="button" id="delete-agenda-column">Delete</button>
-                <input type="number" name="" value="" id="agendaColumnId">
+                <h2>delete agenda column</h2>
+                <button type="button" id="delete-agenda-column">delete</button>
+                <input type="number" name="" value="" id="agendacolumnid">
+            </div>
+            <div>
+                <h2>delete tag</h2>
+                <button type="button" id="delete-tag">delete</button>
+                <div>
+                    <label for="tagid">tagid</label>
+                    <input type="number" name="" value="" id="tagid">
+                </div>
+                <div>
+                    <label for="projectid">projectid</label>
+                    <input type="number" name="" value="" id="projectid">
+                </div>
+            </div>
+            <div>
+                <h2>delete comment</h2>
+                <button type="button" id="delete-comment">delete</button>
+                <div>
+                    <label for="commentid">commentid</label>
+                    <input type="number" name="" value="" id="commentid">
+                </div>
+                <div>
+                    <label for="taskid">taskid</label>
+                    <input type="number" name="" value="" id="taskid">
+                </div>
+            </div>
+            <div>
+                <h2>delete checklist</h2>
+                <button type="button" id="delete-checklist">delete</button>
+                <div>
+                    <label for="checklistId">checklistId</label>
+                    <input type="number" name="" value="" id="checklistId">
+                </div>
+                <div>
+                    <label for="taskId">taskId</label>
+                    <input type="number" name="" value="" id="taskId">
+                </div>
             </div>
         </div>
     </body>
@@ -25,7 +61,7 @@
                 for (const [param, selector] of Object.entries(pathConfig)) {
                     const id = e.target.parentNode.querySelector(selector)?.value
                     if (!id && id !== 0) {
-                        console.log('no id')
+                        console.log(`no id for ${param}`)
                         return
                     }
                     url = url.replace(`$${param}`, id)
@@ -40,5 +76,9 @@
         }
 
         createDelete('#delete-agenda-column', { agendaColumnId: '#agendaColumnId' }, 'agenda/column/$agendaColumnId')
+        createDelete('#delete-tag', { tagId: '#tagId', projectId: '#projectId' }, 'project/$projectId/tag/$tagId')
+        createDelete('#delete-comment', { commentId: '#commentId', taskId: '#taskId' }, 'task/$taskId/comment/$commentId')
+        createDelete('#delete-checklist', { checklistId: '#checklistId', taskId: '#taskId' }, 'task/$taskId/checklist/$checklistId')
     </script>
 </html>
+

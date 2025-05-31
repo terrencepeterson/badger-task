@@ -7,7 +7,7 @@ const taskIdParamSchema = createIdSchema('taskId')
 const dueDateValidation = z.union([z.iso.datetime().refine((val) => dateIsInFuture(val), { error: 'Invalid date - date must be in the future' }).transform(val => jsDateToSqlDate(val)), z.null()])
 
 const validateChecklistParamIds = createValidateParamIds(CHECKLIST_TABLE, 'checklistId', 'task_id', 'taskId')
-const updateChecklistParamSchema = createIdSchema(['taskId', 'checklistId']).check(validateChecklistParamIds)
+const checklistParamSchema = createIdSchema(['taskId', 'checklistId']).check(validateChecklistParamIds)
 
 const validateCommentParamIds = createValidateParamIds(COMMENT_TABLE, 'commentId', 'task_id', 'taskId')
 const commentParamSchema = createIdSchema(['taskId', 'commentId']).check(validateCommentParamIds)
@@ -54,7 +54,8 @@ export const createTaskSchema = { body: createTaskBodySchema }
 export const updateTaskSchema = { params: taskIdParamSchema, body: updateTaskBodySchema }
 export const createChecklistSchema = { params: taskIdParamSchema, body: createChecklistBodySchema }
 export const createCommnentSchema = { params: taskIdParamSchema, body: createCommentBodySchema }
-export const updateChecklistSchema = { params: updateChecklistParamSchema, body: updateChecklistBodySchema }
+export const updateChecklistSchema = { params: checklistParamSchema, body: updateChecklistBodySchema }
 export const updateCommentSchema = { params: commentParamSchema, body: updateCommentBodySchema }
 export const deleteCommentSchema = { params: commentParamSchema }
+export const deleteChecklistSchema = { params: checklistParamSchema }
 
