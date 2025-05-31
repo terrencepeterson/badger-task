@@ -10,7 +10,7 @@ const validateChecklistParamIds = createValidateParamIds(CHECKLIST_TABLE, 'check
 const updateChecklistParamSchema = createIdSchema(['taskId', 'checklistId']).check(validateChecklistParamIds)
 
 const validateCommentParamIds = createValidateParamIds(COMMENT_TABLE, 'commentId', 'task_id', 'taskId')
-const updateCommentParamSchema = createIdSchema(['taskId', 'commentId']).check(validateCommentParamIds)
+const commentParamSchema = createIdSchema(['taskId', 'commentId']).check(validateCommentParamIds)
 
 const createTaskBodySchema = z.object({
     name: nameValidation,
@@ -55,5 +55,6 @@ export const updateTaskSchema = { params: taskIdParamSchema, body: updateTaskBod
 export const createChecklistSchema = { params: taskIdParamSchema, body: createChecklistBodySchema }
 export const createCommnentSchema = { params: taskIdParamSchema, body: createCommentBodySchema }
 export const updateChecklistSchema = { params: updateChecklistParamSchema, body: updateChecklistBodySchema }
-export const updateCommentSchema = { params: updateCommentParamSchema, body: updateCommentBodySchema }
+export const updateCommentSchema = { params: commentParamSchema, body: updateCommentBodySchema }
+export const deleteCommentSchema = { params: commentParamSchema }
 

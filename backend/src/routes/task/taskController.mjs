@@ -1,4 +1,4 @@
-import { createEndpoint, dateIsInFuture, jsDateToSqlDate, formatNullableInput, createPutEndpoint } from "../../utility.mjs"
+import { createEndpoint, dateIsInFuture, jsDateToSqlDate, formatNullableInput, createPutEndpoint, createDeleteEndpoint } from "../../utility.mjs"
 import { TASK_TABLE, ACCESS_CONTROL_TASKS, COLUMN_PROJECT_TABLE, TASK_STATE_HOLD, TASK_STATE_COMPLETED, TASK_STATE_ACTIVE, CHECKLIST_TABLE, COMMENT_TABLE, TASK_COLUMN_AGENDA_TABLE } from "../../definitions.mjs"
 import { getProjectColumnRows, getUserProjectAccess } from "../project/projectService.mjs"
 import { getIsValidAssignee, addMultipleAttributeAccess } from "../../accessControl/attributeAccess.mjs"
@@ -231,4 +231,6 @@ function updateCommentFormat(allowedData) {
 
     return allowedData
 }
+
+export const deleteCommentEndpoint = createDeleteEndpoint(COMMENT_TABLE, 'commentId')
 
