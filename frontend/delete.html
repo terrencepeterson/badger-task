@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title></title>
+        <link href="css/style.css" rel="stylesheet">
+    </head>
+    <body>
+        <div>
+            <div>
+                <h2>Delete Agenda Column</h2>
+                <button type="button" id="delete-agenda-column">Delete</button>
+                <input type="number" name="" value="" id="agendaColumnId">
+            </div>
+        </div>
+    </body>
+    <script>
+        const BASE_URL = 'http://localhost:8001/'
+        function createDelete(btnSelector, pathConfig, deleteUrlPath) {
+            const buttonElement = document.querySelector(btnSelector)
+
+            buttonElement.addEventListener('click', async (e) => {
+                let url = `${BASE_URL}${deleteUrlPath}`
+                for (const [param, selector] of Object.entries(pathConfig)) {
+                    const id = e.target.parentNode.querySelector(selector)?.value
+                    if (!id && id !== 0) {
+                        console.log('no id')
+                        return
+                    }
+                    url = url.replace(`$${param}`, id)
+                }
+                const res = await fetch(url, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                })
+                const parseRes = await res.json()
+                console.log(parseRes)
+            })
+        }
+
+        createDelete('#delete-agenda-column', { agendaColumnId: '#agendaColumnId' }, 'agenda/column/$agendaColumnId')
+    </script>
+</html>

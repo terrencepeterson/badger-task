@@ -1,7 +1,7 @@
-import { createEndpoint, createPutEndpoint } from "../../utility.mjs"
-import { addAttributeAccess } from "../../accessControl/attributeAccess.mjs"
+import { createDeleteEndpoint, createEndpoint, createPutEndpoint } from "../../utility.mjs"
+import { addAttributeAccess, removeMultipleAttributeAccess } from "../../accessControl/attributeAccess.mjs"
 import { ACCESS_CONTROL_COLUMN_AGENDA, COLUMN_AGENDA_TABLE } from "../../definitions.mjs"
-import { getColumnByAgendaColumnId, moveAgendaColumn } from "./agendaService.mjs"
+import { deleteAgendaColumn, getColumnByAgendaColumnId, moveAgendaColumn } from "./agendaService.mjs"
 
 import {
     getAgendaTags,
@@ -90,4 +90,14 @@ async function updateAgendaColumnFormat(allowedData, columnAgendaId, userId) {
 
     return allowedData
 }
+
+// export const deleteAgendaColumnEndpoint = createDeleteEndpoint(COLUMN_AGENDA_TABLE, 'agendaColumnId')
+export const deleteAgendaColumnEndpoint = createEndpoint(async (req) => {
+    const { id: userId } = req.user
+    const { agendaColumnId } = req.params
+    await deleteAgendaColumn(userId, agendaColumnId)
+    await removeMultipleAttributeAccess([userId], ACCESS_CONTROL_COLUMN_AGENDA, agendaColumnId)
+
+    return 'Successfully deleted agenda column'
+})
 

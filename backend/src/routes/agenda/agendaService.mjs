@@ -155,37 +155,74 @@ export async function getColumnByAgendaColumnId(agendaColumnId) {
     return helperData.length ? helperData[0].currentColumn : false
 }
 
-export async function moveAgendaColumn(columnAgendaId, newColumn, biggerThan, lessThan, symbol, userId) {
-    transactionQuery(async (conn) => {
-        await conn.query(`
+export function moveAgendaColumn(columnAgendaId, newColumn, biggerThan, lessThan, symbol, userId) {
+    return transactionQuery(async (conn) => {
+        let hasMoved = await conn.query(`
             UPDATE column_agenda
             SET \`column\` = -1
             WHERE id = ?
         `, [columnAgendaId, userId])
+        if (hasMoved.affectedRows !== 1 || hasMoved.warningStatus !== 0) {
+            throw new Error('Failed to move agenda column')
+        }
 
-        await conn.query(`
-            UPDATE column_agenda
-            SET \`column\` = \`column\` + ?
-            WHERE \`column\` > ?
-            AND \`column\` < ?
-            AND id != ?
-            AND user_id = ?
-        `, [OFFSET_AMOUNT, biggerThan, lessThan, columnAgendaId, userId])
+        await moveColumnsInRange(conn, biggerThan, lessThan, columnAgendaId, userId, symbol)
 
-        await conn.query(`
-            UPDATE column_agenda
-            SET \`column\` = \`column\` - ?
-            WHERE \`column\` > ?
-            AND \`column\` < ?
-            AND id != ?
-            AND user_id = ?
-        `, [(symbol === '+') ? OFFSET_AMOUNT - 1 : OFFSET_AMOUNT + 1, biggerThan + OFFSET_AMOUNT, lessThan + OFFSET_AMOUNT, columnAgendaId, userId])
-
-        await conn.query(`
+        hasMoved = await conn.query(`
             UPDATE column_agenda
             SET \`column\` = ${newColumn}
             WHERE id = ?
         `, [columnAgendaId])
+        if (hasMoved.affectedRows !== 1 || hasMoved.warningStatus !== 0) {
+            throw new Error('Failed to move agenda column')
+        }
+
+        return true
+    })
+}
+
+async function moveColumnsInRange(conn, biggerThan, lessThan, columnAgendaId, userId, symbol) {
+    await conn.query(`
+        UPDATE column_agenda
+        SET \`column\` = \`column\` + ?
+        WHERE \`column\` > ?
+        AND \`column\` < ?
+        AND id != ?
+        AND user_id = ?
+    `, [OFFSET_AMOUNT, biggerThan, lessThan, columnAgendaId, userId])
+
+    await conn.query(`
+        UPDATE column_agenda
+        SET \`column\` = \`column\` - ?
+        WHERE \`column\` > ?
+        AND \`column\` < ?
+        AND id != ?
+        AND user_id = ?
+    `, [(symbol === '+') ? OFFSET_AMOUNT - 1 : OFFSET_AMOUNT + 1, biggerThan + OFFSET_AMOUNT, lessThan + OFFSET_AMOUNT, columnAgendaId, userId])
+}
+
+export async function deleteAgendaColumn(userId, columnAgendaId) {
+    transactionQuery(async (conn) => {
+        const helperData = await conn.query(`
+            SELECT
+                \`column\`,
+                (SELECT MAX(\`column\`) FROM column_agenda WHERE user_id = ?) as maxColumn
+            FROM column_agenda
+            WHERE id = ?
+        `, [userId, columnAgendaId])
+        if (!helperData.length) {
+            throw new Error('Agenda column with that id not found')
+        }
+        const { column, maxColumn } = helperData[0]
+
+        const hasDeleted = await conn.query(`DELETE from column_agenda WHERE id = ?`, [columnAgendaId])
+        if (hasDeleted.affectedRows !== 1 || hasDeleted.warningStatus !== 0) {
+            throw new Error('Failed to delete agenda column from DB')
+        }
+
+        if (column !== maxColumn) {
+            await moveColumnsInRange(conn, column, maxColumn + 1, columnAgendaId, userId, '-')
+        }
     })
 }
 

@@ -19,4 +19,5 @@ const updateAgendaColumnBodySchema = z.object({
 export const getAgendaColumnSchema = { params: agendaColumnParamSchema, query: agendaColumnQuerySchema }
 export const createAgendaColumnSchema = { body: createAgendaColumnBodySchema }
 export const updateAgendaColumnSchema = { params: agendaColumnParamSchema, body: updateAgendaColumnBodySchema }
+export const deleteAgendaColumnSchema = { params: agendaColumnParamSchema }
 

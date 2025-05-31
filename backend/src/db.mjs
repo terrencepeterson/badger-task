@@ -43,8 +43,8 @@ export async function transactionQuery(queries) {
         await queries(conn)
         await conn.commit()
     } catch (err) {
-        console.log(err)
         if (conn) conn.rollback()
+        throw err
     } finally {
         if (conn) conn.release()
     }
@@ -108,6 +108,14 @@ export async function generateInsert(tableName, config) {
     }
 
     return resultId
+}
+
+export async function deleteRow(table, id) {
+    const hasDeleted = await query(`
+        DELETE FROM ${pool.escapeId(table)} WHERE id = ?
+    `, [id])
+
+    console.log(hasDeleted)
 }
 
 export async function getColumnColumns(table, whereColumn, whereColumnParam) {

@@ -1,5 +1,5 @@
 import { createEndpoint, dateIsInFuture, jsDateToSqlDate, formatNullableInput, createPutEndpoint } from "../../utility.mjs"
-import { TASK_TABLE, ACCESS_CONTROL_TASKS, COLUMN_PROJECT_TABLE, TASK_STATE_HOLD, TASK_STATE_COMPLETED, TASK_STATE_ACTIVE, CHECKLIST_TABLE, COMMENT_TABLE } from "../../definitions.mjs"
+import { TASK_TABLE, ACCESS_CONTROL_TASKS, COLUMN_PROJECT_TABLE, TASK_STATE_HOLD, TASK_STATE_COMPLETED, TASK_STATE_ACTIVE, CHECKLIST_TABLE, COMMENT_TABLE, TASK_COLUMN_AGENDA_TABLE } from "../../definitions.mjs"
 import { getProjectColumnRows, getUserProjectAccess } from "../project/projectService.mjs"
 import { getIsValidAssignee, addMultipleAttributeAccess } from "../../accessControl/attributeAccess.mjs"
 import { getIdByDifferentId } from "../../db.mjs"
@@ -83,6 +83,20 @@ async function updateTaskFormatValidation(allowedData, taskId, userId) {
         maxRowCurrentAgendaColumn,
         maxRowNewAgendaColumn
     } = await getEditTaskHelperColumns({ taskId, userId, newProjectColumnId, newAgendaColumnId })
+    console.log(
+        {
+            currentProjectColumnId,
+            currentProjectRow,
+            currentAgendaColumnId,
+            currentAgendaRow,
+            maxRowCurrentProjectColumn,
+            maxRowNewProjectColumn,
+            validProjectColumnIds,
+            validAgendaColumnIds,
+            maxRowCurrentAgendaColumn,
+            maxRowNewAgendaColumn
+        }
+    )
 
     const isValidRow = (row, highestRow) => {
         if (isNaN(row) || row.trim && row.trim() === '') {
