@@ -1,7 +1,7 @@
 import { createEndpoint, createPutEndpoint } from "../../utility.mjs"
 import { addAttributeAccess, removeMultipleAttributeAccess } from "../../accessControl/attributeAccess.mjs"
 import { ACCESS_CONTROL_COLUMN_AGENDA, COLUMN_AGENDA_TABLE } from "../../definitions.mjs"
-import { deleteAgendaColumn, getColumnByAgendaColumnId } from "./agendaService.mjs"
+import { deleteAgendaColumn, getMoveAgendaColumHelperData } from "./agendaService.mjs"
 
 import {
     getAgendaTags,
@@ -70,10 +70,14 @@ async function updateAgendaColumnFormat(allowedData, columnAgendaId, userId) {
     const { column: newColumn } = allowedData
 
     if (Object.hasOwn(allowedData, 'column')) {
-        let currentColumn = await getColumnByAgendaColumnId(columnAgendaId)
+        let { currentColumn, maxColumn } = await getMoveAgendaColumHelperData(userId, columnAgendaId)
 
         if (!currentColumn && currentColumn !== 0) {
             throw new Error('Unable to update agenda column')
+        }
+
+        if (newColumn > maxColumn) {
+            throw new Error(`New column is out of range (0 - ${maxColumn}) - please provide a column within the given range`)
         }
 
         if (currentColumn === newColumn) {

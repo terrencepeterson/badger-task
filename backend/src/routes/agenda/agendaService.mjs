@@ -144,14 +144,15 @@ export function getAgendaColumnColumns(userId) {
     return getColumnColumns(COLUMN_AGENDA_TABLE, 'user_id', userId)
 }
 
-export async function getColumnByAgendaColumnId(agendaColumnId) {
+export async function getMoveAgendaColumHelperData(userId, agendaColumnId) {
     let helperData = await query(`
-        SELECT \`column\` as currentColumn
+        SELECT \`column\` as currentColumn,
+        (SELECT MAX(\`column\`) FROM column_agenda WHERE user_id = ?) as maxColumn
         FROM column_agenda
         WHERE id = ?
-    `, [agendaColumnId])
+    `, [userId, agendaColumnId])
 
-    return helperData.length ? helperData[0].currentColumn : false
+    return helperData.length ? helperData[0] : false
 }
 
 export async function deleteAgendaColumn(userId, columnAgendaId) {
