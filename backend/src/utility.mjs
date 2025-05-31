@@ -1,6 +1,6 @@
 import { z } from "zod/v4"
 import { DEFAULT_DB_VALUE } from "./definitions.mjs"
-import { generateUpdate } from "./db.mjs"
+import { generateUpdate, doIdsMatch } from "./db.mjs"
 import { idValidation } from "./validation.mjs"
 
 // creates an async wrapper around an endpoint
@@ -103,5 +103,18 @@ export function createIdSchema(paramNames) {
 
     const zConfigObject = Object.fromEntries(paramNames.map(paramName => [paramName, idValidation]))
     return z.object(zConfigObject)
+}
+
+export function createValidateParamIds(table, childIdParamName, parentIdColumnName, parentIdParamName) {
+    return async function(ctx) {
+        if (!await doIdsMatch(table, ctx.value[childIdParamName], parentIdColumnName, ctx.value[parentIdParamName])) {
+            ctx.issues.push({
+                code: 'custom',
+                message: `Invalid ${childIdParamName} or ${parentIdParamName} - make sure they\'re correct`,
+                input: ctx.value,
+                path: [`${childIdParamName} & ${parentIdParamName}`]
+            })
+        }
+    }
 }
 

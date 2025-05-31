@@ -18,7 +18,7 @@ import {
     getMoveProjectColumnHelperData
 } from "./projectService.mjs"
 import { getOrganisationIdByUserId, getAllUsersFromOrganisation } from "../organisation/organisationService.mjs"
-import { ROLE_ADMIN, ACCESS_CONTROL_PROJECTS, PROJECT_TABLE, VALID_PROJECT_COLUMN_ICONS, ACCESS_CONTROL_COLUMN_PROJECTS, COLUMN_PROJECT_TABLE } from "../../definitions.mjs"
+import { ROLE_ADMIN, ACCESS_CONTROL_PROJECTS, PROJECT_TABLE, VALID_PROJECT_COLUMN_ICONS, ACCESS_CONTROL_COLUMN_PROJECTS, COLUMN_PROJECT_TABLE, TAG_TABLE } from "../../definitions.mjs"
 import { addMultipleAttributeAccess, removeMultipleAttributeAccess } from "../../accessControl/attributeAccess.mjs"
 import { moveColumn } from "../../db.mjs"
 
@@ -175,4 +175,11 @@ async function updateProjectColumnFormat(allowedData, projectColumnId, userId, r
     allowedData = {}
     return allowedData
 }
+
+export const updateTagEndpoint = createPutEndpoint(
+    false,
+    ['name', 'colour'],
+    TAG_TABLE,
+    'tagId'
+)
 

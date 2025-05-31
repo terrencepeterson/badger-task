@@ -1,42 +1,16 @@
 import { z } from "zod/v4"
-import { createIdSchema, dateIsInFuture, jsDateToSqlDate } from "../../utility.mjs"
+import { createIdSchema, dateIsInFuture, jsDateToSqlDate, createValidateParamIds } from "../../utility.mjs"
 import { idValidation, nameValidation, nullableIdValidation, nullableStringValidation } from "../../validation.mjs"
 import { TASK_STATE_HOLD, TASK_STATE_ACTIVE, TASK_STATE_COMPLETED, CHECKLIST_STATES, CHECKLIST_TABLE, COMMENT_TABLE } from "../../definitions.mjs"
-import { doIdsMatch } from "../../db.mjs"
 
 const taskIdParamSchema = createIdSchema('taskId')
 const dueDateValidation = z.union([z.iso.datetime().refine((val) => dateIsInFuture(val), { error: 'Invalid date - date must be in the future' }).transform(val => jsDateToSqlDate(val)), z.null()])
 
-const updateChecklistParamSchema = z.object({
-    taskId: idValidation,
-    checklistId: idValidation
-}).check(async (ctx) => {
-    const { taskId, checklistId } = ctx.value
-    console.log(ctx.value)
-    if (!await doIdsMatch(CHECKLIST_TABLE, checklistId, 'task_id', taskId)) {
-        ctx.issues.push({
-            code: 'custom',
-            message: 'Invalid taskId or checklistId - make sure they\'re correct',
-            input: ctx.value,
-            path: ['taskId & checklistId']
-        })
-    }
-})
+const validateChecklistParamIds = createValidateParamIds(CHECKLIST_TABLE, 'checklistId', 'task_id', 'taskId')
+const updateChecklistParamSchema = createIdSchema(['taskId', 'checklistId']).check(validateChecklistParamIds)
 
-const updateCommentParamSchema = z.object({
-    taskId: idValidation,
-    commentId: idValidation
-}).check(async (ctx) => {
-    const { taskId, commentId } = ctx.value
-    if (!await doIdsMatch(COMMENT_TABLE, commentId, 'task_id', taskId)) {
-        ctx.issues.push({
-            code: 'custom',
-            message: 'Invalid taskId or commentId - make sure they\'re correct',
-            input: ctx.value,
-            path: ['taskId & commentId']
-        })
-    }
-})
+const validateCommentParamIds = createValidateParamIds(COMMENT_TABLE, 'commentId', 'task_id', 'taskId')
+const updateCommentParamSchema = createIdSchema(['taskId', 'commentId']).check(validateCommentParamIds)
 
 const createTaskBodySchema = z.object({
     name: nameValidation,
