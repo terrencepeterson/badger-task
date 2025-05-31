@@ -1,7 +1,7 @@
 import { z } from "zod/v4"
 import { DEFAULT_DB_VALUE, VALID_PROJECT_COLUMN_ICONS } from "../../definitions.mjs"
 import { createIdSchema } from "../../utility.mjs"
-import { hexColourValidation, nameValidation, imgUrlValidation, nullableStringValidation } from "../../validation.mjs"
+import { hexColourValidation, nameValidation, imgUrlValidation, nullableStringValidation, idValidation } from "../../validation.mjs"
 
 const projectParamSchema = createIdSchema('projectId')
 const projectColumnParamSchema = createIdSchema(['projectId', 'projectColumnId'])
@@ -33,10 +33,18 @@ const createTagBodySchema = z.object({
     colour: hexColourValidation
 })
 
+const updateProjectColumnBodySchema = z.object({
+    name: nameValidation.optional(),
+    icon: projectColumnIconsValidation.optional(),
+    colour: hexColourValidation.optional(),
+    column: idValidation.optional()
+})
+
 export const createProjectSchema = { body: createProjectBodySchema }
 export const updateProjectSchema = { params: projectParamSchema, body: updateProjectBodySchema }
 export const getProjectSchema = { params: projectParamSchema}
 export const getProjectColumnSchema = { params: projectColumnParamSchema }
 export const createProjectColumnSchema = { params: projectParamSchema, body: createProjectColumnBodySchema }
 export const createTagSchema = { params: projectParamSchema, body: createTagBodySchema }
+export const updateProjectColumnSchema = { params: projectColumnParamSchema, body: updateProjectColumnBodySchema }
 

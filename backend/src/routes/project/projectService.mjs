@@ -342,3 +342,18 @@ export function createTag(name, colour, project_id) {
     return generateInsert(TAG_TABLE, { name, colour, project_id })
 }
 
+export async function getMoveProjectColumnHelperData(projectId, projectColumnId) {
+    const helperData = await query(`
+            SELECT
+                \`column\` as currentColumn,
+                (SELECT MAX(\`column\`) FROM column_project WHERE project_id = ?) as maxColumn
+            FROM column_project
+            WHERE id = ?;
+    `, [projectId, projectColumnId])
+    if (!helperData.length) {
+        throw new Error('Invalid project column')
+    }
+
+    return helperData[0]
+}
+

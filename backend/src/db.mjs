@@ -1,8 +1,20 @@
 import '@dotenvx/dotenvx/config'
 import mariadb from 'mariadb'
 import {
+    COLUMN_AGENDA_TABLE,
+    COLUMN_PROJECT_TABLE,
     DEFAULT_DB_VALUE,
 } from '../src/definitions.mjs'
+const OFFSET_AMOUNT = 1000000
+
+const columnKeys = {
+    [COLUMN_AGENDA_TABLE]: {
+        columnFilterName: 'user_id'
+    },
+    [COLUMN_PROJECT_TABLE]: {
+        columnFilterName: 'project_id'
+    }
+}
 
 export const pool = mariadb.createPool({
     host: 'db',
@@ -128,7 +140,7 @@ export async function getColumnColumns(table, whereColumn, whereColumnParam) {
 
     return column.length ? column.map(c => c.column) : false
 }
-//
+
 // this is needed becuase when we peform access control on the endponts where we don't store their values in the cache
 // (checklist, comment, tag, etc...) we need to rely on their 'parentId' for access control, an issue here...
 // when updating a comment a user could give us a taskId they have access to and then pass a completly different comment id
@@ -140,6 +152,53 @@ export async function doIdsMatch(table, childId, parentIdColumnName, parentId) {
     `, [childId, parentId])
 
     return !!doesMatch.length
+}
+
+export function moveColumn(columnId, newColumn, biggerThan, lessThan, symbol, columnFilter, table) {
+    return transactionQuery(async (conn) => {
+        let hasMoved = await conn.query(`
+            UPDATE ${table}
+            SET \`column\` = -1
+            WHERE id = ?
+        `, [columnId])
+        if (hasMoved.affectedRows !== 1 || hasMoved.warningStatus !== 0) {
+            throw new Error('Failed to move column')
+        }
+
+        await moveColumnsInRange(conn, biggerThan, lessThan, columnId, columnFilter, symbol, table)
+
+        hasMoved = await conn.query(`
+            UPDATE ${table}
+            SET \`column\` = ?
+            WHERE id = ?
+        `, [newColumn, columnId])
+        if (hasMoved.affectedRows !== 1 || hasMoved.warningStatus !== 0) {
+            throw new Error('Failed to move column')
+        }
+
+        return true
+    })
+}
+
+async function moveColumnsInRange(conn, biggerThan, lessThan, columnId, columnFilter, symbol, table) {
+    const { columnFilterName } = columnKeys[table]
+    await conn.query(`
+        UPDATE ${table}
+        SET \`column\` = \`column\` + ?
+        WHERE \`column\` > ?
+        AND \`column\` < ?
+        AND id != ?
+        AND ${columnFilterName} = ?
+    `, [OFFSET_AMOUNT, biggerThan, lessThan, columnId, columnFilter])
+
+    await conn.query(`
+        UPDATE ${table}
+        SET \`column\` = \`column\` - ?
+        WHERE \`column\` > ?
+        AND \`column\` < ?
+        AND id != ?
+        AND ${columnFilterName} = ?
+    `, [(symbol === '+') ? OFFSET_AMOUNT - 1 : OFFSET_AMOUNT + 1, biggerThan + OFFSET_AMOUNT, lessThan + OFFSET_AMOUNT, columnId, columnFilter])
 }
 
 process.on('SIGINT', async () => {

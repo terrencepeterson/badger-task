@@ -1,7 +1,7 @@
-import { createDeleteEndpoint, createEndpoint, createPutEndpoint } from "../../utility.mjs"
+import { createEndpoint, createPutEndpoint } from "../../utility.mjs"
 import { addAttributeAccess, removeMultipleAttributeAccess } from "../../accessControl/attributeAccess.mjs"
 import { ACCESS_CONTROL_COLUMN_AGENDA, COLUMN_AGENDA_TABLE } from "../../definitions.mjs"
-import { deleteAgendaColumn, getColumnByAgendaColumnId, moveAgendaColumn } from "./agendaService.mjs"
+import { deleteAgendaColumn, getColumnByAgendaColumnId } from "./agendaService.mjs"
 
 import {
     getAgendaTags,
@@ -13,6 +13,7 @@ import {
     createAgendaColumn,
     getAgendaColumnColumns
 } from "./agendaService.mjs"
+import { moveColumn } from "../../db.mjs"
 
 export const getAgendaEndpoint = createEndpoint(async (req) => {
     const { id: userId } = req.user
@@ -80,9 +81,9 @@ async function updateAgendaColumnFormat(allowedData, columnAgendaId, userId) {
         }
 
         if (newColumn < currentColumn) {
-            await moveAgendaColumn(columnAgendaId, newColumn, newColumn - 1, currentColumn, '+', userId)
+            await moveColumn(columnAgendaId, newColumn, newColumn - 1, currentColumn, '+', userId, COLUMN_AGENDA_TABLE)
         } else {
-            await moveAgendaColumn(columnAgendaId, newColumn, currentColumn, newColumn + 1, '-', userId)
+            await moveColumn(columnAgendaId, newColumn, currentColumn, newColumn + 1, '-', userId, COLUMN_AGENDA_TABLE)
         }
 
         delete allowedData.column

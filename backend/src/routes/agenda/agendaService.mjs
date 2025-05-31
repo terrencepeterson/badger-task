@@ -1,6 +1,5 @@
 import { query, transactionQuery, mapTags, generateInsert, getColumnColumns } from "../../db.mjs"
 import { COLUMN_AGENDA_TABLE } from "../../definitions.mjs"
-const OFFSET_AMOUNT = 1000000
 
 export function getAgendaTasks(userId) {
     return query(`
@@ -153,52 +152,6 @@ export async function getColumnByAgendaColumnId(agendaColumnId) {
     `, [agendaColumnId])
 
     return helperData.length ? helperData[0].currentColumn : false
-}
-
-export function moveAgendaColumn(columnAgendaId, newColumn, biggerThan, lessThan, symbol, userId) {
-    return transactionQuery(async (conn) => {
-        let hasMoved = await conn.query(`
-            UPDATE column_agenda
-            SET \`column\` = -1
-            WHERE id = ?
-        `, [columnAgendaId, userId])
-        if (hasMoved.affectedRows !== 1 || hasMoved.warningStatus !== 0) {
-            throw new Error('Failed to move agenda column')
-        }
-
-        await moveColumnsInRange(conn, biggerThan, lessThan, columnAgendaId, userId, symbol)
-
-        hasMoved = await conn.query(`
-            UPDATE column_agenda
-            SET \`column\` = ${newColumn}
-            WHERE id = ?
-        `, [columnAgendaId])
-        if (hasMoved.affectedRows !== 1 || hasMoved.warningStatus !== 0) {
-            throw new Error('Failed to move agenda column')
-        }
-
-        return true
-    })
-}
-
-async function moveColumnsInRange(conn, biggerThan, lessThan, columnAgendaId, userId, symbol) {
-    await conn.query(`
-        UPDATE column_agenda
-        SET \`column\` = \`column\` + ?
-        WHERE \`column\` > ?
-        AND \`column\` < ?
-        AND id != ?
-        AND user_id = ?
-    `, [OFFSET_AMOUNT, biggerThan, lessThan, columnAgendaId, userId])
-
-    await conn.query(`
-        UPDATE column_agenda
-        SET \`column\` = \`column\` - ?
-        WHERE \`column\` > ?
-        AND \`column\` < ?
-        AND id != ?
-        AND user_id = ?
-    `, [(symbol === '+') ? OFFSET_AMOUNT - 1 : OFFSET_AMOUNT + 1, biggerThan + OFFSET_AMOUNT, lessThan + OFFSET_AMOUNT, columnAgendaId, userId])
 }
 
 export async function deleteAgendaColumn(userId, columnAgendaId) {
