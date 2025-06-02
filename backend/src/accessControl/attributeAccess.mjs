@@ -149,10 +149,7 @@ async function addRemoveMultipleAttributeAccess(userIds, accessControlKey, attri
         }
 
         const attribute = Array.isArray(attributes) ? attributes[i] : attributes
-        const hasAddedAttribute = await redisClient[`s${type}`](redisKey, attribute.toString())
-        if (!hasAddedAttribute) {
-            throw new Error(`Failed to update ${redisKey}: ${attribute}`)
-        }
+        await redisClient[`s${type}`](redisKey, attribute.toString())
     }
 }
 

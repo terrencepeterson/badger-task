@@ -67,17 +67,9 @@ export function createPutEndpoint(validateAndFormatData, allowedColumnKeys, tabl
 }
 
 export function createDeleteEndpoint(table, idKey) {
-    return createEndpoint((req) => {
-        return deleteRow(table, req.params[idKey])
+    return createEndpoint(async (req) => {
+        return await deleteRow(table, req.params[idKey])
     })
-}
-
-export function formatNullableInput(input) {
-    return (!input && input !== 0) ? null : input
-}
-
-export function formatDefaultableInput(input) {
-    return (!input && input !== 0) ? DEFAULT_DB_VALUE : input
 }
 
 export function jsDateToSqlDate(dateTimeIsoString) {

@@ -196,12 +196,14 @@ export function createComment(text, task_id, created_by) {
     return generateInsert(COMMENT_TABLE, { text, task_id, created_by })
 }
 
-export async function doestaskidmatchchecklist(taskid, checklistid) {
-    const doesmatch = await query(`
-        select id from checklist
-        where id = ? and task_id = ?
-    `, [checklistid, taskid])
+export async function getAllUsersFromOrganisationByUserId(userId) {
+    let users = await query(`
+        SELECT id FROM \`user\` u
+        WHERE u.organisation_id = (
+            SELECT organisation_id FROM user WHERE id = ?
+        )
+    `, [userId])
 
-    return !!doesmatch.length
+    return users.length ? users.map(u => u.id) : null
 }
 

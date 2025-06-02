@@ -49,7 +49,7 @@ const updateCommentBodySchema = z.object({
     text: nameValidation
 })
 
-export const getTaskSchema = { params: taskIdParamSchema }
+export const idSchema = { params: taskIdParamSchema }
 export const createTaskSchema = { body: createTaskBodySchema }
 export const updateTaskSchema = { params: taskIdParamSchema, body: updateTaskBodySchema }
 export const createChecklistSchema = { params: taskIdParamSchema, body: createChecklistBodySchema }
