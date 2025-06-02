@@ -1,4 +1,4 @@
-import { createDeleteEndpoint, createEndpoint, createPutEndpoint } from "../../utility.mjs"
+import { createDeleteEndpoint, createDeleteWAccessControlEndpoint, createEndpoint, createPutEndpoint } from "../../utility.mjs"
 import {
     getProjectTasks,
     getProjectColumnsByProjectId,
@@ -20,7 +20,8 @@ import {
 import { getOrganisationIdByUserId, getAllUsersFromOrganisation } from "../organisation/organisationService.mjs"
 import { ROLE_ADMIN, ACCESS_CONTROL_PROJECTS, PROJECT_TABLE, VALID_PROJECT_COLUMN_ICONS, ACCESS_CONTROL_COLUMN_PROJECTS, COLUMN_PROJECT_TABLE, TAG_TABLE } from "../../definitions.mjs"
 import { addMultipleAttributeAccess, removeMultipleAttributeAccess } from "../../accessControl/attributeAccess.mjs"
-import { moveColumn } from "../../db.mjs"
+import { deleteRow, moveColumn } from "../../db.mjs"
+import { getAllUsersFromOrganisationByUserId } from "../user/userService.mjs"
 
 export const updateProjectEndpoint = createPutEndpoint(
     projectFormatAndValidation,
@@ -184,4 +185,6 @@ export const updateTagEndpoint = createPutEndpoint(
 )
 
 export const deleteTagEndpoint = createDeleteEndpoint(TAG_TABLE, 'tagId')
+
+export const deleteProjectColumnEndpoint = createDeleteWAccessControlEndpoint(COLUMN_PROJECT_TABLE, 'projectColumnId', ACCESS_CONTROL_COLUMN_PROJECTS, 'project column')
 

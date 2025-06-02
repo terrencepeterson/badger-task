@@ -1,9 +1,10 @@
-import { createEndpoint, createPutEndpoint, createDeleteEndpoint } from "../../utility.mjs"
+import { createEndpoint, createPutEndpoint, createDeleteEndpoint, createDeleteWAccessControlEndpoint } from "../../utility.mjs"
 import { TASK_TABLE, ACCESS_CONTROL_TASKS, COLUMN_PROJECT_TABLE, CHECKLIST_TABLE, COMMENT_TABLE, TASK_COLUMN_AGENDA_TABLE } from "../../definitions.mjs"
 import { getProjectColumnRows, getUserProjectAccess } from "../project/projectService.mjs"
 import { getIsValidAssignee, addMultipleAttributeAccess, removeMultipleAttributeAccess } from "../../accessControl/attributeAccess.mjs"
 import { getIdByDifferentId, deleteRow } from "../../db.mjs"
 import { moveTaskToNewColumn, moveTaskToEndOfNewColumn, moveTaskWithinColumn, addTaskToAgendaColumn } from "./taskServiceMove.mjs"
+import { getAllUsersFromOrganisationByUserId } from "../user/userService.mjs"
 import {
     getTaskById,
     getCommentsByTaskId,
@@ -13,7 +14,6 @@ import {
     getEditTaskHelperColumns,
     createComment,
     createChecklist,
-    getAllUsersFromOrganisationByUserId
 } from "./taskService.mjs"
 
 export const taskEndpoint = createEndpoint(async (req) => {
@@ -235,11 +235,5 @@ function updateCommentFormat(allowedData) {
 
 export const deleteCommentEndpoint = createDeleteEndpoint(COMMENT_TABLE, 'commentId')
 export const deleteChecklistEndpoint = createDeleteEndpoint(CHECKLIST_TABLE, 'checklistId')
-export const deleteTaskEndpoint = createEndpoint(async (req) =>  {
-    const { taskId } = req.params
-    await deleteRow(TASK_TABLE, taskId)
-    const allUsersFromOrganisation = await getAllUsersFromOrganisationByUserId(req.user.id)
-    await removeMultipleAttributeAccess(allUsersFromOrganisation, ACCESS_CONTROL_TASKS, taskId)
+export const deleteTaskEndpoint = createDeleteWAccessControlEndpoint(TASK_TABLE, 'taskId', ACCESS_CONTROL_TASKS, 'task')
 
-    return 'Successfully deleted task'
-})

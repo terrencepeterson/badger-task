@@ -1,7 +1,8 @@
 import { z } from "zod/v4"
-import { DEFAULT_DB_VALUE } from "./definitions.mjs"
 import { generateUpdate, doIdsMatch, deleteRow } from "./db.mjs"
 import { idValidation } from "./validation.mjs"
+import { getAllUsersFromOrganisationByUserId } from "./routes/user/userService.mjs"
+import { removeMultipleAttributeAccess } from "./accessControl/attributeAccess.mjs"
 
 // creates an async wrapper around an endpoint
 // instead of having the below in all endpoints
@@ -69,6 +70,20 @@ export function createPutEndpoint(validateAndFormatData, allowedColumnKeys, tabl
 export function createDeleteEndpoint(table, idKey) {
     return createEndpoint(async (req) => {
         return await deleteRow(table, req.params[idKey])
+    })
+}
+
+export function createDeleteWAccessControlEndpoint(deleteTable, deleteByParam, accessControlKey, name) {
+    return createEndpoint(async (req) => {
+        const hasDeletedRow = await deleteRow(deleteTable, req.params[deleteByParam])
+        if (!hasDeletedRow) {
+            throw new Error(`Failed to delete ${name}`)
+        }
+
+        const allUsersFromOrganisation = await getAllUsersFromOrganisationByUserId(req.user.id)
+        await removeMultipleAttributeAccess(allUsersFromOrganisation, accessControlKey, req.params[deleteByParam])
+
+        return `Successfully deleted ${name}`
     })
 }
 

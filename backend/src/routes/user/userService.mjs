@@ -27,3 +27,15 @@ export async function getUserDashboard(id) {
 
     return null
 }
+
+export async function getAllUsersFromOrganisationByUserId(userId) {
+    let users = await query(`
+        SELECT id FROM \`user\` u
+        WHERE u.organisation_id = (
+            SELECT organisation_id FROM user WHERE id = ?
+        )
+    `, [userId])
+
+    return users.length ? users.map(u => u.id) : null
+}
+

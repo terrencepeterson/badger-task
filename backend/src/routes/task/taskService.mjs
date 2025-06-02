@@ -196,14 +196,3 @@ export function createComment(text, task_id, created_by) {
     return generateInsert(COMMENT_TABLE, { text, task_id, created_by })
 }
 
-export async function getAllUsersFromOrganisationByUserId(userId) {
-    let users = await query(`
-        SELECT id FROM \`user\` u
-        WHERE u.organisation_id = (
-            SELECT organisation_id FROM user WHERE id = ?
-        )
-    `, [userId])
-
-    return users.length ? users.map(u => u.id) : null
-}
-

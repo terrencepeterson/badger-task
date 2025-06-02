@@ -56,4 +56,5 @@ export const createTagSchema = { params: projectParamSchema, body: createTagBody
 export const updateProjectColumnSchema = { params: projectColumnParamSchema, body: updateProjectColumnBodySchema }
 export const updateTagSchema = { params: tagParamSchema, body: editTagBodySchema }
 export const deleteTagSchema = { params: tagParamSchema }
+export const deleteProjectColumnSchema = { params: projectColumnParamSchema }
 
