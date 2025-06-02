@@ -13,7 +13,8 @@ import {
     updateProjectColumnEndpoint,
     updateTagEndpoint,
     deleteTagEndpoint,
-    deleteProjectColumnEndpoint
+    deleteProjectColumnEndpoint,
+    deleteProjecEndpoint
 } from "./projectController.mjs"
 
 import {
@@ -22,7 +23,7 @@ import {
     createTagSchema,
     deleteTagSchema,
     getProjectColumnSchema,
-    getProjectSchema,
+    projectIdSchema,
     updateProjectColumnSchema,
     updateProjectSchema,
     updateTagSchema
@@ -31,9 +32,10 @@ import {
 const router = Router()
 router.use(authenticate)
 
-router.get('/:projectId', validate(getProjectSchema), projectAccessControl, getProjectEndpoint)
+router.get('/:projectId', validate(projectIdSchema), projectAccessControl, getProjectEndpoint)
 router.post('/', validate(createProjectSchema), createRoleAccessControl, createProjectEndpoint)
 router.put('/:projectId', validate(updateProjectSchema), adminRoleAccessControl, projectAccessControl, updateProjectEndpoint)
+router.delete('/:projectId', validate(projectIdSchema), adminRoleAccessControl, projectAccessControl, deleteProjecEndpoint)
 router.get('/:projectId/column/:projectColumnId', validate(getProjectColumnSchema), projectColumnAccessControl, getProjectColumnEndpoint)
 router.post('/:projectId/column', validate(createProjectColumnSchema), createRoleAccessControl, projectAccessControl, createProjectColumnEndpoint)
 router.put('/:projectId/column/:projectColumnId', validate(updateProjectColumnSchema), projectColumnAccessControl, updateProjectColumnEndpoint)

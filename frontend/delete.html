@@ -49,6 +49,34 @@
                     <input type="number" name="" value="" id="taskId">
                 </div>
             </div>
+            <div>
+                <h2>delete task</h2>
+                <button type="button" id="delete-task">delete</button>
+                <div>
+                    <label for="taskId">taskId</label>
+                    <input type="number" name="" value="" id="taskId">
+                </div>
+            </div>
+            <div>
+                <h2>delete project column</h2>
+                <button type="button" id="delete-project-column">delete</button>
+                <div>
+                    <label for="projectColumnId">projectColumnId</label>
+                    <input type="number" name="" value="" id="projectColumnId">
+                </div>
+                <div>
+                    <label for="projectId">projectId</label>
+                    <input type="number" name="" value="" id="projectId">
+                </div>
+            </div>
+            <div>
+                <h2>delete project</h2>
+                <button type="button" id="delete-project">delete</button>
+                <div>
+                    <label for="projectId">projectId</label>
+                    <input type="number" name="" value="" id="projectId">
+                </div>
+            </div>
         </div>
     </body>
     <script>
@@ -79,6 +107,9 @@
         createDelete('#delete-tag', { tagId: '#tagId', projectId: '#projectId' }, 'project/$projectId/tag/$tagId')
         createDelete('#delete-comment', { commentId: '#commentId', taskId: '#taskId' }, 'task/$taskId/comment/$commentId')
         createDelete('#delete-checklist', { checklistId: '#checklistId', taskId: '#taskId' }, 'task/$taskId/checklist/$checklistId')
+        createDelete('#delete-task', { taskId: '#taskId' }, 'task/$taskId')
+        createDelete('#delete-project-column', { projectColumnId: '#projectColumnId', projectId: '#projectId' }, 'project/$projectId/column/$projectColumnId')
+        createDelete('#delete-project', { projectId: '#projectId' }, 'project/$projectId')
     </script>
 </html>
 

@@ -185,6 +185,6 @@ export const updateTagEndpoint = createPutEndpoint(
 )
 
 export const deleteTagEndpoint = createDeleteEndpoint(TAG_TABLE, 'tagId')
-
 export const deleteProjectColumnEndpoint = createDeleteWAccessControlEndpoint(COLUMN_PROJECT_TABLE, 'projectColumnId', ACCESS_CONTROL_COLUMN_PROJECTS, 'project column')
+export const deleteProjecEndpoint = createDeleteWAccessControlEndpoint(PROJECT_TABLE, 'projectId', ACCESS_CONTROL_PROJECTS, 'project')
 

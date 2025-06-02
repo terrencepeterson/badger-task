@@ -49,7 +49,7 @@ const editTagBodySchema = z.object({
 
 export const createProjectSchema = { body: createProjectBodySchema }
 export const updateProjectSchema = { params: projectParamSchema, body: updateProjectBodySchema }
-export const getProjectSchema = { params: projectParamSchema}
+export const projectIdSchema = { params: projectParamSchema}
 export const getProjectColumnSchema = { params: projectColumnParamSchema }
 export const createProjectColumnSchema = { params: projectParamSchema, body: createProjectColumnBodySchema }
 export const createTagSchema = { params: projectParamSchema, body: createTagBodySchema }
