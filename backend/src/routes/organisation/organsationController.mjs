@@ -4,7 +4,6 @@ import { belongsToOrganisation, createOrganisation } from "./organisationService
 
 export const updateOrganisationEndpoint = createPutEndpoint(
     organisationFormatAndValidation,
-    ['name', 'imgUrl'],
     ORGANISATION_TABLE,
     'organisationId'
 )

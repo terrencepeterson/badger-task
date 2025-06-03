@@ -59,7 +59,6 @@ export const createTaskEndpoint = createEndpoint(async (req) => {
 
 export const updateTaskEndpoint = createPutEndpoint(
     updateTaskFormatValidation,
-    ['name', 'description', 'dueDate', 'state', 'newProjectRow', 'assignee', 'newProjectColumnId', 'newAgendaRow', 'newAgendaColumnId'],
     TASK_TABLE,
     'taskId'
 )
@@ -217,14 +216,12 @@ export const createCommentEndpoint = createEndpoint(async (req) => {
 
 export const updateChecklistEndpoint = createPutEndpoint(
     false,
-    ['state', 'name'],
     CHECKLIST_TABLE,
     'checklistId'
 )
 
 export const updateCommentEndpoint = createPutEndpoint(
     updateCommentFormat,
-    ['text'],
     COMMENT_TABLE,
     'commentId'
 )

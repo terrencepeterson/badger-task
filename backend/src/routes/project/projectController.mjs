@@ -25,7 +25,6 @@ import { getAllUsersFromOrganisationByUserId } from "../user/userService.mjs"
 
 export const updateProjectEndpoint = createPutEndpoint(
     projectFormatAndValidation,
-    ['name', 'description', 'imgUrl', 'isPrivate'],
     PROJECT_TABLE,
     'projectId'
 )
@@ -146,7 +145,6 @@ export const createTagEndpoint = createEndpoint(async (req) => {
 
 export const updateProjectColumnEndpoint = createPutEndpoint(
     updateProjectColumnFormat,
-    ['name', 'icon', 'colour', 'column'],
     COLUMN_PROJECT_TABLE,
     'projectColumnId'
 )
@@ -179,7 +177,6 @@ async function updateProjectColumnFormat(allowedData, projectColumnId, userId, r
 
 export const updateTagEndpoint = createPutEndpoint(
     false,
-    ['name', 'colour'],
     TAG_TABLE,
     'tagId'
 )

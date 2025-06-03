@@ -61,7 +61,6 @@ export const createAgendaColumnEndpoint = createEndpoint(async (req) => {
 
 export const updateAgendaColumnEndpoint = createPutEndpoint(
     updateAgendaColumnFormat,
-    ['name', 'colour', 'column'],
     COLUMN_AGENDA_TABLE,
     'agendaColumnId'
 )

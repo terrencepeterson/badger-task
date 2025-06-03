@@ -35,12 +35,9 @@ export function createEndpoint(getData, checkUser = true) {
     }
 }
 
-export function createPutEndpoint(validateAndFormatData, allowedColumnKeys, table, updateIdKey) {
+export function createPutEndpoint(validateAndFormatData, table, updateIdKey) {
     return createEndpoint(async (req) => {
-        let allowedData = Object.fromEntries(
-            Object.entries(req.body).
-            filter(([columnName, val]) => allowedColumnKeys.includes(columnName))
-        )
+        let { body: allowedData } = req
         const allowedDataKeys = Object.keys(allowedData)
         const updateId = req.params[updateIdKey]
         const successMessage = `Updated ${table}: ${allowedDataKeys.map(c => convertColumnToFrontName(c)).join(', ')}`
