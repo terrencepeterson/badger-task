@@ -9,9 +9,11 @@ export const updateOrganisationEndpoint = createPutEndpoint(
     'organisationId'
 )
 
-function organisationFormatAndValidation(allowedData, organsiationId, userId) {
-    allowedData.img_url = allowedData.imgUrl
-    delete allowedData.imgUrl
+function organisationFormatAndValidation(allowedData) {
+    if (Object.hasOwn(allowedData, 'imgUrl')) {
+        allowedData.img_url = allowedData.imgUrl
+        delete allowedData.imgUrl
+    }
 
     return allowedData
 }
