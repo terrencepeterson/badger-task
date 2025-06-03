@@ -5,7 +5,8 @@ import {
     COLUMN_PROJECT_TABLE,
     DEFAULT_DB_VALUE,
 } from '../src/definitions.mjs'
-const OFFSET_AMOUNT = 1000000
+import '@dotenvx/dotenvx/config'
+const OFFSET_AMOUNT = Number(process.env.database_offset_amount)
 
 const columnKeys = {
     [COLUMN_AGENDA_TABLE]: {

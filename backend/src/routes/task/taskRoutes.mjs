@@ -2,7 +2,19 @@ import { Router } from "express"
 import { projectColumnAccessControl, taskAccessControl } from "../../accessControl/attributeAccess.mjs"
 import { authenticate, validate } from "../../middleware.mjs"
 import { createRoleAccessControl } from "../../accessControl/roleAccess.mjs"
-import { createChecklistSchema, createCommnentSchema, createTaskSchema, deleteChecklistSchema, deleteCommentSchema, idSchema, updateChecklistSchema, updateCommentSchema, updateTaskSchema } from "./taskSchema.mjs"
+
+import {
+    createChecklistSchema,
+    createCommnentSchema,
+    createTaskSchema,
+    deleteChecklistSchema,
+    deleteCommentSchema,
+    idSchema,
+    updateChecklistSchema,
+    updateCommentSchema,
+    updateTaskSchema,
+    updateTasksProjectColumn
+} from "./taskSchema.mjs"
 import {
     createTaskEndpoint,
     taskEndpoint,
@@ -13,7 +25,8 @@ import {
     updateCommentEndpoint,
     deleteCommentEndpoint,
     deleteChecklistEndpoint,
-    deleteTaskEndpoint
+    deleteTaskEndpoint,
+    tasksUpdateProjectColumnEndpoint
 } from "./taskController.mjs"
 
 const router = Router()
@@ -29,6 +42,7 @@ router.delete('/:taskId/checklist/:checklistId', validate(deleteChecklistSchema)
 router.post('/:taskId/comment', validate(createCommnentSchema), taskAccessControl, createCommentEndpoint)
 router.put('/:taskId/comment/:commentId', validate(updateCommentSchema), taskAccessControl, updateCommentEndpoint)
 router.delete('/:taskId/comment/:commentId', validate(deleteCommentSchema), taskAccessControl, deleteCommentEndpoint)
+router.put('/update-column-project/:projectColumnId', validate(updateTasksProjectColumn), tasksUpdateProjectColumnEndpoint)
 
 export default router
 

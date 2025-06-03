@@ -14,6 +14,8 @@ import {
     getEditTaskHelperColumns,
     createComment,
     createChecklist,
+    getIsValidTasksProjectColumn,
+    updateTasksProjectColumn,
 } from "./taskService.mjs"
 
 export const taskEndpoint = createEndpoint(async (req) => {
@@ -236,4 +238,17 @@ function updateCommentFormat(allowedData) {
 export const deleteCommentEndpoint = createDeleteEndpoint(COMMENT_TABLE, 'commentId')
 export const deleteChecklistEndpoint = createDeleteEndpoint(CHECKLIST_TABLE, 'checklistId')
 export const deleteTaskEndpoint = createDeleteWAccessControlEndpoint(TASK_TABLE, 'taskId', ACCESS_CONTROL_TASKS, 'task')
+
+export const tasksUpdateProjectColumnEndpoint = createEndpoint(async (req) => {
+    const { projectColumnId: newProjectColumnId } = req.params
+    const { taskIds, currentProjectColumnId } = req.body
+    const isValidTaskIds = await getIsValidTasksProjectColumn(taskIds, currentProjectColumnId)
+    if (!isValidTaskIds) {
+        throw new Error('Invalid project column - please provide all tasks from a single project column')
+    }
+
+    await updateTasksProjectColumn(currentProjectColumnId, newProjectColumnId, taskIds)
+
+    return { message: 'Successfully moved tasks', taskIds }
+})
 

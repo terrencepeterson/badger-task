@@ -12,6 +12,8 @@ const checklistParamSchema = createIdSchema(['taskId', 'checklistId']).check(val
 const validateCommentParamIds = createValidateParamIds(COMMENT_TABLE, 'commentId', 'task_id', 'taskId')
 const commentParamSchema = createIdSchema(['taskId', 'commentId']).check(validateCommentParamIds)
 
+const projectColumnIdSchema = createIdSchema('projectColumnId')
+
 const createTaskBodySchema = z.object({
     name: nameValidation,
     description: nullableStringValidation.default(null),
@@ -49,6 +51,13 @@ const updateCommentBodySchema = z.object({
     text: nameValidation
 })
 
+const updateTasksProjectColumnBodySchema = z.object({
+    taskIds: z.array(idValidation).min(1).refine(taskIds =>
+        new Set(taskIds).size === taskIds.length, { message: 'Task id\'s must be unique'}
+    ),
+    currentProjectColumnId: idValidation
+})
+
 export const idSchema = { params: taskIdParamSchema }
 export const createTaskSchema = { body: createTaskBodySchema }
 export const updateTaskSchema = { params: taskIdParamSchema, body: updateTaskBodySchema }
@@ -58,4 +67,5 @@ export const updateChecklistSchema = { params: checklistParamSchema, body: updat
 export const updateCommentSchema = { params: commentParamSchema, body: updateCommentBodySchema }
 export const deleteCommentSchema = { params: commentParamSchema }
 export const deleteChecklistSchema = { params: checklistParamSchema }
+export const updateTasksProjectColumn = { params: projectColumnIdSchema, body: updateTasksProjectColumnBodySchema }
 

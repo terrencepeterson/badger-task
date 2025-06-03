@@ -1,6 +1,7 @@
 import { transactionQuery } from "../../db.mjs"
 import { TASK_COLUMN_AGENDA_TABLE, TASK_TABLE } from "../../definitions.mjs"
-const OFFSET_AMOUNT = 1000000
+import '@dotenvx/dotenvx/config'
+const OFFSET_AMOUNT = Number(process.env.database_offset_amount)
 
 const columnKeys = {
     [TASK_TABLE]: {

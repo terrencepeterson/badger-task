@@ -1,5 +1,7 @@
-import { query, generateInsert, mapTags } from "../../db.mjs"
+import { query, generateInsert, mapTags, transactionQuery } from "../../db.mjs"
 import { TASK_TABLE, CHECKLIST_TABLE, COMMENT_TABLE } from "../../definitions.mjs"
+import '@dotenvx/dotenvx/config'
+const OFFSET_AMOUNT = Number(process.env.database_offset_amount)
 
 export async function getDashboardTasks(userId, batchNumber = 0) {
     let tasks = await query(`
@@ -194,5 +196,58 @@ export function createChecklist(name, task_id) {
 
 export function createComment(text, task_id, created_by) {
     return generateInsert(COMMENT_TABLE, { text, task_id, created_by })
+}
+
+export async function getIsValidTasksProjectColumn(taskIds, projectColumnId) {
+    let allTasksFromProjectColumn = await query(`
+        SELECT id FROM task WHERE project_column_id = ? ORDER BY id ASC;
+    `, [projectColumnId])
+    allTasksFromProjectColumn = allTasksFromProjectColumn.map(taskId => taskId.id)
+    const sortedTasks = taskIds.sort((a, b) => a - b)
+
+    if (allTasksFromProjectColumn.length !== sortedTasks.length) {
+        return false
+    }
+
+    for (let i = 0; i < sortedTasks.length; ++i) {
+        if (sortedTasks[i] !== allTasksFromProjectColumn[i]) {
+            return false
+        }
+    }
+
+    return true
+}
+
+export async function updateTasksProjectColumn(currentProjectColumnId, newProjectColumnId, taskIds) {
+    const taskPlaceholders = taskIds.map(id => '?').join(',')
+    // already checked that the tasks from the same project column
+    const isNewProjectColumnInSameProject = await query(`
+        SELECT id
+        FROM column_project
+        WHERE id = ? AND project_id = (SELECT project_id FROM column_project WHERE id = ?)
+    `, [newProjectColumnId, currentProjectColumnId])
+    if (isNewProjectColumnInSameProject.length !== 1) {
+        throw new Error('Invalid projectColumnId - the new project column is invalid, you can only move tasks to columns inside the same project')
+    }
+
+    transactionQuery(async (conn) => {
+        let lengthNewColumn = await conn.query(`
+            SELECT MAX(project_row) + 1 as columnLength FROM task WHERE project_column_id = ?;
+        `, [newProjectColumnId])
+        lengthNewColumn = lengthNewColumn[0].columnLength
+        lengthNewColumn = Number(lengthNewColumn ?? 0)
+
+        await conn.query(`
+            UPDATE task
+            SET project_row = project_row + ?
+            WHERE id IN (${taskPlaceholders});
+        `, [lengthNewColumn, ...taskIds])
+
+        await conn.query(`
+            UPDATE task
+            SET project_column_id = ?
+            WHERE id IN (${taskPlaceholders});
+        `, [newProjectColumnId, ...taskIds])
+    })
 }
 
