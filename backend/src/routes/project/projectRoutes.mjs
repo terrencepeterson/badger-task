@@ -34,14 +34,14 @@ router.use(authenticate)
 
 router.get('/:projectId', validate(projectIdSchema), projectAccessControl, getProjectEndpoint)
 router.post('/', validate(createProjectSchema), createRoleAccessControl, createProjectEndpoint)
-router.put('/:projectId', validate(updateProjectSchema), adminRoleAccessControl, projectAccessControl, updateProjectEndpoint)
+router.patch('/:projectId', validate(updateProjectSchema), adminRoleAccessControl, projectAccessControl, updateProjectEndpoint)
 router.delete('/:projectId', validate(projectIdSchema), adminRoleAccessControl, projectAccessControl, deleteProjecEndpoint)
 router.get('/:projectId/column/:projectColumnId', validate(getProjectColumnSchema), projectColumnAccessControl, getProjectColumnEndpoint)
 router.post('/:projectId/column', validate(createProjectColumnSchema), createRoleAccessControl, projectAccessControl, createProjectColumnEndpoint)
-router.put('/:projectId/column/:projectColumnId', validate(updateProjectColumnSchema), projectColumnAccessControl, updateProjectColumnEndpoint)
+router.patch('/:projectId/column/:projectColumnId', validate(updateProjectColumnSchema), projectColumnAccessControl, updateProjectColumnEndpoint)
 router.delete('/:projectId/column/:projectColumnId', validate(updateProjectColumnSchema), projectColumnAccessControl, deleteProjectColumnEndpoint)
 router.post('/:projectId/tag', validate(createTagSchema) , createRoleAccessControl, projectAccessControl, createTagEndpoint)
-router.put('/:projectId/tag/:tagId', validate(updateTagSchema), createRoleAccessControl, projectAccessControl, updateTagEndpoint)
+router.patch('/:projectId/tag/:tagId', validate(updateTagSchema), createRoleAccessControl, projectAccessControl, updateTagEndpoint)
 router.delete('/:projectId/tag/:tagId', validate(deleteTagSchema), createRoleAccessControl, projectAccessControl, deleteTagEndpoint)
 
 export default router

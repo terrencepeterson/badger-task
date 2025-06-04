@@ -16,7 +16,7 @@ router.use(authenticate)
 router.get('/column/:agendaColumnId', validate(getAgendaColumnSchema), agendaColumnAccessControl, getAgendaColumnEndpoint)
 router.get('/', getAgendaEndpoint)
 router.post('/column', validate(createAgendaColumnSchema), createAgendaColumnEndpoint)
-router.put('/column/:agendaColumnId', validate(updateAgendaColumnSchema), agendaColumnAccessControl, updateAgendaColumnEndpoint)
+router.patch('/column/:agendaColumnId', validate(updateAgendaColumnSchema), agendaColumnAccessControl, updateAgendaColumnEndpoint)
 router.delete('/column/:agendaColumnId', validate(deleteAgendaColumnSchema), agendaColumnAccessControl, deleteAgendaColumnEndpoint)
 
 export default router

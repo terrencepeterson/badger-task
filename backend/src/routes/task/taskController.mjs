@@ -85,20 +85,6 @@ async function updateTaskFormatValidation(allowedData, taskId, userId) {
         maxRowCurrentAgendaColumn,
         maxRowNewAgendaColumn
     } = await getEditTaskHelperColumns({ taskId, userId, newProjectColumnId, newAgendaColumnId })
-    console.log(
-        {
-            currentProjectColumnId,
-            currentProjectRow,
-            currentAgendaColumnId,
-            currentAgendaRow,
-            maxRowCurrentProjectColumn,
-            maxRowNewProjectColumn,
-            validProjectColumnIds,
-            validAgendaColumnIds,
-            maxRowCurrentAgendaColumn,
-            maxRowNewAgendaColumn
-        }
-    )
 
     const isValidRow = (row, highestRow) => {
         if (isNaN(row) || row.trim && row.trim() === '') {

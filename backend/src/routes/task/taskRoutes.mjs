@@ -34,15 +34,15 @@ router.use(authenticate)
 
 router.get('/:taskId', validate(idSchema), taskAccessControl, taskEndpoint)
 router.post('/', validate(createTaskSchema), projectColumnAccessControl, createTaskEndpoint)
-router.put('/:taskId', validate(updateTaskSchema), createRoleAccessControl, taskAccessControl, updateTaskEndpoint)
+router.patch('/:taskId', validate(updateTaskSchema), createRoleAccessControl, taskAccessControl, updateTaskEndpoint)
 router.delete('/:taskId', validate(idSchema), createRoleAccessControl, taskAccessControl, deleteTaskEndpoint)
 router.post('/:taskId/checklist', validate(createChecklistSchema), createRoleAccessControl, taskAccessControl, createChecklistEndpoint)
-router.put('/:taskId/checklist/:checklistId', validate(updateChecklistSchema), createRoleAccessControl, taskAccessControl, updateChecklistEndpoint)
+router.patch('/:taskId/checklist/:checklistId', validate(updateChecklistSchema), createRoleAccessControl, taskAccessControl, updateChecklistEndpoint)
 router.delete('/:taskId/checklist/:checklistId', validate(deleteChecklistSchema), createRoleAccessControl, taskAccessControl, deleteChecklistEndpoint)
 router.post('/:taskId/comment', validate(createCommnentSchema), taskAccessControl, createCommentEndpoint)
-router.put('/:taskId/comment/:commentId', validate(updateCommentSchema), taskAccessControl, updateCommentEndpoint)
+router.patch('/:taskId/comment/:commentId', validate(updateCommentSchema), taskAccessControl, updateCommentEndpoint)
 router.delete('/:taskId/comment/:commentId', validate(deleteCommentSchema), taskAccessControl, deleteCommentEndpoint)
-router.put('/update-column-project/:projectColumnId', validate(updateTasksProjectColumn), tasksUpdateProjectColumnEndpoint)
+router.patch('/update-column-project/:projectColumnId', validate(updateTasksProjectColumn), tasksUpdateProjectColumnEndpoint)
 
 export default router
 

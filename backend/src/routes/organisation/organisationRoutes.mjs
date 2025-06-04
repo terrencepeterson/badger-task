@@ -9,7 +9,7 @@ const router = Router()
 router.use(authenticate)
 
 router.post('/', validate(createOrganisationSchema), createOrganisationEndpoint)
-router.put('/:organisationId', validate(updateOrganiationSchema), adminRoleAccessControl, organisationAccessControl, updateOrganisationEndpoint)
+router.patch('/:organisationId', validate(updateOrganiationSchema), adminRoleAccessControl, organisationAccessControl, updateOrganisationEndpoint)
 
 export default router
 

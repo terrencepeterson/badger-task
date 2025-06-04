@@ -133,10 +133,10 @@
         </div>
 
         <div>
-            <h2>Update agenda column</h2>
+            <h2>update agenda column</h2>
             <form id="update-agenda-column-form">
                 <div>
-                    <label for="name">Name</label>
+                    <label for="name">name</label>
                     <input type="text" name="name" value="" id="name">
                 </div>
                 <div>
@@ -148,8 +148,81 @@
                     <input type="text" name="column" value="" id="column" class="column">
                 </div>
                 <div>
-                    <label for="agendaColumnId">agendaColumnId</label>
-                    <input type="text" name="agendaColumnId" value="" class="agenda-column-id">
+                    <label for="agendacolumnid">agendacolumnid</label>
+                    <input type="text" name="agendacolumnid" value="" class="agenda-column-id">
+                </div>
+                <button type="submit">submit</button>
+            </form>
+        </div>
+
+        <div>
+            <h2>update project column</h2>
+            <form id="update-project-column-form">
+                <div>
+                    <label for="name">name</label>
+                    <input type="text" name="name" value="" id="name">
+                </div>
+                <div>
+                    <label for="colour">colour</label>
+                    <input type="text" name="colour" value="" id="colour" class="colour">
+                </div>
+                <div>
+                    <label for="icon">icon</label>
+                    <input type="text" name="icon" value="" id="icon" class="icon">
+                </div>
+                <div>
+                    <label for="column">column</label>
+                    <input type="text" name="column" value="" id="column" class="column">
+                </div>
+                <div>
+                    <label for="projectColumnId">project column id</label>
+                    <input type="text" name="projectColumnId" value="" class="project-column-id">
+                </div>
+                <div>
+                    <label for="projectId">project id</label>
+                    <input type="text" name="projectId" value="" class="project-id">
+                </div>
+                <button type="submit">submit</button>
+            </form>
+        </div>
+
+        <div>
+            <h2>update tag</h2>
+            <form id="update-tag-form">
+                <div>
+                    <label for="name">name</label>
+                    <input type="text" name="name" value="" id="name">
+                </div>
+                <div>
+                    <label for="colour">colour</label>
+                    <input type="text" name="colour" value="" id="colour" class="colour">
+                </div>
+                <div>
+                    <label for="tagId">tag id</label>
+                    <input type="text" name="tagId" value="" class="tag-id">
+                </div>
+                <div>
+                    <label for="projectId">project id</label>
+                    <input type="text" name="projectId" value="" class="project-id">
+                </div>
+                <button type="submit">submit</button>
+            </form>
+        </div>
+
+        <div>
+            <h2>batch update tasks project column</h2>
+            <form id="update-tasks-project-column">
+                <div>
+                    <label for="task-ids">Task ids (comma separated)</label>
+                    <input type="text" name="taskIds" value="" id="task-ids">
+                </div>
+                <div>
+                    <label for="projectColumnId">Project column id</label>
+                    <input type="text" name="projectColumnId" value="" id="projectColumnId" class="project-column-id">
+                </div>
+                <div>
+                    <label for="currentProjectColumnId">Current Project column id</label>
+                    <input type="text" name="currentProjectColumnId" value="" id="currentProjectColumnId" class="project-column-id">
                 </div>
                 <button type="submit">submit</button>
             </form>
@@ -165,7 +238,7 @@
             data = Object.fromEntries(Object.entries(data).filter(([key, value]) => value))
             const url = `${taskUrl}/${e.target.querySelector('#task-id')?.value}`
             const res = await fetch(url, {
-                method: "PUT",
+                method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -183,8 +256,9 @@
             const url = `${updateOrganisationUrl}/${e.target.querySelector('#organisation-id').value}`
             let data = new FormData(e.target)
             data = Object.fromEntries(data)
+            console.log(data)
             const res = await fetch(`${url}`, {
-                method: "PUT",
+                method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -205,7 +279,7 @@
             data = Object.fromEntries(Object.entries(data).filter(([key, value]) => value))
             console.log(data)
             const res = await fetch(url, {
-                method: "PUT",
+                method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -217,7 +291,7 @@
         })
 
         const BASE_URL = 'http://localhost:8001/'
-        function addPutListener(formSelector, idSelectors, paramsUrl) {
+        function addPatchListener(formSelector, idSelectors, paramsUrl) {
             const form = document.querySelector(formSelector)
             form.addEventListener('submit', async (e) => {
                 e.preventDefault()
@@ -232,8 +306,14 @@
                 let data = new FormData(e.target)
                 data = Object.fromEntries(data)
                 data = Object.fromEntries(Object.entries(data).filter(([key, value]) => value))
+                if (data.taskIds) {
+                    data.taskIds = data.taskIds.split(',').map(id => id.trim())
+                    console.log(data.taskIds)
+                }
+                console.log(data)
+
                 const res = await fetch(`${BASE_URL}${url}`, {
-                    method: "PUT",
+                    method: "PATCH",
                     headers: {
                         "Content-Type": "application/json",
                     },
@@ -245,22 +325,40 @@
             })
         }
 
-        addPutListener(
+        addPatchListener(
             '#update-checklist-form',
             { taskId: '.task-id', checklistId: '.checklist-id'},
             'task/$taskId/checklist/$checklistId'
         )
 
-        addPutListener(
+        addPatchListener(
             '#update-comment-form',
             { taskId: '.task-id', commentId: '.comment-id'},
             'task/$taskId/comment/$commentId'
         )
 
-        addPutListener(
+        addPatchListener(
             '#update-agenda-column-form',
             { agendaColumnId: '.agenda-column-id'},
             'agenda/column/$agendaColumnId'
+        )
+
+        addPatchListener(
+            '#update-project-column-form',
+            { projectId: '.project-id', projectColumnId: '.project-column-id' },
+            'project/$projectId/column/$projectColumnId'
+        )
+
+        addPatchListener(
+            '#update-tag-form',
+            { projectId: '.project-id', tagId: '.tag-id' },
+            'project/$projectId/tag/$tagId'
+        )
+
+        addPatchListener(
+            '#update-tasks-project-column',
+            { projectColumnId: '.project-column-id' },
+            'task/update-column-project/$projectColumnId'
         )
     </script>
 </html>
