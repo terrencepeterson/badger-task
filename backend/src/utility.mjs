@@ -1,4 +1,5 @@
 import { z } from "zod/v4"
+import sharp from "sharp"
 import { generateUpdate, doIdsMatch, deleteRow, updateImgVersion  } from "./db.mjs"
 import { idValidation } from "./validation.mjs"
 import { getAllUsersFromOrganisationByUserId } from "./routes/user/userService.mjs"
@@ -93,18 +94,23 @@ export function createImageEndpoint(table, paramIdKey, imageType) {
     return createEndpoint(async (req) => {
         const { path } = req.file
         const resourceId = req.params[paramIdKey]
+        const imagePublicKey = generateImagePublicKey(table, resourceId, imageType)
+        const convertedImagePath = `${process.env.backend_root}/uploads/${imagePublicKey}.webp`
         if (!resourceId && resourceId !== 0 || !table || !imageType) {
             throw new Error('Failed to add image to the databasae')
         }
-
-        const imagePublicKey = generateImagePublicKey(table, resourceId, imageType)
 
         const fileType = await fileTypeFromFile(path)
         if (!IMAGE_TYPES.includes(fileType.ext)) {
             throw new Error('Invalid file type')
         }
 
-        const res = await cloudinary.uploader.upload(path, {
+        await sharp(path)
+            .resize(1000, null, { withoutEnlargement: true })
+            .webp()
+            .toFile(convertedImagePath)
+
+        const res = await cloudinary.uploader.upload(convertedImagePath, {
             public_id: imagePublicKey,
             resource_type: 'auto'
         })
@@ -113,6 +119,7 @@ export function createImageEndpoint(table, paramIdKey, imageType) {
         }
 
         try {
+            await unlink(convertedImagePath)
             await unlink(path)
         } catch (e) {
             throw new Error('Failed to delete temporary file')
