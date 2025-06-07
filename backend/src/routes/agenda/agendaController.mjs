@@ -1,4 +1,4 @@
-import { createEndpoint, createPutEndpoint } from "../../utility.mjs"
+import { createEndpoint, createPatchEndpoint } from "../../utility.mjs"
 import { addAttributeAccess, removeMultipleAttributeAccess } from "../../accessControl/attributeAccess.mjs"
 import { ACCESS_CONTROL_COLUMN_AGENDA, COLUMN_AGENDA_TABLE } from "../../definitions.mjs"
 import { deleteAgendaColumn, getMoveAgendaColumHelperData } from "./agendaService.mjs"
@@ -59,7 +59,7 @@ export const createAgendaColumnEndpoint = createEndpoint(async (req) => {
     return { message: 'Successfully created agenda column', agendaColumnId }
 })
 
-export const updateAgendaColumnEndpoint = createPutEndpoint(
+export const updateAgendaColumnEndpoint = createPatchEndpoint(
     updateAgendaColumnFormat,
     COLUMN_AGENDA_TABLE,
     'agendaColumnId'

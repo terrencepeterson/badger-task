@@ -2,6 +2,7 @@ import { z } from "zod/v4"
 import { createIdSchema, dateIsInFuture, jsDateToSqlDate, createValidateParamIds } from "../../utility.mjs"
 import { idValidation, nameValidation, nullableIdValidation, nullableStringValidation } from "../../validation.mjs"
 import { TASK_STATE_HOLD, TASK_STATE_ACTIVE, TASK_STATE_COMPLETED, CHECKLIST_STATES, CHECKLIST_TABLE, COMMENT_TABLE } from "../../definitions.mjs"
+import { isValidTag } from "./taskService.mjs"
 
 const taskIdParamSchema = createIdSchema('taskId')
 const dueDateValidation = z.union([z.iso.datetime().refine((val) => dateIsInFuture(val), { error: 'Invalid date - date must be in the future' }).transform(val => jsDateToSqlDate(val)), z.null()])
@@ -11,6 +12,16 @@ const checklistParamSchema = createIdSchema(['taskId', 'checklistId']).check(val
 
 const validateCommentParamIds = createValidateParamIds(COMMENT_TABLE, 'commentId', 'task_id', 'taskId')
 const commentParamSchema = createIdSchema(['taskId', 'commentId']).check(validateCommentParamIds)
+const taskTagParamSchema = createIdSchema(['taskId', 'tagId']).check(async (ctx) => {
+    if (!await isValidTag(ctx.value.tagId, ctx.value.taskId)) {
+        ctx.issues.push({
+            code: 'custom',
+            message: `Invalid tagId - tag does not belong to the same project as the task`,
+            input: ctx.value,
+            path: [`TaskId & TagId`]
+        })
+    }
+})
 
 const projectColumnIdSchema = createIdSchema('projectColumnId')
 
@@ -68,4 +79,5 @@ export const updateCommentSchema = { params: commentParamSchema, body: updateCom
 export const deleteCommentSchema = { params: commentParamSchema }
 export const deleteChecklistSchema = { params: checklistParamSchema }
 export const updateTasksProjectColumn = { params: projectColumnIdSchema, body: updateTasksProjectColumnBodySchema }
+export const addTagSchema = { params: taskTagParamSchema }
 

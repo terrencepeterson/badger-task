@@ -1,8 +1,8 @@
-import { createEndpoint, createPutEndpoint, createDeleteEndpoint, createDeleteWAccessControlEndpoint } from "../../utility.mjs"
-import { TASK_TABLE, ACCESS_CONTROL_TASKS, COLUMN_PROJECT_TABLE, CHECKLIST_TABLE, COMMENT_TABLE, TASK_COLUMN_AGENDA_TABLE } from "../../definitions.mjs"
+import { createEndpoint, createPatchEndpoint, createDeleteEndpoint, createDeleteWAccessControlEndpoint } from "../../utility.mjs"
+import { TASK_TABLE, ACCESS_CONTROL_TASKS, COLUMN_PROJECT_TABLE, CHECKLIST_TABLE, COMMENT_TABLE, TASK_COLUMN_AGENDA_TABLE, TASK_TAG_TABLE } from "../../definitions.mjs"
 import { getProjectColumnRows, getUserProjectAccess } from "../project/projectService.mjs"
 import { getIsValidAssignee, addMultipleAttributeAccess } from "../../accessControl/attributeAccess.mjs"
-import { getIdByDifferentId } from "../../db.mjs"
+import { getIdByDifferentId, generateInsert } from "../../db.mjs"
 import { moveTaskToNewColumn, moveTaskToEndOfNewColumn, moveTaskWithinColumn, addTaskToAgendaColumn } from "./taskServiceMove.mjs"
 import {
     getTaskById,
@@ -15,6 +15,7 @@ import {
     createChecklist,
     getIsValidTasksProjectColumn,
     updateTasksProjectColumn,
+    addTagToTask,
 } from "./taskService.mjs"
 
 export const taskEndpoint = createEndpoint(async (req) => {
@@ -56,7 +57,7 @@ export const createTaskEndpoint = createEndpoint(async (req) => {
     return { message: 'Successfully created task', taskId }
 })
 
-export const updateTaskEndpoint = createPutEndpoint(
+export const updateTaskEndpoint = createPatchEndpoint(
     updateTaskFormatValidation,
     TASK_TABLE,
     'taskId'
@@ -188,7 +189,7 @@ export const createChecklistEndpoint = createEndpoint(async (req) => {
 
 export const createCommentEndpoint = createEndpoint(async (req) => {
     const { id: createdBy } = req.user
-    const { text, } = req.body
+    const { text } = req.body
     const { taskId } = req.params
 
     const comment = await createComment(text, taskId, createdBy)
@@ -199,13 +200,13 @@ export const createCommentEndpoint = createEndpoint(async (req) => {
     return { message: 'Successfully created comment', comment }
 })
 
-export const updateChecklistEndpoint = createPutEndpoint(
+export const updateChecklistEndpoint = createPatchEndpoint(
     false,
     CHECKLIST_TABLE,
     'checklistId'
 )
 
-export const updateCommentEndpoint = createPutEndpoint(
+export const updateCommentEndpoint = createPatchEndpoint(
     updateCommentFormat,
     COMMENT_TABLE,
     'commentId'
@@ -232,5 +233,11 @@ export const tasksUpdateProjectColumnEndpoint = createEndpoint(async (req) => {
     await updateTasksProjectColumn(currentProjectColumnId, newProjectColumnId, taskIds)
 
     return { message: 'Successfully moved tasks', taskIds }
+})
+
+export const addTagToTaskEndpoint = createEndpoint(async (req) => {
+    const { tagId, taskId } = req.params
+    await addTagToTask(tagId, taskId)
+    return 'Successfully added tag'
 })
 

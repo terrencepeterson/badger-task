@@ -1,4 +1,4 @@
-import { createDeleteEndpoint, createDeleteWAccessControlEndpoint, createEndpoint, createPutEndpoint, createImageEndpoint } from "../../utility.mjs"
+import { createDeleteEndpoint, createDeleteWAccessControlEndpoint, createEndpoint, createPatchEndpoint, createImageEndpoint } from "../../utility.mjs"
 import {
     getProjectTasks,
     getProjectColumnsByProjectId,
@@ -22,7 +22,7 @@ import { ROLE_ADMIN, ACCESS_CONTROL_PROJECTS, PROJECT_TABLE, ACCESS_CONTROL_COLU
 import { addMultipleAttributeAccess, removeMultipleAttributeAccess } from "../../accessControl/attributeAccess.mjs"
 import { moveColumn } from "../../db.mjs"
 
-export const updateProjectEndpoint = createPutEndpoint(
+export const updateProjectEndpoint = createPatchEndpoint(
     projectFormatAndValidation,
     PROJECT_TABLE,
     'projectId'
@@ -142,7 +142,7 @@ export const createTagEndpoint = createEndpoint(async (req) => {
     return { message: 'Succesfully created new tag', tagId }
 })
 
-export const updateProjectColumnEndpoint = createPutEndpoint(
+export const updateProjectColumnEndpoint = createPatchEndpoint(
     updateProjectColumnFormat,
     COLUMN_PROJECT_TABLE,
     'projectColumnId'
@@ -174,7 +174,7 @@ async function updateProjectColumnFormat(allowedData, projectColumnId, userId, r
     return allowedData
 }
 
-export const updateTagEndpoint = createPutEndpoint(
+export const updateTagEndpoint = createPatchEndpoint(
     false,
     TAG_TABLE,
     'tagId'

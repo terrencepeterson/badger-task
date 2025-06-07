@@ -41,7 +41,7 @@ export function createEndpoint(getData, checkUser = true) {
     }
 }
 
-export function createPutEndpoint(validateAndFormatData, table, updateIdKey) {
+export function createPatchEndpoint(validateAndFormatData, table, updateIdKey) {
     return createEndpoint(async (req) => {
         let { body: allowedData } = req
         const allowedDataKeys = Object.keys(allowedData)

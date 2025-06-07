@@ -1,8 +1,8 @@
-import { createEndpoint, createImageEndpoint, createPutEndpoint } from "../../utility.mjs"
+import { createEndpoint, createImageEndpoint, createPatchEndpoint } from "../../utility.mjs"
 import { AVATAR_IMAGE_TYPE, ORGANISATION_TABLE } from "../../definitions.mjs"
 import { belongsToOrganisation, createOrganisation } from "./organisationService.mjs"
 
-export const updateOrganisationEndpoint = createPutEndpoint(
+export const updateOrganisationEndpoint = createPatchEndpoint(
     false,
     ORGANISATION_TABLE,
     'organisationId'

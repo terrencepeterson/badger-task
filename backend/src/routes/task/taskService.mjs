@@ -1,5 +1,5 @@
 import { query, generateInsert, mapTags, transactionQuery } from "../../db.mjs"
-import { TASK_TABLE, CHECKLIST_TABLE, COMMENT_TABLE, AVATAR_IMAGE_TYPE, USER_TABLE } from "../../definitions.mjs"
+import { TASK_TABLE, CHECKLIST_TABLE, COMMENT_TABLE, AVATAR_IMAGE_TYPE, USER_TABLE, TASK_TAG_TABLE } from "../../definitions.mjs"
 import '@dotenvx/dotenvx/config'
 import { convertDbImgToUrl } from "../../utility.mjs"
 import { defaultUserAvatarLink } from "../../cloudinary.mjs"
@@ -267,5 +267,35 @@ export async function updateTasksProjectColumn(currentProjectColumnId, newProjec
             WHERE id IN (${taskPlaceholders});
         `, [newProjectColumnId, ...taskIds])
     })
+}
+
+export async function isValidTag(tagId, taskId) {
+    const isValid = await query(`
+        SELECT id FROM tag WHERE id = ? AND project_id = (
+            SELECT p.id
+            FROM task t
+            INNER JOIN column_project cp
+            ON cp.id = t.project_column_id
+            INNER JOIN project p
+            ON p.id = cp.project_id
+            WHERE t.id = ?
+        )
+    `, [tagId, taskId])
+    return !!isValid.length
+}
+
+// notice IGNORE here - seen as though we're using a composite key in
+// this table if a duplicate is added it crashes the server
+export async function addTagToTask(tagId, taskId) {
+    let addedTag = await query(`
+        INSERT IGNORE INTO task_tag (tag_id, task_id)
+        VALUES (?, ?);
+    `, [tagId, taskId])
+
+    if (addedTag.affectedRows === 0 && addedTag.warningStatus >= 1) {
+        throw new Error('Duplicated tag on task')
+    }
+
+    return true
 }
 
