@@ -1,7 +1,8 @@
 import { query, generateInsert, mapTags, transactionQuery } from "../../db.mjs"
-import { TASK_TABLE, CHECKLIST_TABLE, COMMENT_TABLE } from "../../definitions.mjs"
+import { TASK_TABLE, CHECKLIST_TABLE, COMMENT_TABLE, AVATAR_IMAGE_TYPE, USER_TABLE } from "../../definitions.mjs"
 import '@dotenvx/dotenvx/config'
-const OFFSET_AMOUNT = Number(process.env.database_offset_amount)
+import { convertDbImgToUrl } from "../../utility.mjs"
+import { defaultUserAvatarLink } from "../../cloudinary.mjs"
 
 export async function getDashboardTasks(userId, batchNumber = 0) {
     let tasks = await query(`
@@ -41,7 +42,7 @@ export async function getDashboardTasks(userId, batchNumber = 0) {
 }
 
 export async function getTaskById(taskId, userId) {
-    const task = await query(`
+    let task = await query(`
         SELECT
             tsk.id as taskId,
             tsk.name,
@@ -50,7 +51,8 @@ export async function getTaskById(taskId, userId) {
             tsk.state,
             tsk.created_at,
             u.name as assigneeName,
-            u.img_url as assigneeImgUrl,
+            u.avatar_img_version,
+            u.id as userId,
             p.name as projectName,
             ca.name as columnAgendaName,
             ca.colour as columnAgendaColour
@@ -72,22 +74,38 @@ export async function getTaskById(taskId, userId) {
         WHERE tsk.id = ?;
     `, [userId, taskId])
 
-    return task.length ? task[0] : null
+    if (!task.length) {
+        return null
+    }
+
+    task = convertDbImgToUrl(task[0], AVATAR_IMAGE_TYPE, AVATAR_IMAGE_TYPE, defaultUserAvatarLink, USER_TABLE, task[0].userId)
+    delete task.userId
+
+    return task
 }
 
-export function getCommentsByTaskId(taskId) {
-    return query(`
+export async function getCommentsByTaskId(taskId) {
+    let comments = await query(`
         SELECT
             c.id as commentId,
             c.text as comment,
             c.created_at as commentCreatedAt,
             u.name as commentCreatedBy,
-            u.img_url as commentCreatedByImgUrl
+            u.avatar_img_version,
+            u.id as userId
         FROM comment c
         LEFT JOIN user u
             ON u.id = c.created_by
         WHERE c.task_id = ?
     `, [taskId])
+
+    comments = comments.map(c => {
+        const userId = c.userId
+        delete c.userId
+        return convertDbImgToUrl(c, AVATAR_IMAGE_TYPE, AVATAR_IMAGE_TYPE, defaultUserAvatarLink, USER_TABLE, userId)
+    })
+
+    return comments
 }
 
 export function getTagsByTaskId(taskId) {

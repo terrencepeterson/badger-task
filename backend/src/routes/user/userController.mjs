@@ -1,8 +1,9 @@
-import { createEndpoint } from "../../utility.mjs"
+import { createEndpoint, createImageEndpoint } from "../../utility.mjs"
 import { getDashboardTasks } from "../task/taskService.mjs"
 import { getUserDashboard } from "./userService.mjs"
 import { getProjectsByUserId } from "../project/projectService.mjs"
 import { getTagsByUserId } from "../project/projectService.mjs"
+import { AVATAR_IMAGE_TYPE, BACKGROUND_IMAGE_TYPE, USER_TABLE } from "../../definitions.mjs"
 
 export const dashboardEndpoint = createEndpoint(async (req) => {
     const { batchNumber } =  req.query
@@ -26,4 +27,7 @@ export const dashboardEndpoint = createEndpoint(async (req) => {
 
     return dashboardData
 })
+
+export const updateUserAvatarEndpoint = createImageEndpoint(USER_TABLE, 'userId', AVATAR_IMAGE_TYPE)
+export const updateUserBackgroundEndpoint = createImageEndpoint(USER_TABLE, 'userId', BACKGROUND_IMAGE_TYPE)
 

@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { projectAccessControl, projectColumnAccessControl } from "../../accessControl/attributeAccess.mjs"
-import { authenticate, validate } from "../../middleware.mjs"
+import { authenticate, imageUpload, validate } from "../../middleware.mjs"
 import { createRoleAccessControl, adminRoleAccessControl } from "../../accessControl/roleAccess.mjs"
 
 import {
@@ -14,7 +14,8 @@ import {
     updateTagEndpoint,
     deleteTagEndpoint,
     deleteProjectColumnEndpoint,
-    deleteProjecEndpoint
+    deleteProjecEndpoint,
+    updateProjectImageEndpoint
 } from "./projectController.mjs"
 
 import {
@@ -28,6 +29,7 @@ import {
     updateProjectSchema,
     updateTagSchema
 } from "./projectSchema.mjs"
+import { imageFileSchema } from "../../validation.mjs"
 
 const router = Router()
 router.use(authenticate)
@@ -43,6 +45,7 @@ router.delete('/:projectId/column/:projectColumnId', validate(updateProjectColum
 router.post('/:projectId/tag', validate(createTagSchema) , createRoleAccessControl, projectAccessControl, createTagEndpoint)
 router.patch('/:projectId/tag/:tagId', validate(updateTagSchema), createRoleAccessControl, projectAccessControl, updateTagEndpoint)
 router.delete('/:projectId/tag/:tagId', validate(deleteTagSchema), createRoleAccessControl, projectAccessControl, deleteTagEndpoint)
+router.post('/:projectId/avatar', validate(projectIdSchema), createRoleAccessControl, projectAccessControl, imageUpload, validate(imageFileSchema), updateProjectImageEndpoint)
 
 export default router
 

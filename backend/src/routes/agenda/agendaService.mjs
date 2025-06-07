@@ -1,5 +1,7 @@
+import { defaultProjectAvatarLink, defaultUserAvatarLink } from "../../cloudinary.mjs"
 import { query, transactionQuery, mapTags, generateInsert, getColumnColumns } from "../../db.mjs"
-import { COLUMN_AGENDA_TABLE } from "../../definitions.mjs"
+import { AVATAR_IMAGE_TYPE, COLUMN_AGENDA_TABLE, PROJECT_TABLE, USER_TABLE } from "../../definitions.mjs"
+import { convertDbImgToUrl } from "../../utility.mjs"
 
 export function getAgendaTasks(userId) {
     return query(`
@@ -54,12 +56,12 @@ export async function getAgendaColumns(userId) {
     return columns
 }
 
-export function getAgendaUsers(userId) {
-    return query(`
+export async function getAgendaUsers(userId) {
+    let agendaUsers = await query(`
         SELECT DISTINCT
             u.id,
             u.name,
-            u.img_url
+            u.avatar_img_version
         FROM column_agenda ca
         INNER JOIN task_column_agenda tca
             ON tca.column_agenda_id = ca.id
@@ -69,6 +71,10 @@ export function getAgendaUsers(userId) {
             ON u.id = tsk.assignee
         WHERE ca.user_id = ?;
     `, [userId])
+
+    agendaUsers = agendaUsers.map((u) => convertDbImgToUrl(u, AVATAR_IMAGE_TYPE, AVATAR_IMAGE_TYPE, defaultUserAvatarLink, USER_TABLE, u.id))
+
+    return agendaUsers
 }
 
 export function getAgendaTags(userId) {
@@ -88,11 +94,11 @@ export function getAgendaTags(userId) {
     `, [userId])
 }
 
-export function getAgendaProjects(userId) {
-    return query(`
+export async function getAgendaProjects(userId) {
+    let agendaProject = await query(`
         SELECT DISTINCT
             p.id,
-            p.img_url,
+            p.avatar_img_version,
             p.name
         FROM column_agenda ca
         INNER JOIN task_column_agenda tca
@@ -105,6 +111,8 @@ export function getAgendaProjects(userId) {
             ON p.id = cp.project_id
         WHERE ca.user_id = ?;
     `, [userId])
+
+    return agendaProject.map(p => convertDbImgToUrl(p, AVATAR_IMAGE_TYPE, AVATAR_IMAGE_TYPE, defaultProjectAvatarLink, PROJECT_TABLE, p.id))
 }
 
 export async function getAgendaColumn(columnId, row) {

@@ -1,8 +1,13 @@
 import { z } from "zod/v4"
-import { generateUpdate, doIdsMatch, deleteRow } from "./db.mjs"
+import { generateUpdate, doIdsMatch, deleteRow, updateImgVersion  } from "./db.mjs"
 import { idValidation } from "./validation.mjs"
 import { getAllUsersFromOrganisationByUserId } from "./routes/user/userService.mjs"
 import { removeMultipleAttributeAccess } from "./accessControl/attributeAccess.mjs"
+import '@dotenvx/dotenvx/config'
+import { unlink } from 'node:fs/promises'
+import cloudinary from './cloudinary.mjs'
+import {fileTypeFromFile} from 'file-type'
+import { IMAGE_TYPES } from "./definitions.mjs"
 
 // creates an async wrapper around an endpoint
 // instead of having the below in all endpoints
@@ -84,6 +89,44 @@ export function createDeleteWAccessControlEndpoint(deleteTable, deleteByParam, a
     })
 }
 
+export function createImageEndpoint(table, paramIdKey, imageType) {
+    return createEndpoint(async (req) => {
+        const { path } = req.file
+        const resourceId = req.params[paramIdKey]
+        if (!resourceId && resourceId !== 0 || !table || !imageType) {
+            throw new Error('Failed to add image to the databasae')
+        }
+
+        const imagePublicKey = generateImagePublicKey(table, resourceId, imageType)
+
+        const fileType = await fileTypeFromFile(path)
+        if (!IMAGE_TYPES.includes(fileType.ext)) {
+            throw new Error('Invalid file type')
+        }
+
+        const res = await cloudinary.uploader.upload(path, {
+            public_id: imagePublicKey,
+            resource_type: 'auto'
+        })
+        if (!res.version) {
+            throw new Error('Failed to update image')
+        }
+
+        try {
+            await unlink(path)
+        } catch (e) {
+            throw new Error('Failed to delete temporary file')
+        }
+
+        const hasUpdatedImage = await updateImgVersion(table, res.version, resourceId, imageType)
+        if (!hasUpdatedImage) {
+            throw new Error('Failed to add image to the databasae')
+        }
+
+        return { message:  "Successfully uploaded image", data: generateImageLink({ publicId: imagePublicKey, version: res.version }) }
+    })
+}
+
 export function jsDateToSqlDate(dateTimeIsoString) {
     const datetime = new Date(dateTimeIsoString)
     if (!datetime) {
@@ -126,5 +169,39 @@ export function createValidateParamIds(table, childIdParamName, parentIdColumnNa
             })
         }
     }
+}
+
+export function generateImagePublicKey(dbTableName, resourceId, imageType) {
+    return `${dbTableName}_${resourceId}_${imageType}`
+}
+
+export function generateImageLink(config) {
+    const { publicId, version } = config
+    if (!publicId) {
+        return false
+    }
+    const baseUrl = `https://res.cloudinary.com/${process.env.cloudinary_cloud_name}/image/upload/q_auto/f_auto/`
+    const segments = []
+
+    if (version) {
+        segments.push(`v${config.version}`)
+    }
+    segments.push(publicId)
+    let path = segments.join('/')
+
+    return baseUrl + path
+}
+
+export function convertDbImgToUrl(resource, imgKey, imgType, defaultImgLink, table, resourceId) {
+    resource = { ...resource }
+    const dbImgKey = `${imgKey}_img_version`
+    const resourceImgKey = `${imgKey}_img_url`
+    if (resource[dbImgKey]) {
+        resource[resourceImgKey] = generateImageLink({ publicId: generateImagePublicKey(table, resourceId, imgType), version: resource[dbImgKey]})
+    } else {
+        resource[resourceImgKey] = defaultImgLink
+    }
+    delete resource[dbImgKey]
+    return resource
 }
 

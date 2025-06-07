@@ -38,8 +38,8 @@ export async function getAllUsersFromOrganisation(organisationId) {
     return allUsers
 }
 
-export async function createOrganisation(userId, name, img_url) {
-    const organisationId = await generateInsert(ORGANISATION_TABLE, { name, img_url })
+export async function createOrganisation(userId, name) {
+    const organisationId = await generateInsert(ORGANISATION_TABLE, { name })
     if (!organisationId) {
         throw new Error('Failed to create organisation')
     }

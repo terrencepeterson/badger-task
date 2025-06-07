@@ -2,3 +2,4 @@ backend/db-backups
 backend/db-data
 backend/.env
 backend/node_modules
+backend/uploads

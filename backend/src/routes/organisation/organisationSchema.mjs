@@ -1,20 +1,14 @@
 import { z } from "zod/v4"
-import { nameValidation, imgUrlValidation } from "../../validation.mjs"
-import { DEFAULT_DB_VALUE } from "../../definitions.mjs"
+import { nameValidation } from "../../validation.mjs"
 import { createIdSchema } from "../../utility.mjs"
 
 const organisationParamSchema = createIdSchema('organisationId')
 
-const updateOrganisationBodySchema = z.object({
-    name: nameValidation.optional(),
-    imgUrl: imgUrlValidation.optional()
+const organisationBodySchema = z.object({
+    name: nameValidation.optional()
 })
 
-const createOrganisationBodySchema = z.object({
-    name: nameValidation,
-    imgUrl: imgUrlValidation.default(DEFAULT_DB_VALUE)
-})
-
-export const updateOrganiationSchema = { params: organisationParamSchema, body: updateOrganisationBodySchema }
-export const createOrganisationSchema = { body: createOrganisationBodySchema }
+export const updateOrganiationSchema = { params: organisationParamSchema, body: organisationBodySchema }
+export const createOrganisationSchema = { body: organisationBodySchema }
+export const organisationIdSchema = { params: organisationParamSchema }
 

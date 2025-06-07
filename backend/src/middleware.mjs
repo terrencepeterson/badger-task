@@ -7,6 +7,10 @@ export const cookieSettings = {
     secure: true,
     partitioned: true
 }
+import '@dotenvx/dotenvx/config'
+const multer = await import('multer')
+const upload = multer.default({ dest: `${process.env.backend_root}/uploads` })
+export const imageUpload = upload.single('image_file')
 
 export function responseFormatter(req, res, next) {
     res.setTokenCookie = (token) => {

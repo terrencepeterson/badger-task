@@ -1,17 +1,20 @@
+import { defaultBackgroundLink, defaultOrganisationAvatarLink, defaultUserAvatarLink } from "../../cloudinary.mjs"
 import { query } from "../../db.mjs"
-import { USER_TABLE, ORGANISATION_TABLE } from "../../definitions.mjs"
+import { USER_TABLE, ORGANISATION_TABLE, AVATAR_IMAGE_TYPE, BACKGROUND_IMAGE_TYPE } from "../../definitions.mjs"
+import { convertDbImgToUrl } from "../../utility.mjs"
 
 export async function getUserDashboard(id) {
-    const user = await query(`
+    let user = await query(`
         SELECT
             COUNT(DISTINCT t.id) AS tasksTotalCount,
             u.id as userId,
+            o.id as organisationId,
             u.name as userName,
-            u.img_url as userImgUrl,
-            u.background_img_url as userBackgroundUrl,
+            u.avatar_img_version as user_avatar_img_version,
+            u.background_img_version,
             u.description as userDescription,
             o.name as organisationName,
-            o.img_url as organisationImgUrl
+            o.avatar_img_version as organisation_avatar_img_version
         FROM ${USER_TABLE} u
         LEFT JOIN task t
             ON t.assignee = u.id AND t.assignee = ?
@@ -19,13 +22,19 @@ export async function getUserDashboard(id) {
             ON o.id = u.organisation_id
         WHERE u.id = ?
     `, [id,id])
+    l(user)
 
-    if (user.length) {
-        user[0].tasksTotalCount = Number(user[0].tasksTotalCount)
-        return user[0]
+    if (!user.length) {
+        return null
     }
 
-    return null
+    user = convertDbImgToUrl(user[0], 'user_' + AVATAR_IMAGE_TYPE, AVATAR_IMAGE_TYPE, defaultUserAvatarLink, USER_TABLE, user[0].userId)
+    user = convertDbImgToUrl(user, 'organisation_' + AVATAR_IMAGE_TYPE, AVATAR_IMAGE_TYPE, defaultOrganisationAvatarLink, ORGANISATION_TABLE, user.organisationId)
+    user = convertDbImgToUrl(user, BACKGROUND_IMAGE_TYPE, BACKGROUND_IMAGE_TYPE, defaultBackgroundLink, USER_TABLE, user.userId)
+    user.tasksTotalCount = Number(user.tasksTotalCount)
+    delete user.organisationId
+
+    return user
 }
 
 export async function getAllUsersFromOrganisationByUserId(userId) {

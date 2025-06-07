@@ -1,10 +1,9 @@
 import { createEndpoint, createPutEndpoint, createDeleteEndpoint, createDeleteWAccessControlEndpoint } from "../../utility.mjs"
 import { TASK_TABLE, ACCESS_CONTROL_TASKS, COLUMN_PROJECT_TABLE, CHECKLIST_TABLE, COMMENT_TABLE, TASK_COLUMN_AGENDA_TABLE } from "../../definitions.mjs"
 import { getProjectColumnRows, getUserProjectAccess } from "../project/projectService.mjs"
-import { getIsValidAssignee, addMultipleAttributeAccess, removeMultipleAttributeAccess } from "../../accessControl/attributeAccess.mjs"
-import { getIdByDifferentId, deleteRow } from "../../db.mjs"
+import { getIsValidAssignee, addMultipleAttributeAccess } from "../../accessControl/attributeAccess.mjs"
+import { getIdByDifferentId } from "../../db.mjs"
 import { moveTaskToNewColumn, moveTaskToEndOfNewColumn, moveTaskWithinColumn, addTaskToAgendaColumn } from "./taskServiceMove.mjs"
-import { getAllUsersFromOrganisationByUserId } from "../user/userService.mjs"
 import {
     getTaskById,
     getCommentsByTaskId,

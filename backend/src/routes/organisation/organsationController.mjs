@@ -1,21 +1,12 @@
-import { createEndpoint, createPutEndpoint } from "../../utility.mjs"
-import { ORGANISATION_TABLE } from "../../definitions.mjs"
+import { createEndpoint, createImageEndpoint, createPutEndpoint } from "../../utility.mjs"
+import { AVATAR_IMAGE_TYPE, ORGANISATION_TABLE } from "../../definitions.mjs"
 import { belongsToOrganisation, createOrganisation } from "./organisationService.mjs"
 
 export const updateOrganisationEndpoint = createPutEndpoint(
-    organisationFormatAndValidation,
+    false,
     ORGANISATION_TABLE,
     'organisationId'
 )
-
-function organisationFormatAndValidation(allowedData) {
-    if (Object.hasOwn(allowedData, 'imgUrl')) {
-        allowedData.img_url = allowedData.imgUrl
-        delete allowedData.imgUrl
-    }
-
-    return allowedData
-}
 
 export const createOrganisationEndpoint = createEndpoint(async (req) => {
     const { id: userId } = req.user
@@ -24,11 +15,13 @@ export const createOrganisationEndpoint = createEndpoint(async (req) => {
         throw new Error('Please create a new account, the current account already belongs to an organisation')
     }
 
-    const organisationId = await createOrganisation(userId, req.body.name, req.body.imgUrl)
+    const organisationId = await createOrganisation(userId, req.body.name)
     if (!organisationId && organisationId !== 0) {
         throw new Error('Failed to add organisation - could not update user')
     }
 
     return { message: "Successfully added organisation", organisationId }
 })
+
+export const addOrganisationImageEndpoint = createImageEndpoint(ORGANISATION_TABLE, 'organisationId', AVATAR_IMAGE_TYPE)
 

@@ -1,15 +1,18 @@
+import { defaultUserAvatarLink } from "../../cloudinary.mjs"
 import { generateInsert, query } from "../../db.mjs"
-import { USER_TABLE, COLUMN_AGENDA_TABLE } from "../../definitions.mjs"
+import { USER_TABLE, COLUMN_AGENDA_TABLE, AVATAR_IMAGE_TYPE } from "../../definitions.mjs"
+import { convertDbImgToUrl } from "../../utility.mjs"
 
-export async function createUser(name, email, description, role, password, img_url) {
-    const userId = await generateInsert(USER_TABLE, { name, email, description, role, password, img_url })
+export async function createUser(name, email, description, role, password) {
+    const userId = await generateInsert(USER_TABLE, { name, email, description, role, password })
     await addDefaultAgenda(userId)
-    const user = await query(`
-        SELECT id, name, email, img_url, created_at
+    let user = await query(`
+        SELECT id, name, email, avatar_img_version, created_at
         FROM ${USER_TABLE} where id = ?;
     `, [userId])
 
-    return user[0]
+    user = convertDbImgToUrl(user[0], AVATAR_IMAGE_TYPE, AVATAR_IMAGE_TYPE, defaultUserAvatarLink, USER_TABLE, user[0].id)
+    return user
 }
 
 export async function getUserByEmail(email, includePassword = false) {

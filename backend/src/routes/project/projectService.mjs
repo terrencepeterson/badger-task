@@ -1,5 +1,7 @@
+import { defaultProjectAvatarLink, defaultUserAvatarLink } from "../../cloudinary.mjs"
 import { query, mapTags, generateInsert, transactionQuery, getColumnColumns, pool } from "../../db.mjs"
-import { PROJECT_TABLE, COLUMN_PROJECT_TABLE, TASK_TABLE, USER_TABLE, TASK_TAG_TABLE, TASK_COLUMN_AGENDA_TABLE, COLUMN_AGENDA_TABLE, TAG_TABLE, ROLE_ADMIN } from "../../definitions.mjs"
+import { PROJECT_TABLE, COLUMN_PROJECT_TABLE, TASK_TABLE, USER_TABLE, TASK_TAG_TABLE, TASK_COLUMN_AGENDA_TABLE, COLUMN_AGENDA_TABLE, TAG_TABLE, ROLE_ADMIN, AVATAR_IMAGE_TYPE } from "../../definitions.mjs"
+import { convertDbImgToUrl, generateImageLink, generateImagePublicKey } from "../../utility.mjs"
 
 export async function getEditProjectHelperColumns(projectId) {
     const editProjectHelperColumns = await query(`
@@ -27,12 +29,12 @@ export async function getProjectColumnRows(projectColumnId) {
     return projectRows.length ? projectRows.map(r => r.project_row) : false
 }
 
-export function getProjectsByUserId(userId) {
-     return query(`
+export async function getProjectsByUserId(userId) {
+     const projects = await query(`
         SELECT DISTINCT
             p.id as projectId,
             p.name as projectName,
-            p.img_url as projectImgUrl,
+            p.avatar_img_version,
             p.private
         FROM project p
         LEFT JOIN user_project up
@@ -46,13 +48,18 @@ export function getProjectsByUserId(userId) {
             p.private = FALSE OR
             p.private = TRUE AND up.user_id = ?;
     `, [userId, userId])
+
+    return projects.map(p => convertDbImgToUrl(p, AVATAR_IMAGE_TYPE, AVATAR_IMAGE_TYPE, defaultProjectAvatarLink, PROJECT_TABLE, p.id))
+
+    // return porj
 }
 
 export async function getProjectByProjectId(projectId) {
-    const project = await query(`
+    let project = await query(`
         SELECT
+            p.id,
             p.name,
-            p.img_url,
+            p.avatar_img_version,
             p.created_at,
             p.description,
             u.name as createdBy
@@ -62,7 +69,11 @@ export async function getProjectByProjectId(projectId) {
         WHERE p.id = ?
     `, [projectId])
 
-    return project.length ? project[0] : null
+    if (!project.length) {
+        return null
+    }
+
+    return convertDbImgToUrl(project[0], AVATAR_IMAGE_TYPE, AVATAR_IMAGE_TYPE, defaultProjectAvatarLink, PROJECT_TABLE, project[0].id)
 }
 
 export async function getProjectTasks(projectId, userId) {
@@ -181,19 +192,21 @@ export async function getProjectColumnsByProjectId(projectId) {
     return columns
 }
 
-export function getProjectUsersWAssigneedTask(projectId) {
+export async function getProjectUsersWAssigneedTask(projectId) {
 // gets users which have been assigned to a task in the project
-    return query(`
+    const projects = await query(`
         SELECT DISTINCT
             u.id,
             u.name,
-            u.img_url
+            u.avatar_img_version
         FROM user u
         INNER JOIN task t ON t.assignee = u.id
         INNER JOIN column_project cp ON cp.id = t.project_column_id
         INNER JOIN project p ON p.id = cp.project_id
         WHERE p.id = ?;
     `, [projectId])
+
+    projects.map(p => convertDbImgToUrl(p, AVATAR_IMAGE_TYPE, AVATAR_IMAGE_TYPE, defaultUserAvatarLink, USER_TABLE, p.id))
 }
 
 export async function getProjectsAccess(userId) {
@@ -225,8 +238,8 @@ export async function getProjectsAccess(userId) {
     }
 }
 
-export function createProject(userId, organisation_id, name, description, isPrivate, img_url) {
-    return generateInsert(PROJECT_TABLE, {name, created_by: userId, organisation_id, description, private: isPrivate, img_url})
+export function createProject(userId, organisation_id, name, description, isPrivate) {
+    return generateInsert(PROJECT_TABLE, { name, created_by: userId, organisation_id, description, private: isPrivate })
 }
 
 export async function getUserProjectAccess(projectId) {

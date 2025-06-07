@@ -8,7 +8,7 @@ import { addAccessControls, removeAccessControl } from "../../accessControl/attr
 import { ROLE_MEMBER } from '../../definitions.mjs'
 
 export const signupEndpoint = createEndpoint(async ({ body }) => {
-    const { name, email, password, confirmPassword, description, imgUrl } = body // required fields
+    const { name, email, password, confirmPassword, description } = body // required fields
 
     if (password !== confirmPassword) {
         throw new Error('Passsword and confirm password do not match')
@@ -21,7 +21,7 @@ export const signupEndpoint = createEndpoint(async ({ body }) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const user = await createUser(name, email, description, ROLE_MEMBER, hashedPassword, imgUrl)
+    const user = await createUser(name, email, description, ROLE_MEMBER, hashedPassword)
     if (!user) {
         throw new Error('Failed to create user')
     }

@@ -27,6 +27,8 @@ export const TASK_STATE_ACTIVE = 'active'
 export const TASK_STATE_COMPLETED = 'completed'
 export const TASK_STATE_HOLD = 'hold'
 export const VALID_PROJECT_COLUMN_ICONS = ['wave', 'email', 'question', 'issue', 'home', 'computer', 'photo', 'music', 'tv', 'completed', 'idea', 'agenda', 'website', 'decision']
-export const IMAGE_TYPES = ['svg', 'jpg', 'jpeg', 'png']
+export const IMAGE_TYPES = ['jpg', 'jpeg', 'png', 'webp']
 export const CHECKLIST_STATES = ['active', 'completed']
 
+export const AVATAR_IMAGE_TYPE = 'avatar'
+export const BACKGROUND_IMAGE_TYPE = 'background'

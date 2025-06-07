@@ -30,7 +30,7 @@ SET character_set_client = utf8mb4;
   1 AS `email`,
   1 AS `description`,
   1 AS `role`,
-  1 AS `img_url`,
+  1 AS `avatar_img_version`,
   1 AS `created_at`,
   1 AS `organisation_id` */;
 SET character_set_client = @saved_cs_client;
@@ -50,7 +50,7 @@ CREATE TABLE `checklist` (
   PRIMARY KEY (`id`),
   KEY `checklist_task_FK` (`task_id`),
   CONSTRAINT `checklist_task_FK` FOREIGN KEY (`task_id`) REFERENCES `task` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=252 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=253 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -69,7 +69,7 @@ CREATE TABLE `column_agenda` (
   PRIMARY KEY (`id`),
   KEY `column_agenda_user_FK` (`user_id`),
   CONSTRAINT `column_agenda_user_FK` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=136 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=148 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -84,12 +84,12 @@ CREATE TABLE `column_project` (
   `name` varchar(100) NOT NULL,
   `icon` enum('wave','email','question','issue','home','computer','photo','music','tv','completed','idea','agenda','website','decision') DEFAULT 'wave',
   `colour` varchar(100) NOT NULL,
-  `column` int(10) unsigned NOT NULL,
+  `column` int(11) NOT NULL,
   `project_id` int(10) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   KEY `column_project_project_FK` (`project_id`),
   CONSTRAINT `column_project_project_FK` FOREIGN KEY (`project_id`) REFERENCES `project` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=83 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=87 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -111,7 +111,7 @@ CREATE TABLE `comment` (
   KEY `comment_user_FK` (`created_by`),
   CONSTRAINT `comment_task_FK` FOREIGN KEY (`task_id`) REFERENCES `task` (`id`) ON DELETE CASCADE,
   CONSTRAINT `comment_user_FK` FOREIGN KEY (`created_by`) REFERENCES `user` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=201 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=203 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -124,9 +124,9 @@ DROP TABLE IF EXISTS `organisation`;
 CREATE TABLE `organisation` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
-  `img_url` varchar(200) NOT NULL DEFAULT 'default.svg',
+  `avatar_img_version` varchar(200) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -139,7 +139,7 @@ DROP TABLE IF EXISTS `project`;
 CREATE TABLE `project` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
-  `img_url` varchar(200) NOT NULL DEFAULT 'default.svg',
+  `avatar_img_version` varchar(200) DEFAULT NULL,
   `created_by` int(10) unsigned NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `organisation_id` int(10) unsigned NOT NULL,
@@ -150,7 +150,7 @@ CREATE TABLE `project` (
   KEY `project_organisation_FK` (`organisation_id`),
   CONSTRAINT `project_organisation_FK` FOREIGN KEY (`organisation_id`) REFERENCES `organisation` (`id`) ON DELETE CASCADE,
   CONSTRAINT `project_user_FK` FOREIGN KEY (`created_by`) REFERENCES `user` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=114 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=115 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -168,7 +168,7 @@ CREATE TABLE `tag` (
   PRIMARY KEY (`id`),
   KEY `tag_project_FK` (`project_id`),
   CONSTRAINT `tag_project_FK` FOREIGN KEY (`project_id`) REFERENCES `project` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=64 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=65 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -195,10 +195,10 @@ CREATE TABLE `task` (
   KEY `task_user__created_by_FK` (`created_by`),
   KEY `task_user_assignee_FK` (`assignee`),
   KEY `task_column_project_FK` (`project_column_id`),
-  CONSTRAINT `task_column_project_FK` FOREIGN KEY (`project_column_id`) REFERENCES `column_project` (`id`),
+  CONSTRAINT `task_column_project_FK` FOREIGN KEY (`project_column_id`) REFERENCES `column_project` (`id`) ON DELETE CASCADE,
   CONSTRAINT `task_user__created_by_FK` FOREIGN KEY (`created_by`) REFERENCES `user` (`id`),
   CONSTRAINT `task_user_assignee_FK` FOREIGN KEY (`assignee`) REFERENCES `user` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=291 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=309 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -218,7 +218,7 @@ CREATE TABLE `task_column_agenda` (
   KEY `task_column_agenda_task_FK` (`task_id`),
   CONSTRAINT `task_column_agenda_column_agenda_FK` FOREIGN KEY (`column_agenda_id`) REFERENCES `column_agenda` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `task_column_agenda_task_FK` FOREIGN KEY (`task_id`) REFERENCES `task` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=98 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=99 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -252,15 +252,15 @@ CREATE TABLE `user` (
   `description` text DEFAULT NULL,
   `role` enum('admin','member','viewer') NOT NULL DEFAULT 'member',
   `password` char(60) NOT NULL,
-  `img_url` varchar(200) NOT NULL DEFAULT 'default.svg',
+  `avatar_img_version` varchar(200) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `organisation_id` int(10) unsigned DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
-  `background_img_url` varchar(100) NOT NULL DEFAULT 'default.png',
+  `background_img_version` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `user_organisation_FK` (`organisation_id`),
   CONSTRAINT `user_organisation_FK` FOREIGN KEY (`organisation_id`) REFERENCES `organisation` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -288,12 +288,12 @@ CREATE TABLE `user_project` (
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
-/*!50001 SET character_set_client      = utf8mb3 */;
-/*!50001 SET character_set_results     = utf8mb3 */;
-/*!50001 SET collation_connection      = utf8mb3_general_ci */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_uca1400_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
-/*!50001 VIEW `active_user` AS select `user`.`id` AS `id`,`user`.`name` AS `name`,`user`.`email` AS `email`,`user`.`description` AS `description`,`user`.`role` AS `role`,`user`.`img_url` AS `img_url`,`user`.`created_at` AS `created_at`,`user`.`organisation_id` AS `organisation_id` from `user` where `user`.`deleted_at` is null */;
+/*!50013 DEFINER=`root`@`%` SQL SECURITY DEFINER */
+/*!50001 VIEW `active_user` AS select `user`.`id` AS `id`,`user`.`name` AS `name`,`user`.`email` AS `email`,`user`.`description` AS `description`,`user`.`role` AS `role`,`user`.`avatar_img_version` AS `avatar_img_version`,`user`.`created_at` AS `created_at`,`user`.`organisation_id` AS `organisation_id` from `user` where `user`.`deleted_at` is null */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -307,4 +307,4 @@ CREATE TABLE `user_project` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2025-05-31 11:17:01
+-- Dump completed on 2025-06-07  7:53:25

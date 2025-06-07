@@ -211,3 +211,16 @@ process.on('SIGINT', async () => {
     process.exit();
 });
 
+export async function updateImgVersion(table, version, setId, type) {
+    const hasAddedImage = await query(`
+        UPDATE ${pool.escapeId(table)}
+        SET ${type}_img_version = ?
+        WHERE id = ?
+    `, [version, setId])
+    if (hasAddedImage.affectedRows !== 1 || hasAddedImage.warningStatus !== 0) {
+        return false
+    }
+
+    return true
+}
+

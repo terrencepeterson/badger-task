@@ -20,3 +20,9 @@ export const idValidation = z.union([z
 ])
 export const nullableIdValidation = z.union([idValidation, z.null()])
 
+export const imageFileSchema = {
+    file: z.looseObject({
+        mimetype: z.literal(['image/png', 'image/jpeg', 'image/webp'], 'Invalid file type')
+    })
+}
+
