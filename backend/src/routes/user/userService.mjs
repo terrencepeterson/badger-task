@@ -48,3 +48,12 @@ export async function getAllUsersFromOrganisationByUserId(userId) {
     return users.length ? users.map(u => u.id) : null
 }
 
+export async function getPasswordById(id) {
+    const user = await query(`
+        SELECT password 
+        FROM user
+        WHERE id = ?
+    `, [id])
+    return user[0]?.password
+}
+
