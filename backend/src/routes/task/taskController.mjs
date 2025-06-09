@@ -16,6 +16,7 @@ import {
     getIsValidTasksProjectColumn,
     updateTasksProjectColumn,
     addTagToTask,
+    deleteTagTask,
 } from "./taskService.mjs"
 
 export const taskEndpoint = createEndpoint(async (req) => {
@@ -239,5 +240,15 @@ export const addTagToTaskEndpoint = createEndpoint(async (req) => {
     const { tagId, taskId } = req.params
     await addTagToTask(tagId, taskId)
     return 'Successfully added tag'
+})
+
+export const removeTagFromTaskEndpoint = createEndpoint(async (req) => {
+    const { tagId, taskId } = req.params
+    const hasDeleted = await deleteTagTask(tagId, taskId)
+    if (!hasDeleted) {
+        throw new Error('Failed to remove tag')
+    }
+
+    return 'Successfully removed tag'
 })
 

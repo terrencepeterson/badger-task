@@ -79,5 +79,5 @@ export const updateCommentSchema = { params: commentParamSchema, body: updateCom
 export const deleteCommentSchema = { params: commentParamSchema }
 export const deleteChecklistSchema = { params: checklistParamSchema }
 export const updateTasksProjectColumn = { params: projectColumnIdSchema, body: updateTasksProjectColumnBodySchema }
-export const addTagSchema = { params: taskTagParamSchema }
+export const tagSchema = { params: taskTagParamSchema }
 

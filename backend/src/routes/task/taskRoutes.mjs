@@ -3,7 +3,7 @@ import { projectColumnAccessControl, taskAccessControl } from "../../accessContr
 import { authenticate, validate } from "../../middleware.mjs"
 import { createRoleAccessControl } from "../../accessControl/roleAccess.mjs"
 import {
-    addTagSchema,
+    tagSchema,
     createChecklistSchema,
     createCommnentSchema,
     createTaskSchema,
@@ -27,7 +27,8 @@ import {
     deleteChecklistEndpoint,
     deleteTaskEndpoint,
     tasksUpdateProjectColumnEndpoint,
-    addTagToTaskEndpoint
+    addTagToTaskEndpoint,
+    removeTagFromTaskEndpoint
 } from "./taskController.mjs"
 
 const router = Router()
@@ -44,7 +45,8 @@ router.post('/:taskId/comment', validate(createCommnentSchema), taskAccessContro
 router.patch('/:taskId/comment/:commentId', validate(updateCommentSchema), taskAccessControl, updateCommentEndpoint)
 router.delete('/:taskId/comment/:commentId', validate(deleteCommentSchema), taskAccessControl, deleteCommentEndpoint)
 router.patch('/update-column-project/:projectColumnId', validate(updateTasksProjectColumn), tasksUpdateProjectColumnEndpoint)
-router.post('/:taskId/tag/:tagId', validate(addTagSchema), createRoleAccessControl, taskAccessControl, addTagToTaskEndpoint)
+router.post('/:taskId/tag/:tagId', validate(tagSchema), createRoleAccessControl, taskAccessControl, addTagToTaskEndpoint)
+router.delete('/:taskId/tag/:tagId', validate(tagSchema), createRoleAccessControl, taskAccessControl, removeTagFromTaskEndpoint)
 
 export default router
 

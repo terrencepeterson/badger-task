@@ -1,4 +1,4 @@
-import { query, generateInsert, mapTags, transactionQuery } from "../../db.mjs"
+import { query, generateInsert, mapTags, transactionQuery, pool } from "../../db.mjs"
 import { TASK_TABLE, CHECKLIST_TABLE, COMMENT_TABLE, AVATAR_IMAGE_TYPE, USER_TABLE, TASK_TAG_TABLE } from "../../definitions.mjs"
 import '@dotenvx/dotenvx/config'
 import { convertDbImgToUrl } from "../../utility.mjs"
@@ -297,5 +297,12 @@ export async function addTagToTask(tagId, taskId) {
     }
 
     return true
+}
+
+export async function deleteTagTask(tagId, taskId) {
+    const removeTag = await query(`
+        DELETE FROM task_tag WHERE tag_id = ? AND task_id = ?
+    `, [tagId, taskId])
+    return removeTag.affectedRows === 1 && removeTag.warningStatus === 0
 }
 
