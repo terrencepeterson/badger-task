@@ -1,4 +1,4 @@
-import { createEndpoint, createImageEndpoint } from "../../utility.mjs"
+import { createEndpoint, createImageEndpoint, createPatchEndpoint } from "../../utility.mjs"
 import { getDashboardTasks } from "../task/taskService.mjs"
 import { getPasswordById, getUserDashboard } from "./userService.mjs"
 import { getProjectsByUserId } from "../project/projectService.mjs"
@@ -63,4 +63,18 @@ export const updatePasswordEndpoint = createEndpoint(async (req) => {
 
 export const updateUserAvatarEndpoint = createImageEndpoint(USER_TABLE, 'userId', AVATAR_IMAGE_TYPE)
 export const updateUserBackgroundEndpoint = createImageEndpoint(USER_TABLE, 'userId', BACKGROUND_IMAGE_TYPE)
+
+export const updateUserEndpoint = createPatchEndpoint(
+    updateUserValidation,
+    USER_TABLE,
+    'userId'
+)
+
+function updateUserValidation(allowedData, paramUserId, tokenUserId) {
+    if (paramUserId !== tokenUserId) {
+        throw new Error('Wrong user provided')
+    }
+
+    return allowedData
+}
 
