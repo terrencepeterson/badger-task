@@ -227,6 +227,48 @@
                 <button type="submit">submit</button>
             </form>
         </div>
+
+        <div>
+            <h2>Update passowrd</h2>
+            <form id="update-password">
+                <div>
+                    <label for="current-password">CurrentPassowrd</label>
+                    <input type="" name="currentPassword" value="" id="current-password">
+                </div>
+                <div>
+                    <label for="new-password">newPassword</label>
+                    <input type="" name="newPassword" value="" id="new-password">
+                </div>
+                <div>
+                    <label for="confirm-password">confirmPassword</label>
+                    <input type="" name="confirmPassword" value="" id="confirm-password">
+                </div>
+                <div>
+                    <label for="user-id">user id</label>
+                    <input type="text" name="userId" value="" class="user-id">
+                </div>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+
+        <div>
+            <h2>Update User</h2>
+            <form id="update-user">
+                <div>
+                    <label for="name">Name</label>
+                    <input type="text" name="name" value="" id="name">
+                </div>
+                <div>
+                    <label for="description">Description</label>
+                    <input type="text" name="description" value="" id="description">
+                </div>
+                <div>
+                    <label for="user-id">User Id</label>
+                    <input type="text" name="userId" value="" id="user-id" class="user-id">
+                </div>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
     </body>
     <script>
         const updateTaskElement = document.querySelector('#update-task')
@@ -360,5 +402,18 @@
             { projectColumnId: '.project-column-id' },
             'task/update-column-project/$projectColumnId'
         )
+
+        addPatchListener(
+            '#update-password',
+            { userId: '.user-id' },
+            'user/$userId/password'
+        )
+
+        addPatchListener(
+            '#update-user',
+            { userId: '.user-id' },
+            'user/$userId'
+        )
+
     </script>
 </html>

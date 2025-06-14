@@ -47,7 +47,7 @@
                 </div>
                 <div>
                     <label for="private">Is private</label>
-                    <input type="checkbox" name="isPrivate" id="private" checked>
+                    <input type="checkbox" name="private" id="private" checked>
                 </div>
                 <div>
                     <label for="img-url">IMG url</label>
@@ -163,12 +163,76 @@
             </form>
         </div>
 
-        <div>
+        <div style="margin-bottom: 2rem;">
             <form id="data-picker-form">
                 <input type="date" id="birthday" name="date">
                 <button type="submit">Submit date</button>
             </form>
         </div>
+
+        <div style="margin-bottom: 2rem;">
+            <h2>Add organisation image</h2>
+            <form id="organisation-image-form" enctype="multipart/form-data">
+                <input type="file" name="image_file" />
+                <div>
+                    <label for="organisationId">Organisation Id</label>
+                    <input class="organisation-id" type="text" name="" value="" id="organisationId">
+                </div>
+                <img src="" alt="" style="width: 100px;">
+                <button type="submit">submit</button>
+            </form>
+        </div>
+
+        <div style="margin-bottom: 2rem;">
+            <h2>Add user image</h2>
+            <form id="user-image-form" enctype="multipart/form-data">
+                <input type="file" name="image_file" />
+                <div>
+                    <label for="userId">User Id</label>
+                    <input class="user-id" type="text" name="" value="" id="userId">
+                </div>
+                <img src="" alt="" style="width: 100px;">
+                <button type="submit">submit</button>
+            </form>
+        </div>
+
+        <div style="margin-bottom: 2rem;">
+            <h2>Add user background image</h2>
+            <form id="user-background-image-form" enctype="multipart/form-data">
+                <input type="file" name="image_file" />
+                <div>
+                    <label for="userId">User Id</label>
+                    <input class="user-id" type="text" name="" value="" id="userId">
+                </div>
+                <img src="" alt="" style="width: 100px;">
+                <button type="submit">submit</button>
+            </form>
+        </div>
+
+        <div style="margin-bottom: 2rem;">
+            <h2>Add project image</h2>
+            <form id="project-image-form" enctype="multipart/form-data">
+                <input type="file" name="image_file" />
+                <div>
+                    <label for="projectId">Project Id</label>
+                    <input class="project-id" type="text" name="" value="" id="projectId">
+                </div>
+                <img src="" alt="" style="width: 100px;">
+                <button type="submit">submit</button>
+            </form>
+        </div>
+
+        <div>
+            <h2>Custom post (adding tags to tasks)</h2>
+            <form id="custom-post">
+                <div>
+                    <label for="custom-path">custom path</label>
+                    <input type="text"  value="" id="custom-path">
+                </div>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+
     </body>
 
     <script>
@@ -227,9 +291,13 @@
         const createProjectUrl = 'http://localhost:8001/project'
         projectElement.addEventListener('submit', async (e) => {
             e.preventDefault()
-            let data = new FormData(e.target)
-            data = Object.fromEntries(data)
-            console.log(data)
+            // let data = new FormData(e.target)
+            // data = Object.fromEntries(data)
+            const data = {}
+            data.name = 'last westy'
+            // data.description = 'some testy westy description'
+            // data.imgUrl = 'may25project.svg'
+            // data.isPrivate = true
             const res = await fetch(createProjectUrl, {
                 method: "POST",
                 headers: {
@@ -243,17 +311,13 @@
         })
 
         const projectColumnElement = document.querySelector('#create-project-column')
-        const createProjectColumnUrl = 'http://localhost:8001/project/column'
         projectColumnElement.addEventListener('submit', async (e) => {
             e.preventDefault()
             const projectId = projectColumnElement.querySelector('#project-id').value
-            const params = new URLSearchParams({
-                projectId
-            })
 
             let data = new FormData(e.target)
             data = Object.fromEntries(data)
-            const res = await fetch(`${createProjectColumnUrl}?${params}`, {
+            const res = await fetch(`${createProjectUrl}/${projectId}/column`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -290,14 +354,17 @@
             e.preventDefault()
             const projectColumnId = taskElement.querySelector('#project-column-id').value
             console.log(projectColumnId)
-            const params = new URLSearchParams({
-                column: projectColumnId
-            })
 
-            let data = new FormData(e.target)
-            data = Object.fromEntries(data)
+            // let data = new FormData(e.target)
+            // data = Object.fromEntries(data)
+            data = {}
+            data.name = 'some new task'
+            // data.dueDate = "2024-10-12T00:00:00.000Z"
+            console.log(projectColumnId)
+            data.projectColumnId = projectColumnId
+            data.assignee = 23
             console.log(data)
-            const res = await fetch(`${taskUrl}?${params}`, {
+            const res = await fetch(`${taskUrl}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -310,17 +377,14 @@
         })
 
         const commentElement = document.querySelector('#create-comment')
-        const commentUrl = 'http://localhost:8001/task/comment'
+        const commentUrl = 'http://localhost:8001/task'
         commentElement.addEventListener('submit', async (e) => {
             e.preventDefault()
             const taskId = commentElement.querySelector('#task-id').value
-            const params = new URLSearchParams({
-                taskId
-            })
 
             let data = new FormData(e.target)
             data = Object.fromEntries(data)
-            const res = await fetch(`${commentUrl}?${params}`, {
+            const res = await fetch(`${commentUrl}/${taskId}/comment`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -333,17 +397,12 @@
         })
 
         const tagElement = document.querySelector('#create-tag')
-        const tagUrl = 'http://localhost:8001/project/tag'
         tagElement.addEventListener('submit', async (e) => {
             e.preventDefault()
             const projectId = tagElement.querySelector('#project-id').value
-            const params = new URLSearchParams({
-                projectId
-            })
-
             let data = new FormData(e.target)
             data = Object.fromEntries(data)
-            const res = await fetch(`${tagUrl}?${params}`, {
+            const res = await fetch(`${createProjectUrl}/${projectId}/tag`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -356,17 +415,14 @@
         })
 
         const checklistElement = document.querySelector('#create-checklist')
-        const checklistUrl = 'http://localhost:8001/task/checklist'
+        const checklistUrl = 'http://localhost:8001/task/'
         checklistElement.addEventListener('submit', async (e) => {
             e.preventDefault()
             const taskId = checklistElement.querySelector('#task-id').value
-            const params = new URLSearchParams({
-                taskId
-            })
 
             let data = new FormData(e.target)
             data = Object.fromEntries(data)
-            const res = await fetch(`${checklistUrl}?${params}`, {
+            const res = await fetch(`${checklistUrl}/${taskId}/checklist`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -377,6 +433,76 @@
             const parsedRes = await res.json()
             console.log(parsedRes)
         })
+
+        const BASE_URL = 'http://localhost:8001/'
+        function createImageListener(formSelector, idSelectors, paramsUrl) {
+            document.querySelector(formSelector).addEventListener('submit', async (e) => {
+                e.preventDefault()
+                let path = paramsUrl
+                Object.entries(idSelectors).forEach(([key, selector]) => {
+                    const value = e.target.querySelector(selector).value
+                    path = path.replace(`$${key}`, value)
+                })
+                console.log(path)
+
+                let data = new FormData(e.target)
+                console.log(data)
+                console.log(`${BASE_URL}${path}`)
+                const res = await fetch(`${BASE_URL}${path}`, {
+                    method: "POST",
+                    body: data,
+                    credentials: 'include'
+                })
+                const parsedData = await res.json()
+                console.log(parsedData)
+                const imgElement = e.target.querySelector('img')
+                if (parsedData.metadata) {
+                    imgElement.setAttribute('src', parsedData.metadata.data)
+                }
+            })
+        }
+
+        createImageListener(
+            '#organisation-image-form',
+            { organisationId: '.organisation-id' },
+            'organisation/$organisationId/avatar'
+        )
+
+        createImageListener(
+            '#user-image-form',
+            { userId: '.user-id' },
+            'user/$userId/avatar'
+        )
+
+        createImageListener(
+            '#user-background-image-form',
+            { userId: '.user-id' },
+            'user/$userId/backgroundImage'
+        )
+
+        createImageListener(
+            '#project-image-form',
+            { projectId: '.project-id' },
+            'project/$projectId/avatar'
+        )
+
+        const customPostFormElement = document.querySelector('#custom-post')
+        customPostFormElement.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            const path = e.target.querySelector('#custom-path')?.value
+            if (!path) {
+                console.log('no path!')
+                return
+            }
+            const url = `${BASE_URL}${path}`
+            const res = await fetch(url, {
+                credentials: 'include',
+                method: 'POST'
+            })
+            const parseRes = await res.json()
+            console.log(parseRes)
+        })
+
     </script>
 </html>
 

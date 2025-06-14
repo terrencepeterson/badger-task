@@ -13,11 +13,13 @@
     <form id="login-form" method="POST" style="margin-bottom: 1rem;">
         <div>
             <label for="email">Email</label>
+            <!-- <input type="email" name="email" id="email" value="matt1@test.com" required> -->
             <input type="email" name="email" id="email" value="test5@test.com" required>
         </div>
         <div>
             <label for="password">Password</label>
-            <input type="password" name="password" id="password" value="Password123#" required>
+            <input type="password" name="password" id="password" value="A$$w0rd12" required>
+            <!-- <input type="password" name="password" id="password" value="Password123#" required> -->
         </div>
         <button type="submit">Submit</button>
         <button id="logout" type="button">Logout</button>
@@ -66,7 +68,7 @@
         <h3>Get Agenda Column</h3>
         <div>
             <label for="column-agenda-id">Column agenda id</label>
-            <input type="number" name="column-agenda-id" value="" id="column-agenda-id">
+            <input type="text" name="column-agenda-id" value="" id="column-agenda-id">
         </div>
         <div>
             <label for="column-row">Agenda row</label>
@@ -136,11 +138,8 @@
     const taskButton = document.querySelector('.get-task-button')
     const taskUrl = 'http://localhost:8001/task'
     taskButton.addEventListener('click', async (e) => {
-        const params = new URLSearchParams({
-            taskId: taskInputElement.value
-        })
-
-        const data = await fetch(`${taskUrl}?${params}`, { credentials: 'include' })
+        const url = `${taskUrl}/${taskInputElement.value}`
+        const data = await fetch(url, { credentials: 'include' })
         const parsedData = await data.json()
         console.log(parsedData)
     })
@@ -149,11 +148,8 @@
     const projectButton = document.querySelector('.get-project-button')
     const projectUrl = 'http://localhost:8001/project'
     projectButton.addEventListener('click', async (e) => {
-        const params = new URLSearchParams({
-            projectId: projectInputElement.value
-        })
-
-        const data = await fetch(`${projectUrl}?${params}`, { credentials: 'include' })
+        const url = `${projectUrl}/${projectInputElement.value}`
+        const data = await fetch(url, { credentials: 'include' })
         const parsedData = await data.json()
         console.log(parsedData)
     })
@@ -172,12 +168,13 @@
     const agendaColumnButtonElement = document.querySelector('.get-agenda-column')
     const agendaColumnUrl = 'http://localhost:8001/agenda/column'
     agendaColumnButtonElement.addEventListener('click', async (e) => {
-        const params = new URLSearchParams({
-            column: columnAgendaIdElement.value,
+        const queryParams = new URLSearchParams({
             row: columnAgendaRowElement.value
         })
 
-        const data = await fetch(`${agendaColumnUrl}?${params}`, { credentials: 'include' })
+        console.log(columnAgendaIdElement.value)
+        const url = `${agendaColumnUrl}/${columnAgendaIdElement.value}/?${queryParams}`
+        const data = await fetch(url, { credentials: 'include' })
         const parsedData = await data.json()
         console.log(parsedData)
     })
@@ -185,14 +182,14 @@
     const columnProjectIdElement = document.querySelector('#project-column-id')
     const columnProjectRowElement = document.querySelector('#project-column-row')
     const projectColumnButtonElement = document.querySelector('.get-project-column')
-    const projectColumnUrl = 'http://localhost:8001/project/column'
+    const projectColumnUrl = 'http://localhost:8001/project'
     projectColumnButtonElement.addEventListener('click', async (e) => {
         const params = new URLSearchParams({
-            column: columnProjectIdElement.value,
             row: columnProjectRowElement.value
         })
 
-        const data = await fetch(`${projectColumnUrl}?${params}`, { credentials: 'include' })
+        const url = `${projectColumnUrl}/${14}/column/${columnProjectIdElement.value}/?${params}`
+        const data = await fetch(url, { credentials: 'include' })
         const parsedData = await data.json()
         console.log(parsedData)
     })

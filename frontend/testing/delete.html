@@ -77,6 +77,18 @@
                     <input type="number" name="" value="" id="projectId">
                 </div>
             </div>
+            <div>
+                <h2>delete tag from task</h2>
+                <button type="button" id="delete-tag-from-task">delete</button>
+                <div>
+                    <label for="task-id">taskId</label>
+                    <input type="number" name="" value="" id="task-id">
+                </div>
+                <div>
+                    <label for="tag-id">tagId</label>
+                    <input type="number" name="" value="" id="tag-id">
+                </div>
+            </div>
         </div>
     </body>
     <script>
@@ -110,6 +122,8 @@
         createDelete('#delete-task', { taskId: '#taskId' }, 'task/$taskId')
         createDelete('#delete-project-column', { projectColumnId: '#projectColumnId', projectId: '#projectId' }, 'project/$projectId/column/$projectColumnId')
         createDelete('#delete-project', { projectId: '#projectId' }, 'project/$projectId')
+        // /:taskId/tag/:tagId
+        createDelete('#delete-tag-from-task', { taskId: '#task-id', tagId: '#tag-id' }, 'task/$taskId/tag/$tagId')
     </script>
 </html>
 
