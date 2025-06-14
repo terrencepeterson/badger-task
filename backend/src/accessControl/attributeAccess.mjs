@@ -131,20 +131,20 @@ export async function addAttributeAccess(userId, accessControlKey, attribute) {
     return true
 }
 
-export async function addMultipleAttributeAccess(userIds, accessControlKey, attributes) {
-    await addRemoveMultipleAttributeAccess(userIds, accessControlKey, attributes, 'Add')
+export async function addMultipleAttributeAccess(userIds, accessControlKey, attributes, forceAdd = true) {
+    await addRemoveMultipleAttributeAccess(userIds, accessControlKey, attributes, 'Add', forceAdd)
 }
 
 export async function removeMultipleAttributeAccess(userIds, accessControlKey, attributes) {
     await addRemoveMultipleAttributeAccess(userIds, accessControlKey, attributes, 'Rem')
 }
 
-async function addRemoveMultipleAttributeAccess(userIds, accessControlKey, attributes, type) {
+async function addRemoveMultipleAttributeAccess(userIds, accessControlKey, attributes, type, force) {
     // type must be Add or Rem
     const redisKeys = userIds.map(id => getRedisKey(id, accessControlKey))
     for (const [i, redisKey] of redisKeys.entries()) {
         const keyExists = await redisClient.exists(redisKey)
-        if (!keyExists) {
+        if (!force && !keyExists) {
             continue
         }
 

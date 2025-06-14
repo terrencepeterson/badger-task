@@ -22,7 +22,6 @@ export async function getUserDashboard(id) {
             ON o.id = u.organisation_id
         WHERE u.id = ?
     `, [id,id])
-    l(user)
 
     if (!user.length) {
         return null
@@ -50,7 +49,7 @@ export async function getAllUsersFromOrganisationByUserId(userId) {
 
 export async function getPasswordById(id) {
     const user = await query(`
-        SELECT password 
+        SELECT password
         FROM user
         WHERE id = ?
     `, [id])

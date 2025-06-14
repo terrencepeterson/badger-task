@@ -9,7 +9,7 @@ export async function getOrganisationIdByUserId(userId) {
     `, [userId])
 
     organisationId = organisationId[0].organisation_id
-    return (!organisationId && organisationId !== 0) ? false : +organisationId
+    return (!organisationId && organisationId !== 0) ? [] : +organisationId
 }
 
 export async function belongsToOrganisation(userId) {

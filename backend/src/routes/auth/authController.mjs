@@ -78,3 +78,8 @@ export const logoutEndpoint = createEndpoint((req, res) => {
     return loggedOut
 })
 
+// don't want to add attribute access to people who aren't logged in but need to add the attributes if logged in and a new user - the 
+// problem we have atm is that if the user doesn't have the set present in the cache we assume that we  don't need to add access control
+// but if the user starts without a resource they don't get added in this instance
+//
+// if we start tracking who's logged in then we can see if we need to add the attribute access

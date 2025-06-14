@@ -1,6 +1,7 @@
 import { createEndpoint, createImageEndpoint, createPatchEndpoint } from "../../utility.mjs"
-import { AVATAR_IMAGE_TYPE, ORGANISATION_TABLE } from "../../definitions.mjs"
+import { ACCESS_CONTROL_ORGANISATION, AVATAR_IMAGE_TYPE, ORGANISATION_TABLE } from "../../definitions.mjs"
 import { belongsToOrganisation, createOrganisation } from "./organisationService.mjs"
+import { addMultipleAttributeAccess } from "../../accessControl/attributeAccess.mjs"
 
 export const updateOrganisationEndpoint = createPatchEndpoint(
     false,
@@ -19,6 +20,8 @@ export const createOrganisationEndpoint = createEndpoint(async (req) => {
     if (!organisationId && organisationId !== 0) {
         throw new Error('Failed to add organisation - could not update user')
     }
+
+    addMultipleAttributeAccess([userId], ACCESS_CONTROL_ORGANISATION, organisationId)
 
     return { message: "Successfully added organisation", organisationId }
 })
