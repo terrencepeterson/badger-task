@@ -1,11 +1,23 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue';
+import TheSidebar from "@/components/TheSidebar.vue"
+import TheProjectSidebar from "@/components/TheProjectSidebar.vue"
+import TheTopbar from "@/components/TheTopbar.vue"
+import { useStandloneTaskStore } from '@/stores/StandaloneTaskStore'
+
+const standaloneTaskStore = useStandloneTaskStore()
 </script>
 
 <template>
-    <div>
-        <h1>Hello</h1>  
-        <HelloWorld />
-    </div>
+    <template v-if="!standaloneTaskStore.isStandalone">
+        <TheSidebar />
+        <TheProjectSidebar />
+        <TheTopbar>
+            <RouterView name="topBar" />
+        </TheTopbar>
+        <main>
+            <RouterView />
+        </main>
+    </template>
+    <RouterView name="modal" />
 </template>
 
