@@ -1,10 +1,8 @@
 <script setup>
-
 </script>
 
 <template>
-    <div>
-        <h1>Task View</h1>
-    </div>
+    <h2>test</h2>
+    <RouterView />
 </template>
 

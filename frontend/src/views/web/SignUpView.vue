@@ -4,7 +4,7 @@
 
 <template>
     <div>
-        <h2>World</h2>
+        <h1>Signup View</h1>
     </div>
 </template>
 

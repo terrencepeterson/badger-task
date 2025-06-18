@@ -4,7 +4,7 @@
 
 <template>
     <div>
-        <h1>Agenda View</h1>
+        <h1>Index View</h1>
     </div>
 </template>
 

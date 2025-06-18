@@ -1,7 +1,7 @@
 <script setup>
-import TheSidebar from "@/components/TheSidebar.vue"
-import TheProjectSidebar from "@/components/TheProjectSidebar.vue"
-import TheTopbar from "@/components/TheTopbar.vue"
+import TheSidebar from "@/components/app/TheSidebar.vue"
+import TheProjectSidebar from "@/components/app/TheProjectSidebar.vue"
+import TheTopbar from "@/components/app/TheTopbar.vue"
 import { useStandloneTaskStore } from '@/stores/StandaloneTaskStore'
 
 const standaloneTaskStore = useStandloneTaskStore()
@@ -12,12 +12,12 @@ const standaloneTaskStore = useStandloneTaskStore()
         <TheSidebar />
         <TheProjectSidebar />
         <TheTopbar>
-            <RouterView name="topBar" />
+            <RouterView name="appTopBar" />
         </TheTopbar>
         <main>
-            <RouterView />
+            <RouterView name="appMain" />
         </main>
     </template>
-    <RouterView name="modal" />
+    <RouterView name="appModal" />
 </template>
 
