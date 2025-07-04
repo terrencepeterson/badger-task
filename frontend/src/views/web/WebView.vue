@@ -1,12 +1,13 @@
 <script setup>
-
+import TheNav from "@/components/web/TheNav.vue"
 </script>
 
 <template>
-    <h2>web view</h2>
-    <RouterView name="web" />
+    <TheNav />
+    <main class="flex items-start justify-center">
+        <RouterView name="web" />
+    </main>
 </template>
-
 
 <style lang="scss" scoped>
 

@@ -1,5 +1,5 @@
 import { createWebHistory, createRouter } from "vue-router"
-import { useStandloneTaskStore } from "@/stores/StandaloneTaskStore"
+import { useUserStore } from "./stores/UserStore"
 import DashboardView from "@/views/app/DashboardView.vue"
 import DashboardTopbar from "@/layout/topbar/DashboardTopbar.vue"
 import ProjectTopbar from "@/layout/topbar/ProjectTopbar.vue"
@@ -11,21 +11,10 @@ import ModalView from "@/views/app/ModalView.vue"
 import AppView from "@/views/app/AppView.vue"
 import WebView from "@/views/web/WebView.vue"
 import IndexView from "@/views/web/IndexView.vue"
-import LoginView from "@/views/web/LoginView.vue"
+import LogInView from "@/views/web/LogInView.vue"
 import SignUpView from "@/views/web/SignUpView.vue"
-
-function keepDefaultView(to, from) {
-    const standAloneTaskStore = useStandloneTaskStore()
-    if (!from.matched.length) {
-        standAloneTaskStore.setStandalone(true)
-        return
-    }
-
-    to.matched[1].components.appMain = from.matched[1].components.appMain
-    if (Object.hasOwn(from.matched[1].components, 'appTopBar')) {
-        to.matched[1].components.appTopBar = from.matched[1].components.appTopBar
-    }
-}
+import LoggedOutView from "@/views/web/LoggedOutView.vue"
+import { keepDefaultView, beforeAuthGaurd } from "@/routerGaurds.js"
 
 const routes = [
     {
@@ -35,8 +24,9 @@ const routes = [
         meta: { requiresAuth: false },
         children: [
             { path: '/', name: 'index', components: { web: IndexView } },
-            { path: '/login', name: 'login', components: { web: LoginView } },
-            { path: '/sign-up', name: 'signup', components: { web: SignUpView } }
+            { path: '/log-in', name: 'logIn', components: { web: LogInView }, beforeEnter: beforeAuthGaurd },
+            { path: '/sign-up', name: 'signUp', components: { web: SignUpView }, beforeEnter: beforeAuthGaurd },
+            { path: '/logged-out', name: 'loggedOut', components: { web: LoggedOutView }, beforeEnter: beforeAuthGaurd },
         ]
     },
     {
@@ -59,4 +49,13 @@ const router = createRouter({
     history: createWebHistory()
 })
 
+router.beforeEach(async (to) => {
+    const userStore = useUserStore()
+    await userStore.initUser()
+    if (to.meta.requiresAuth && !userStore.isLoggedIn) {
+        router.push({ name: 'login' })
+    }
+})
+
 export default router
+
