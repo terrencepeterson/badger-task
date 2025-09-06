@@ -1,5 +1,6 @@
 import { createWebHistory, createRouter } from "vue-router"
-import { useUserStore } from "./stores/UserStore"
+import { useUserStore } from "@/stores/UserStore"
+import { ERROR_MESSAGE_TYPE, useMessageStore, WARNING_MESSAGE_TYPE } from "@/stores/MessageStore"
 import DashboardView from "@/views/app/DashboardView.vue"
 import DashboardTopbar from "@/layout/topbar/DashboardTopbar.vue"
 import ProjectTopbar from "@/layout/topbar/ProjectTopbar.vue"
@@ -14,7 +15,7 @@ import IndexView from "@/views/web/IndexView.vue"
 import LogInView from "@/views/web/LogInView.vue"
 import SignUpView from "@/views/web/SignUpView.vue"
 import LoggedOutView from "@/views/web/LoggedOutView.vue"
-import { keepDefaultView, beforeAuthGaurd } from "@/routerGaurds.js"
+import { keepDefaultView } from "@/routerGaurds.js"
 
 const routes = [
     {
@@ -24,9 +25,9 @@ const routes = [
         meta: { requiresAuth: false },
         children: [
             { path: '/', name: 'index', components: { web: IndexView } },
-            { path: '/log-in', name: 'logIn', components: { web: LogInView }, beforeEnter: beforeAuthGaurd },
-            { path: '/sign-up', name: 'signUp', components: { web: SignUpView }, beforeEnter: beforeAuthGaurd },
-            { path: '/logged-out', name: 'loggedOut', components: { web: LoggedOutView }, beforeEnter: beforeAuthGaurd },
+            { path: '/log-in', name: 'logIn', components: { web: LogInView } },
+            { path: '/sign-up', name: 'signUp', components: { web: SignUpView } },
+            { path: '/logged-out', name: 'loggedOut', components: { web: LoggedOutView } },
         ]
     },
     {
@@ -51,9 +52,15 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
     const userStore = useUserStore()
+    const messageStore = useMessageStore()
     await userStore.initUser()
+
     if (to.meta.requiresAuth && !userStore.isLoggedIn) {
-        router.push({ name: 'login' })
+        messageStore.addMessage(ERROR_MESSAGE_TYPE, 'Unauthenticated - please log in')
+        router.push({ name: 'logIn' })
+    } else if (!to.meta.requiresAuth && userStore.isLoggedIn) {
+        messageStore.addMessage(WARNING_MESSAGE_TYPE, `${userStore.name} is already logged in`)
+        router.push({ name: 'dashboard' })
     }
 })
 
