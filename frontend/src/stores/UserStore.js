@@ -1,15 +1,19 @@
+import { getRecentViewedProjects } from "@/localStorage"
 import { defineStore } from "pinia"
 
-// if a task is opened via a link then the app is standalone
 export const useUserStore = defineStore('UserStore', {
     state: () => ({
         isLoggedIn: false,
         id: null,
         name: '',
-        avatarImg: '',
+        avatarImgUrl: '',
         description: '',
         email: '',
-        hasInit: false
+        hasInit: false,
+        organisationId: null,
+        organisationImgUrl: '',
+        projects: [],
+        recentProjects: []
     }),
     actions: {
         setUser(config) {
@@ -23,6 +27,8 @@ export const useUserStore = defineStore('UserStore', {
             if (this.id || this.id === 0) {
                 this.isLoggedIn = true
             }
+
+            this.recentProjects = getRecentViewedProjects()
         },
         async initUser() {
             // first time a user accesses a page we check to see if they have an active JWT
@@ -37,20 +43,28 @@ export const useUserStore = defineStore('UserStore', {
                 })
                 const parsedData = await res.json()
                 if (res.status < 200 || res.status > 299) {
-                    throw new Error(parsedData?.message ?? 'Internal server error')
+                    throw new Error(parsedData.error.message ?? 'Internal server error')
                 }
                 this.setUser(parsedData.data)
             } catch(e) {
+                console.log(e.message)
                 // means the user isn't logged in which is ok
             }
+        },
+        updateRecentlyViewedProjects(newRecentProjects) {
+            this.recentProjects = newRecentProjects
         },
         reset() {
             this.isLoggedIn = false
             this.id = null
             this.name = ''
-            this.avatarImg = ''
+            this.avatarImgUrl = ''
             this.description = ''
             this.email = ''
+            this.organisationId = null
+            this.organisationImgUrl = ''
+            this.projects = []
+            this.recentProjects = []
         }
     }
 })

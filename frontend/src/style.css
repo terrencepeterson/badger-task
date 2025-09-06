@@ -2,8 +2,9 @@
 
 @theme {
     --color-primary: oklch(0.7182 0.1105 239.78);
-    --color-blackish: oklch(0.2396 0.0233 251.45);
+    --color-dark: oklch(0.2396 0.0233 251.45);
     --color-whiteish: oklch(0.9903 0.0011 197.14);
+    --color-ondark: oklch(0.6434 0 0);
 
     --color-error: var(--color-red-100);
     --color-onerror: var(--color-red-500);
@@ -17,7 +18,6 @@
 
     --color-brand-primary: var(--color-primary);
     --color-brand-primary-hover: oklch(0.7846 0.0842 238.44);
-    /* --color-brand-secondary: */
 
     --color-onbrand-primary: var(--color-neutral-secondary);
 
@@ -28,5 +28,7 @@
     --color-grey-light: var(--color-gray-300);
 
     --radius-input: var(--radius-md);
+    --inset-shadow-sidebar-item:  2px 0 0 var(--color-brand-primary) inset;
+    --inset-shadow-project-sidebar:  2px 0 0 black inset;
 }
 

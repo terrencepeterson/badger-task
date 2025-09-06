@@ -5,21 +5,24 @@ import TheTopbar from "@/components/app/TheTopbar.vue"
 import { useStandloneTaskStore } from '@/stores/StandaloneTaskStore'
 import { ref } from "vue"
 
-const projectSidebarActive = ref(true)
+const projectSidebarActive = ref(false)
 const standaloneTaskStore = useStandloneTaskStore()
+const toggleProjectSidebar = () => projectSidebarActive.value = !projectSidebarActive.value
 </script>
 
 <template>
     <template v-if="!standaloneTaskStore.isStandalone">
-        <TheSidebar />
-        <TheProjectSidebar :active="projectSidebarActive" />
-        <div>
-            <TheTopbar>
-                <RouterView name="appTopBar" />
-            </TheTopbar>
-            <main>
-                <RouterView name="appMain" />
-            </main>
+        <div class="flex h-full">
+            <TheSidebar :toggle-project-sidebar="toggleProjectSidebar" />
+            <TheProjectSidebar :active="projectSidebarActive" />
+            <div>
+                <TheTopbar>
+                    <RouterView name="appTopBar" />
+                </TheTopbar>
+                <main>
+                    <RouterView name="appMain" />
+                </main>
+            </div>
         </div>
     </template>
     <RouterView name="appModal" />
