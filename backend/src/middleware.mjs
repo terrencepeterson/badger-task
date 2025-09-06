@@ -8,6 +8,7 @@ export const cookieSettings = {
     partitioned: true
 }
 import '@dotenvx/dotenvx/config'
+import EndpointError from "./EndpointError.mjs"
 const multer = await import('multer')
 const upload = multer.default({ dest: `${process.env.backend_root}/uploads` })
 export const imageUpload = upload.single('image_file')
@@ -15,31 +16,36 @@ export const imageUpload = upload.single('image_file')
 export function responseFormatter(req, res, next) {
     res.setTokenCookie = (token) => {
         // seperated this out as when clearing cookie you don't need maxAge
-        const maxAgeSetting = { maxAge: 24 * 60 * 60 * 1000 }
+        const maxAgeSetting = { maxAge: process.env.auth_token_liftetime }
         Object.assign(maxAgeSetting, cookieSettings)
         res.cookie(process.env.auth_token_cookie_name, token, maxAgeSetting)
     }
 
-    res.success = (data, metadata = {}) => {
+    res.success = (message, data, redirectUrl) => {
         res.status(200).json({
             status: 'success',
+            message,
             data,
-            metadata
+            redirectUrl,
+            code: 200
         })
     }
 
-    res.error = (message, code = 400, details = {}) => {
+    // config expects { error: { type: '', fields: ....}}
+    res.error = (code, config) => {
+        const errorRes = { status: 'error' }
         res.status(code).json({
-            status: 'error',
-            error: {
-                code,
-                message,
-                details
-            },
-            metadata: {
-                timestamp: new Date().toISOString(),
-            }
+            ...errorRes,
+            ...config
         })
+        // res.status(code).json({
+        //     status: 'error',
+        //     code,
+        //     ...details,
+        //     metadata: {
+        //         timestamp: new Date().toISOString(),
+        //     }
+        // })
     }
 
     res.getAuthToken = async () => {
@@ -52,7 +58,7 @@ export function responseFormatter(req, res, next) {
 
         const authToken = cookies[process.env.auth_token_cookie_name]
         if (!authToken) {
-            throw new Error('Unauthenticaed please login')
+            throw new EndpointError({ type: EndpointError.generalErrorId, message: 'Unauthenticaed please login' })
         }
 
         const jsonwebtoken = await import('jsonwebtoken') // must use dynamic import on commonjs module - hence the .default too
@@ -102,8 +108,8 @@ export async function authenticate(req, res, next) {
         }
         next()
     } catch (e) {
-        res.error(e.message, unauthenticated.code, { redirect: true, url: unauthenticated.url })
-        req.user = null // not sure if necessary here but i feel hacker could send a user property in the request
+        res.error(unauthenticated.code, { error: { type: EndpointError.generalErrorId, message: e.message }})
+        req.user = null // not sure if necessary here
         return
     }
 }
@@ -114,14 +120,22 @@ export function validate(schemas) {
             try {
                 req[key] = await schema.parseAsync(req[key])
             } catch (err) {
-                console.log(err)
                 if (err instanceof ZodError) {
+                    const validationErrors = err.issues.reduce((accum, error) => {
+                        accum[error.path[0]] = error.message
+                        return accum
+                    }, {})
+
                     const invalidInputs = err.issues.map(e => e.path[0]).join(', ')
-                    const errors = err.issues.map(e => `${e.path[0]}: ${e.message}`)
-                    return res.error(`Invalid data, please provide the correct data for: ${invalidInputs}`, 400, errors)
+                    const errorObject = { error: {
+                        fields: validationErrors,
+                        type: "validation",
+                        message: `Invalid data, please provide the correct data for: ${invalidInputs}`
+                    }}
+                    return res.error(400, errorObject)
                 }
 
-                return res.error('Internal server error', 500)
+                return res.error(500, { error: { message: 'Internal server error' }})
             }
         }
         next()
