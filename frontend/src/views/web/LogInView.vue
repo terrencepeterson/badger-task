@@ -37,8 +37,6 @@ const submitHandler = async (e) => {
         return
     }
 
-    data.value.avatarImg = data.value.avatar_img_url
-    delete data.value.avatar_img_url
     userStore.setUser(data.value)
     router.push({ name: 'dashboard' })
 }

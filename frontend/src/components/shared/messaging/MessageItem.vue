@@ -61,7 +61,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <li class="rounded-input px-4 py-2 flex gap-2 items-center mb-4 cursor-pointer relative" :class="classes" @click="closeClickHandler">
+    <li class="rounded-input px-4 py-2 flex gap-2 items-center mb-4 cursor-pointer relative z-20" :class="classes" @click="closeClickHandler">
         <VIcon :name="name" />
         <span>
             {{ message }}
