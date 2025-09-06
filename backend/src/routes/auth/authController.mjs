@@ -6,16 +6,26 @@ import { loggedOut } from '../../standarisedResponses.mjs'
 import { cookieSettings } from "../../middleware.mjs"
 import { addAccessControls, removeAccessControl } from "../../accessControl/attributeAccess.mjs"
 import { ROLE_MEMBER } from '../../definitions.mjs'
+import EndpointError from '../../EndpointError.mjs'
+import { getProjectsByUserId } from '../project/projectService.mjs'
 
 export const signupEndpoint = createEndpoint(async ({ body }) => {
     const { name, email, password, confirmPassword, description } = body // required fields
 
     if (password !== confirmPassword) {
-        throw new Error('Passsword and confirm password do not match')
+        throw new EndpointError({ fields: {
+            type: EndpointError.validationErrorId,
+            confirmPassword: 'Confirm Password must match the password'
+        }})
     }
 
     if (await getUserByEmail(email)) {
-        throw new Error('A user already exists with the provided email, please use a different email address')
+        throw new EndpointError({
+            type: EndpointError.validationErrorId,
+            fields: {
+                email: 'A user already exists with the provided email, please use a different email address'
+            }
+        })
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -23,10 +33,15 @@ export const signupEndpoint = createEndpoint(async ({ body }) => {
 
     const user = await createUser(name, email, description, ROLE_MEMBER, hashedPassword)
     if (!user) {
-        throw new Error('Failed to create user')
+        throw new EndpointError({
+            fields: {
+                type: EndpointError.generalErrorId,
+                user: 'Failed to create user'
+            }
+        })
     }
 
-    return user
+    return { message: 'successfully created user', redirectUrl: '/log-in', data: user }
 }, false)
 
 export const loginEndpoint = createEndpoint(async (req, res) => {
@@ -36,12 +51,11 @@ export const loginEndpoint = createEndpoint(async (req, res) => {
     try {
         authToken = await res.getAuthToken()
     } catch(e) {
-        // if no auth token an error will get thrown but we don't
-        // want to do anything with the error
+        // if no auth token an error will get thrown but we don't want to do anything with the error
     }
 
     if (authToken) {
-        throw new Error('An account is already logged in')
+        throw new EndpointError({ message: 'An account is already logged in', type: EndpointError.generalErrorId, redirectUrl: '/app/dashboard' })
     }
 
     // i still validate the email and password in here rather than with zod
@@ -49,12 +63,16 @@ export const loginEndpoint = createEndpoint(async (req, res) => {
     // and then put that back onto req body... not worth it here
     const user = await getUserByEmail(email, true)
     if (!user) {
-        throw new Error('Account does not exist, please sign up or contact administration')
+        throw new EndpointError({
+            message: 'Account does not exist, please sign up or contact administration',
+            type: EndpointError.mixedErrorId,
+            fields: { email: 'An account does not exist with that email'}
+        })
     }
 
     const matchedPassword = await bcrypt.compare(password, user.password)
     if (!matchedPassword) {
-        throw new Error('Incorrect password')
+        throw new EndpointError({ type: EndpointError.validationErrorId, fields: { password: 'Incorrect password' }})
     }
 
     try {
@@ -66,9 +84,9 @@ export const loginEndpoint = createEndpoint(async (req, res) => {
         )
         res.setTokenCookie(token)
         addAccessControls(user.id)
-        return 'Successfully logged in!'
+        return // purposefully don't send message here as the /user endpoint handles that
     } catch(e) {
-        throw new Error('Currently unable to login')
+        throw new EndpointError({ message: 'Currently unable to login', type: EndpointError.generalErrorId })
     }
 }, false)
 
@@ -80,6 +98,8 @@ export const logoutEndpoint = createEndpoint((req, res) => {
 
 export const userEndpoint = createEndpoint(async (req, res) => {
     const user = await getUserById(req.user.id)
+    const projects = await getProjectsByUserId(req.user.id)
+    user.projects = projects
     return { message: 'Successfully logged in', data: user }
 })
 
