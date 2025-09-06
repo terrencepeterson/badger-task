@@ -9,6 +9,8 @@ import { unlink } from 'node:fs/promises'
 import cloudinary from './cloudinary.mjs'
 import {fileTypeFromFile} from 'file-type'
 import { IMAGE_TYPES } from "./definitions.mjs"
+import { error } from "node:console"
+import EndpointError from "./EndpointError.mjs"
 
 // creates an async wrapper around an endpoint
 // instead of having the below in all endpoints
@@ -28,15 +30,16 @@ export function createEndpoint(getData, checkUser = true) {
 
             const data = await getData(req, res)
             if (typeof data === 'object') {
-                const successMessage = data.message
-                delete data.message
-                return res.success(successMessage, data)
+                return res.success(data.message, data.data, data.redirectUrl)
             }
 
             return res.success(data)
         } catch (e) {
-            console.log(e)
-            return res.error(e.message)
+            if (e.generateErrorRes) {
+                return res.error(400, e.generateErrorRes())
+            }
+
+            return res.error(500, { error: { type: EndpointError.generalErrorId, message: 'Internal Server Error' }})
         }
     }
 }
@@ -202,7 +205,7 @@ export function generateImageLink(config) {
 export function convertDbImgToUrl(resource, imgKey, imgType, defaultImgLink, table, resourceId) {
     resource = { ...resource }
     const dbImgKey = `${imgKey}_img_version`
-    const resourceImgKey = `${imgKey}_img_url`
+    const resourceImgKey = `${imgKey}ImgUrl`
     if (resource[dbImgKey]) {
         resource[resourceImgKey] = generateImageLink({ publicId: generateImagePublicKey(table, resourceId, imgType), version: resource[dbImgKey]})
     } else {
@@ -210,5 +213,9 @@ export function convertDbImgToUrl(resource, imgKey, imgType, defaultImgLink, tab
     }
     delete resource[dbImgKey]
     return resource
+}
+
+export function generateErrorConfig(message, type, redirectUrl, fields = []) {
+
 }
 

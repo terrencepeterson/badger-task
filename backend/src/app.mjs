@@ -27,6 +27,9 @@ app.use('/project', projectRouter)
 app.use('/task', taskRouter)
 app.use('/user', userRouter)
 app.use('/agenda', agendaRouter)
+app.use('/', (req, res) => {
+    return res.error(404, { error: { message: "Endpoint not found" }})
+})
 
 export { app }
 
