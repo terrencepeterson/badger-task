@@ -1,4 +1,4 @@
-import { createEndpoint, createPatchEndpoint, createDeleteEndpoint, createDeleteWAccessControlEndpoint } from "../../utility.mjs"
+import { createEndpoint, createPatchEndpoint, createDeleteEndpoint, createDeleteWAccessControlEndpoint, getSuccessConfig } from "../../utility.mjs"
 import { TASK_TABLE, ACCESS_CONTROL_TASKS, COLUMN_PROJECT_TABLE, CHECKLIST_TABLE, COMMENT_TABLE, TASK_COLUMN_AGENDA_TABLE, TASK_TAG_TABLE } from "../../definitions.mjs"
 import { getProjectColumnRows, getUserProjectAccess } from "../project/projectService.mjs"
 import { getIsValidAssignee, addMultipleAttributeAccess } from "../../accessControl/attributeAccess.mjs"
@@ -31,7 +31,7 @@ export const taskEndpoint = createEndpoint(async (req) => {
     task.tags = await getTagsByTaskId(taskId)
     task.checklist = await getChecklistByTaskId(taskId)
 
-    return task
+    return getSuccessConfig(task)
 })
 
 export const createTaskEndpoint = createEndpoint(async (req) => {

@@ -206,7 +206,7 @@ export async function getProjectUsersWAssigneedTask(projectId) {
         WHERE p.id = ?;
     `, [projectId])
 
-    projects.map(p => convertDbImgToUrl(p, AVATAR_IMAGE_TYPE, AVATAR_IMAGE_TYPE, defaultUserAvatarLink, USER_TABLE, p.id))
+    return projects.map(p => convertDbImgToUrl(p, AVATAR_IMAGE_TYPE, AVATAR_IMAGE_TYPE, defaultUserAvatarLink, USER_TABLE, p.id))
 }
 
 export async function getProjectsAccess(userId) {

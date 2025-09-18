@@ -13,8 +13,7 @@ export const signupEndpoint = createEndpoint(async ({ body }) => {
     const { name, email, password, confirmPassword, description } = body // required fields
 
     if (password !== confirmPassword) {
-        throw new EndpointError({ fields: {
-            type: EndpointError.validationErrorId,
+        throw new EndpointError({ type: EndpointError.validationErrorId, fields: {
             confirmPassword: 'Confirm Password must match the password'
         }})
     }

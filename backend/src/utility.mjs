@@ -9,7 +9,6 @@ import { unlink } from 'node:fs/promises'
 import cloudinary from './cloudinary.mjs'
 import {fileTypeFromFile} from 'file-type'
 import { IMAGE_TYPES } from "./definitions.mjs"
-import { error } from "node:console"
 import EndpointError from "./EndpointError.mjs"
 
 // creates an async wrapper around an endpoint
@@ -215,7 +214,8 @@ export function convertDbImgToUrl(resource, imgKey, imgType, defaultImgLink, tab
     return resource
 }
 
-export function generateErrorConfig(message, type, redirectUrl, fields = []) {
-
+export function getSuccessConfig(data, message) {
+    message = !message ? 'success' : `Successfully ${message}`
+    return { message, data }
 }
 

@@ -1,4 +1,4 @@
-import { createDeleteEndpoint, createDeleteWAccessControlEndpoint, createEndpoint, createPatchEndpoint, createImageEndpoint } from "../../utility.mjs"
+import { createDeleteEndpoint, createDeleteWAccessControlEndpoint, createEndpoint, createPatchEndpoint, createImageEndpoint, getSuccessConfig } from "../../utility.mjs"
 import {
     getProjectTasks,
     getProjectColumnsByProjectId,
@@ -45,7 +45,7 @@ export const getProjectEndpoint = createEndpoint(async (req) => {
     projectDetails.users = await getProjectUsersWAssigneedTask(projectId)
     projectDetails.tags = await getProjectTags(projectId)
 
-    return projectDetails
+    return getSuccessConfig(projectDetails)
 })
 
 export const createProjectEndpoint = createEndpoint(async (req) => {

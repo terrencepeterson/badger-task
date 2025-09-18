@@ -27,19 +27,22 @@ export function useFetch() {
                 credentials: 'include'
             })
             parsedData = await res.json()
+
             if (res.status < 200 || res.status > 299) {
                 throw new Error(parsedData?.error.message)
             }
 
             data.value = parsedData.data
 
-            if (parsedData.message) {
+            if (parsedData.message && parsedData.message !== 'success') {
                 messageStore.addMessage(SUCCESS_MESSAGE_TYPE, parsedData.message)
             }
 
             if (parsedData.redirectUrl) {
                 router.push({ path: parsedData.redirectUrl })
             }
+
+            validationErrors.value = false
         } catch (e) {
             if (parsedData.error.fields) {
                 validationErrors.value = parsedData.error.fields
