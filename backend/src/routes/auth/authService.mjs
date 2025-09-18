@@ -1,6 +1,6 @@
-import { defaultUserAvatarLink, defaultOrganisationAvatarLink } from "../../cloudinary.mjs"
+import { defaultUserAvatarLink, defaultOrganisationAvatarLink, defaultBackgroundLink } from "../../cloudinary.mjs"
 import { generateInsert, query } from "../../db.mjs"
-import { USER_TABLE, COLUMN_AGENDA_TABLE, AVATAR_IMAGE_TYPE, ORGANISATION_TABLE } from "../../definitions.mjs"
+import { USER_TABLE, COLUMN_AGENDA_TABLE, AVATAR_IMAGE_TYPE, ORGANISATION_TABLE, BACKGROUND_IMAGE_TYPE } from "../../definitions.mjs"
 import { convertDbImgToUrl } from "../../utility.mjs"
 
 export async function createUser(name, email, description, role, password) {
@@ -45,6 +45,7 @@ export async function getUserById(id) {
 
     user = convertDbImgToUrl(user[0], AVATAR_IMAGE_TYPE, AVATAR_IMAGE_TYPE, defaultUserAvatarLink, USER_TABLE, user[0].id)
     user = convertDbImgToUrl(user, 'organisation_' + AVATAR_IMAGE_TYPE, AVATAR_IMAGE_TYPE, defaultOrganisationAvatarLink, ORGANISATION_TABLE, user.organisationId)
+    user = convertDbImgToUrl(user, BACKGROUND_IMAGE_TYPE, BACKGROUND_IMAGE_TYPE, defaultBackgroundLink, USER_TABLE, user.userId)
     return user
 }
 

@@ -13,7 +13,8 @@ export const useUserStore = defineStore('UserStore', {
         organisationId: null,
         organisationImgUrl: '',
         projects: [],
-        recentProjects: []
+        recentProjects: [],
+        backgroundImgUrl: ''
     }),
     actions: {
         setUser(config) {
@@ -65,6 +66,7 @@ export const useUserStore = defineStore('UserStore', {
             this.organisationImgUrl = ''
             this.projects = []
             this.recentProjects = []
+            this.backgroundImgUrl = ''
         }
     }
 })
