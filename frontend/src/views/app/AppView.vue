@@ -16,14 +16,16 @@ const toggleProjectSidebar = () => projectSidebarActive.value = !projectSidebarA
     <template v-if="!standaloneTaskStore.isStandalone">
         <div class="flex h-full">
             <TheSidebar :toggle-project-sidebar="toggleProjectSidebar" />
-            <TheProjectSidebar :active="projectSidebarActive" />
-            <div class="bg-cover bg-center bg-no-repeat w-full max-w-full" :style="{backgroundImage: `url(${userStore.backgroundImgUrl})`}">
-                <TheTopbar>
-                    <RouterView name="appTopBar" />
-                </TheTopbar>
-                <main>
-                    <RouterView name="appMain" />
-                </main>
+            <div class="bg-cover bg-center bg-no-repeat w-full max-w-full flex" :style="{backgroundImage: `url(${userStore.backgroundImgUrl})`}">
+                <TheProjectSidebar :active="projectSidebarActive" />
+                <div>
+                    <TheTopbar>
+                        <RouterView name="appTopBar" />
+                    </TheTopbar>
+                    <main>
+                        <RouterView name="appMain" />
+                    </main>
+                </div>
             </div>
         </div>
     </template>
