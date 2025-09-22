@@ -17,7 +17,7 @@ const props = defineProps({
 })
 
 const projectLinkClickHandler = () => {
-    if (route.name !== 'dashboard' || route.name !== 'project') {
+    if (route.name !== 'dashboard' && route.name !== 'project') {
         router.push({name: 'dashboard'})
     }
 
@@ -62,9 +62,9 @@ const projectLinkClickHandler = () => {
             <!-- <RouterLink :to="{ name: 'user' }">
                 User
             </RouterLink>  -->
-            <!--<RouterLink :to="{ name: 'modal' }">
+            <RouterLink :to="{ name: 'modal' }">
                 modal
-            </RouterLink>-->
+            </RouterLink>
         </ul>
     </div>
 </template>
