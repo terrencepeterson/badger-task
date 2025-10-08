@@ -219,3 +219,4 @@ export function getSuccessConfig(data, message) {
     return { message, data }
 }
 
+export const capitalise = word => word.substring(0, 1).toUpperCase() + word.substring(1, word.length)

@@ -1,7 +1,7 @@
 import { defaultUserAvatarLink, defaultOrganisationAvatarLink, defaultBackgroundLink } from "../../cloudinary.mjs"
 import { generateInsert, query } from "../../db.mjs"
 import { USER_TABLE, COLUMN_AGENDA_TABLE, AVATAR_IMAGE_TYPE, ORGANISATION_TABLE, BACKGROUND_IMAGE_TYPE } from "../../definitions.mjs"
-import { convertDbImgToUrl } from "../../utility.mjs"
+import { convertDbImgToUrl, capitalise } from "../../utility.mjs"
 
 export async function createUser(name, email, description, role, password) {
     const userId = await generateInsert(USER_TABLE, { name, email, description, role, password })
@@ -36,7 +36,7 @@ function addDefaultAgenda(userId) {
 
 export async function getUserById(id) {
     let user = await query(`
-        SELECT u.id, u.email, u.avatar_img_version, u.name, u.description, o.id as organisationId, o.avatar_img_version as organisation_avatar_img_version
+        SELECT u.id, u.email, u.avatar_img_version, u.name, u.description, o.id as organisationId, o.avatar_img_version as organisationAvatar_img_version
         FROM ${USER_TABLE} u
         JOIN organisation o
             ON o.id = u.organisation_id
@@ -44,7 +44,7 @@ export async function getUserById(id) {
     `, [id])
 
     user = convertDbImgToUrl(user[0], AVATAR_IMAGE_TYPE, AVATAR_IMAGE_TYPE, defaultUserAvatarLink, USER_TABLE, user[0].id)
-    user = convertDbImgToUrl(user, 'organisation_' + AVATAR_IMAGE_TYPE, AVATAR_IMAGE_TYPE, defaultOrganisationAvatarLink, ORGANISATION_TABLE, user.organisationId)
+    user = convertDbImgToUrl(user, 'organisation' + capitalise(AVATAR_IMAGE_TYPE), AVATAR_IMAGE_TYPE, defaultOrganisationAvatarLink, ORGANISATION_TABLE, user.organisationId)
     user = convertDbImgToUrl(user, BACKGROUND_IMAGE_TYPE, BACKGROUND_IMAGE_TYPE, defaultBackgroundLink, USER_TABLE, user.userId)
     return user
 }

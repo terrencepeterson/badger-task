@@ -11,7 +11,7 @@ export const useUserStore = defineStore('UserStore', {
         email: '',
         hasInit: false,
         organisationId: null,
-        organisationImgUrl: '',
+        organisationAvatarImgUrl: '',
         projects: [],
         recentProjects: [],
         backgroundImgUrl: ''
@@ -63,7 +63,7 @@ export const useUserStore = defineStore('UserStore', {
             this.description = ''
             this.email = ''
             this.organisationId = null
-            this.organisationImgUrl = ''
+            this.organisationAvatarImgUrl = ''
             this.projects = []
             this.recentProjects = []
             this.backgroundImgUrl = ''

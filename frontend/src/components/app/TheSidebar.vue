@@ -55,7 +55,7 @@ const projectLinkClickHandler = () => {
             <div class="bg-ondark/25 h-[1px] w-2/3 mx-auto" />
 
             <div class="rounded-xl bg-ondark p-2 mx-2 mt-auto">
-                <img :src="userStore.organisationImgUrl" alt="" class="w-4/5 mx-auto">
+                <img :src="userStore.organisationAvatarImgUrl" alt="" class="w-4/5 mx-auto">
             </div>
 
             <LogoutButton />
