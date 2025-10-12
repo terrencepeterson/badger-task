@@ -26,7 +26,7 @@ const projectLinkClickHandler = () => {
 </script>
 
 <template>
-    <div class="py-4 h-full w-[90px] bg-dark text-ondark z-10">
+    <div class="py-4 h-full min-w-[90px] max-w-[90px] bg-dark text-ondark z-10">
         <ul class="flex flex-col gap-6 h-full">
             <RouterLink class="block w-full mb-8" :to="{ name: 'dashboard' }" is-link>
                 <img class="w-14 mx-auto" :src="logoSrc" alt="">

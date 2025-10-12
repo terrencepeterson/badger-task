@@ -21,7 +21,10 @@ const recentProjects = computed(() => {
 </script>
 
 <template>
-    <div class="bg-dark inset-shadow-project-sidebar py-8  w-[320px] text-white flex flex-col gap-6 overflow-x-hidden transition-[max-width]" :aria-hidden="!active" :class="{'max-w-0': !active, 'max-w-[320px]': active}">
+    <div class="bg-dark inset-shadow-project-sidebar py-8 w-[320px] text-white flex flex-col gap-6 overflow-x-hidden transition-[max-width] z-10"
+         :aria-hidden="!active"
+         :class="{ 'max-w-0': !active, 'max-w-[320px] min-w-[320px]': active }"
+    >
         <div class="flex justify-between items-center px-5 mx-2">
             <span class="text-xl font-bold">Projects</span>
             <DropDownContainer drop-down-title="some test title">
@@ -60,4 +63,3 @@ const recentProjects = computed(() => {
         />
     </div>
 </template>
-
