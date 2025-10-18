@@ -32,7 +32,7 @@ provide('toggleIsViewLoading', toggleIsViewLoading)
                     <TheTopbar>
                         <RouterView name="appTopBar" />
                     </TheTopbar>
-                    <main class="grow overflow-x-scroll">
+                    <main class="grow overflow-x-auto">
                         <RouterView name="appMain" />
                     </main>
                 </div>

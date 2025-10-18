@@ -1,32 +1,97 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, inject, computed } from 'vue'
 import { onBeforeRouteUpdate, useRoute } from 'vue-router'
+import { useFetch } from '@/composables/useFetch'
 import { addRecentlyViewedProject } from '@/localStorage.js'
+import ViewError from '@/components/app/ViewError.vue'
+import TaskColumn from '@/components/app/taskColumn/TaskColumn.vue'
+import TaskColumnProjectHeader from '@/components/app/taskColumn/headers/TaskColumnProjectHeader.vue'
+// import TaskColumnProjectTask from '@/components/app/taskColumn/taskOverviews/TaskColumnProjectTask.vue'
+import TaskColumnTaskRoot from '@/components/app/taskColumn/taskOverviews/TaskColumnTaskRoot.vue'
 
+const { data, error, getData: getEndpointData } = useFetch()
+const toggleIsViewLoading = inject('toggleIsViewLoading')
 const route = useRoute()
-onMounted(() => addRecentlyViewedProject(+route.params.projectId))
-onBeforeRouteUpdate((to) => addRecentlyViewedProject(+to.params.projectId))
+const projectId = +route.params.projectId
+
+// when data passed from backend the tasks only have the ids for the user and the tags
+// this converts the ids to the actual config objects
+const tasks = computed(() => {
+    return data.value?.tasks.map(task => {
+        const user = data.value.users.find(u => u.id == task.assigneeId)
+        const tags = task.tags.map(tId => data.value.tags.find(t => t.id == tId))
+        return {
+            ...task,
+            completed: task.state === 'completed',
+            tags,
+            assigneeAvatarImgUrl: user ? user.avatarImgUrl : null,
+            assigneeName: user ? user.name : null
+        }
+    })
+})
+
+const configs = computed(() => {
+    if (!data.value?.columns) {
+        return []
+    }
+
+    console.log(tasks.value)
+    const ascendingColumnIds = [...data.value.columns].sort((a, b) => a.column - b.column).map(c => c.id)
+    const test = {
+        tasksInColumns: ascendingColumnIds.map((columnId) =>
+            tasks.value.filter(task => task.columnProjectId === columnId).sort((a, b) => a.row - b.row)
+        ),
+        columnHeaders: ascendingColumnIds.map(cId => data.value.columns.find(c => c.id === cId))
+    }
+    return test
+})
+
+const getData = async () => {
+    await getEndpointData(route.meta.endpoint(route))
+    toggleIsViewLoading()
+}
+
+addRecentlyViewedProject(projectId)
+toggleIsViewLoading()
+
+onMounted(async () => {
+    await getData()
+    console.log(data)
+})
+
+onBeforeRouteUpdate(async (to) => {
+    addRecentlyViewedProject(+to.params.projectId)
+    toggleIsViewLoading()
+    await getData()
+})
+
+const addTasksToColumn = async (columnId, row) => {
+    const params = new URLSearchParams({ row })
+    const endpoint = `${import.meta.env.VITE_API_BASE_URL}/project/${projectId}/column/${columnId}?${params}`
+    const res = await fetch(endpoint, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: 'include'
+    })
+    const { data: newTasks } = await res.json()
+    console.log(newTasks)
+    data.value.tasks.push(...newTasks)
+}
 </script>
 
 <template>
-    <div>
-        <h1>Project View</h1>
-        <p>{{ route.params.projectId }}</p>
-        <RouterLink :to="{ name: 'project', params: { projectId: 10 }}" class="block mb-4">
-            10
-        </RouterLink>
-        <RouterLink :to="{ name: 'project', params: { projectId: 11 }}" class="block mb-4">
-            11
-        </RouterLink>
-        <RouterLink :to="{ name: 'project', params: { projectId: 12 }}" class="block mb-4">
-            12
-        </RouterLink>
-        <RouterLink :to="{ name: 'project', params: { projectId: 13 }}" class="block mb-4">
-            13
-        </RouterLink>
-        <RouterLink :to="{ name: 'project', params: { projectId: 14 }}" class="block mb-4">
-            14
-        </RouterLink>
+    <ViewError v-if="error" />
+    <div v-else class="flex overflow-x-scroll overflow-y-hidden h-full w-[calc(100%-90px)]">
+        <TaskColumn
+            v-for="(columnHeader, idx) in configs.columnHeaders"
+            :key="columnHeader.id"
+            :header-config="columnHeader"
+            :task-configs="configs.tasksInColumns[idx]"
+            :task-component="TaskColumnTaskRoot"
+            :header-component="TaskColumnProjectHeader"
+            @load-more-tasks="addTasksToColumn"
+        />
     </div>
 </template>
 

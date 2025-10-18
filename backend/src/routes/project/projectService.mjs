@@ -111,7 +111,7 @@ export async function getProjectTasks(projectId, userId) {
         )
         SELECT taskId, taskName, state, columnProjectId, row, assigneeId, agendaColour, tags
         FROM RankedTasks
-        WHERE rn <= 5;
+        WHERE rn <= 7;
     `, [userId, projectId])
 
     projectTasks = mapTags(projectTasks)
@@ -123,10 +123,11 @@ export async function getProjectColumn(columnId, row, userId) {
     let tasks = await query(`
         SELECT
             t.id,
-            t.name,
+            t.name as taskName,
             t.state,
-            t.assignee,
+            t.assignee as assigneeId,
             t.project_row,
+            t.project_column_id as columnProjectId,
             GROUP_CONCAT(tt.tag_id SEPARATOR ',') AS tags,
             ca.colour as agendaColumnColour
         FROM task t
@@ -177,6 +178,7 @@ export async function getProjectColumnsByProjectId(projectId) {
             cp.name,
             cp.colour,
             cp.icon,
+            cp.column,
             CAST(COUNT(t.id) AS UNSIGNED) AS taskCount
         FROM column_project cp
         LEFT JOIN task t

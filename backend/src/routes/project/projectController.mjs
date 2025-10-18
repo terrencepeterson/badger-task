@@ -21,6 +21,9 @@ import { getOrganisationIdByUserId, getAllUsersFromOrganisation } from "../organ
 import { ROLE_ADMIN, ACCESS_CONTROL_PROJECTS, PROJECT_TABLE, ACCESS_CONTROL_COLUMN_PROJECTS, COLUMN_PROJECT_TABLE, TAG_TABLE, AVATAR_IMAGE_TYPE } from "../../definitions.mjs"
 import { addMultipleAttributeAccess, removeMultipleAttributeAccess } from "../../accessControl/attributeAccess.mjs"
 import { moveColumn } from "../../db.mjs"
+function delay(time) {
+  return new Promise(resolve => setTimeout(resolve, time));
+} 
 
 export const updateProjectEndpoint = createPatchEndpoint(
     projectFormatAndValidation,
@@ -44,6 +47,8 @@ export const getProjectEndpoint = createEndpoint(async (req) => {
     projectDetails.columns = await getProjectColumnsByProjectId(projectId)
     projectDetails.users = await getProjectUsersWAssigneedTask(projectId)
     projectDetails.tags = await getProjectTags(projectId)
+
+    await delay(500)
 
     return getSuccessConfig(projectDetails)
 })
@@ -97,7 +102,7 @@ async function projectFormatAndValidation(allowedData, projectId, userId) {
     return allowedData
 }
 
-export const getProjectColumnEndpoint = createEndpoint((req) => {
+export const getProjectColumnEndpoint = createEndpoint(async (req) => {
     const { projectColumnId: column } = req.params
     const { row } = req.query
 
@@ -109,7 +114,7 @@ export const getProjectColumnEndpoint = createEndpoint((req) => {
         throw new Error('No row provided')
     }
 
-    return getProjectColumn(column, row, req.user.id)
+    return getSuccessConfig(await getProjectColumn(column, row, req.user.id))
 })
 
 export const createProjectColumnEndpoint = createEndpoint(async (req) => {

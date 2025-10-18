@@ -1,9 +1,10 @@
 <script setup>
-import ProjectAvatar from '@/components/app/ProjectAvatar.vue'
 import ProjectSidebarIcon from '@/components/app/projectSidebar/ProjectSidebarIcon.vue';
 import VIcon from '@/components/shared/utilities/VIcon.vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ref, computed } from 'vue'
+import ProjectHeader from '@/components/app/ProjectHeader.vue'
+// import ProjectAvatar from '@/components/app/ProjectAvatar.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -44,8 +45,7 @@ const active = computed(() => route.params.projectId == props.projectId)
         @mouseenter.stop="showSettings = true"
         @mouseleave.stop="showSettings = false"
     >
-        <ProjectAvatar :avatar="avatarImgUrl" class="me-4" />
-        <span class="overflow-hidden text-nowrap text-ellipsis text-sm">{{ projectName }}</span>
+        <ProjectHeader :avatar-img-url="avatarImgUrl" :project-name="projectName" />
         <span class="ms-auto flex gap-2 items-center">
             <span class="transition-opacity" :class="[showSettings ? 'opacity-100' : 'opacity-0']" @click.stop="settingsClickHandler">
                 <ProjectSidebarIcon name="three-dots" />
