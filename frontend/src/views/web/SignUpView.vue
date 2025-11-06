@@ -20,7 +20,6 @@ const submitHandler = async (e) => {
         password: password.value,
         confirmPassword: confirmPassword.value
     })
-    console.log(data)
 }
 </script>
 

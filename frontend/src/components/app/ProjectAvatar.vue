@@ -1,6 +1,7 @@
 <script setup>
-import VIcon from '@/components/shared/utilities/VIcon.vue'
-const props = defineProps({
+import VCircleIcon from '@/components/shared/utilities/VCircleIcon.vue'
+
+defineProps({
     avatarUrl: {
         type: String,
         required: false,
@@ -11,11 +12,9 @@ const props = defineProps({
 
 <template>
     <img v-if="avatarUrl" :src="avatarUrl">
-    <span v-else class="rounded-full w-6 h-6 p-1 flex items-center justify-center bg-ondark">
-        <VIcon name="rocket-fill" class="text-white" />
-    </span>
+    <VCircleIcon v-else
+                 class="bg-ondark w-6 h-6 p-1 "
+                 icon="rocket-fill"
+    />
 </template>
 
-<style lang="scss" scoped>
-
-</style>

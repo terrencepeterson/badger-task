@@ -6,7 +6,6 @@ import { addRecentlyViewedProject } from '@/localStorage.js'
 import ViewError from '@/components/app/ViewError.vue'
 import TaskColumn from '@/components/app/taskColumn/TaskColumn.vue'
 import TaskColumnProjectHeader from '@/components/app/taskColumn/headers/TaskColumnProjectHeader.vue'
-// import TaskColumnProjectTask from '@/components/app/taskColumn/taskOverviews/TaskColumnProjectTask.vue'
 import TaskColumnTaskRoot from '@/components/app/taskColumn/taskOverviews/TaskColumnTaskRoot.vue'
 
 const { data, error, getData: getEndpointData } = useFetch()
@@ -35,7 +34,6 @@ const configs = computed(() => {
         return []
     }
 
-    console.log(tasks.value)
     const ascendingColumnIds = [...data.value.columns].sort((a, b) => a.column - b.column).map(c => c.id)
     const test = {
         tasksInColumns: ascendingColumnIds.map((columnId) =>
@@ -56,7 +54,6 @@ toggleIsViewLoading()
 
 onMounted(async () => {
     await getData()
-    console.log(data)
 })
 
 onBeforeRouteUpdate(async (to) => {
@@ -75,14 +72,15 @@ const addTasksToColumn = async (columnId, row) => {
         credentials: 'include'
     })
     const { data: newTasks } = await res.json()
-    console.log(newTasks)
     data.value.tasks.push(...newTasks)
 }
 </script>
 
 <template>
     <ViewError v-if="error" />
-    <div v-else class="flex overflow-x-scroll overflow-y-hidden h-full w-[calc(100%-90px)]">
+    <div v-else
+         class="flex overflow-x-scroll overflow-y-hidden h-full w-[calc(100%-90px)]"
+    >
         <TaskColumn
             v-for="(columnHeader, idx) in configs.columnHeaders"
             :key="columnHeader.id"

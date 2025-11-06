@@ -1,5 +1,4 @@
 <script setup>
-import VIcon from '@/components/shared/utilities/VIcon.vue'
 import { ref } from 'vue'
 import VCircleIcon from '@/components/shared/utilities/VCircleIcon.vue'
 
@@ -24,9 +23,6 @@ const props = defineProps({
         type: String,
         required: true
     },
-    // state: {
-    //     type:
-    // }
 })
 
 const isMouseOver = ref(false)
