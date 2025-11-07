@@ -4,10 +4,18 @@ import VCircleIcon from '@/components/shared/utilities/VCircleIcon.vue'
 import VIcon from "@/components/shared/utilities/VIcon.vue"
 import ProjectHeader from '../../ProjectHeader.vue'
 import VAvatar from '@/components/shared/utilities/VAvatar.vue'
+import { inject, useTemplateRef, ref } from "vue"
 
 const lorem = new LoremIpsum()
 const generateRandomNumber = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min
 const loremWords = lorem.generateWords(generateRandomNumber(5, 25))
+
+const setPlaceholderCoordinates = inject('setPlaceholderCoordinates')
+const removePlaceholder = inject('removePlaceholder')
+const addPlaceholder = inject('addPlaceholder')
+const taskRef = useTemplateRef('task')
+const dragging = ref(false)
+const hideElement = ref(false)
 
 const props = defineProps({
     taskId: {
@@ -50,13 +58,49 @@ const props = defineProps({
     completed: {
         type: Boolean,
         required: true
+    },
+    row: {
+        type: Number,
+        required: true
+    },
+    columnProjectId: {
+        type: Number,
+        required: true
     }
 })
+
+const dragStartHandler = (e) => {
+    e.dataTransfer.effectAllowed = "move"
+    e.dataTransfer.setData("task", "")
+    setPlaceholderCoordinates(props.columnProjectId, props.row, taskRef.value.$el.offsetHeight)
+    // we don't add the placeholder or hide the task straight away, if you do so it affects [offsets by the placeholder height]
+    // the 'copied' element under the cursor when dragging
+    // however we want the copied element to have a border-primary so we do that here
+    dragging.value = true
+
+    setTimeout(() => {
+        addPlaceholder()
+        hideElement.value = true
+    })
+}
+
+const dragEndHandler = () => {
+    removePlaceholder()
+    setPlaceholderCoordinates(null, null, null)
+    hideElement.value = false
+    dragging.value = false
+}
 </script>
 
 <template>
-    <div class="flex flex-col gap-4 p-4 rounded-lg bg-white cursor-pointer select-none
-                border-2 border-grey-light shadow-sm hover:shadow-lg transition-shadow"
+    <RouterLink ref="task"
+                class="task flex flex-col gap-4 p-4 rounded-lg bg-white cursor-pointer select-none
+                border-2 shadow-sm hover:shadow-lg transition-shadow"
+                :class="{ hidden: hideElement, 'border-primary': dragging, 'border-[#F5F5F5]': !dragging }"
+                draggable="true"
+                :to="{ name: 'modal' }"
+                @dragstart="dragStartHandler"
+                @dragend="dragEndHandler"
     >
         <div v-if="completed" class="bg-success flex -mx-4 -mt-4 py-2 px-4 rounded-t-lg gap-4">
             <span>
@@ -97,7 +141,7 @@ const props = defineProps({
                 />
             </span>
         </div>
-        <div v-if="tags.length" class="flex gap-2 flex-wrap mt-2">
+        <div v-if="tags?.length" class="flex gap-2 flex-wrap mt-2">
             <span v-for="{ id, colour, name } in tags"
                   :key="id"
                   :style="{ backgroundColor: colour}"
@@ -106,6 +150,6 @@ const props = defineProps({
                 {{ name }}
             </span>
         </div>
-    </div>
+    </RouterLink>
 </template>
 

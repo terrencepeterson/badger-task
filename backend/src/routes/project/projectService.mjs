@@ -122,11 +122,11 @@ export async function getProjectTasks(projectId, userId) {
 export async function getProjectColumn(columnId, row, userId) {
     let tasks = await query(`
         SELECT
-            t.id,
+            t.id as taskId,
             t.name as taskName,
             t.state,
             t.assignee as assigneeId,
-            t.project_row,
+            t.project_row as row,
             t.project_column_id as columnProjectId,
             GROUP_CONCAT(tt.tag_id SEPARATOR ',') AS tags,
             ca.colour as agendaColumnColour

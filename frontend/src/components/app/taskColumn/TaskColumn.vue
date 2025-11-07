@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, useTemplateRef, onUnmounted, computed, watch } from 'vue'
 import VIcon from '@/components/shared/utilities/VIcon.vue'
+import TaskPlaceholder from '@/components/app/taskColumn/TaskPlaceholer.vue'
 
 const sentinelElement = useTemplateRef('sentinel')
 const listContainerElement = useTemplateRef('list-container')
@@ -54,12 +55,14 @@ watch(shouldGetMoreTasks, (newValue) => {
     <div class="min-w-[275px] max-w-[275px] relative flex flex-col">
         <component :is="headerComponent" v-bind="headerConfig" />
         <ol v-if="taskConfigs.length" ref="list-container" class="p-3 flex flex-col gap-3 overflow-y-scroll">
-            <component
-                :is="taskComponent"
-                v-for="taskConfig in taskConfigs"
-                :key="taskConfig.taskId"
-                v-bind="taskConfig"
-            />
+            <template v-for="taskConfig in taskConfigs" :key="taskConfig.taskId">
+                <TaskPlaceholder v-if="taskConfig.placeholder" :height="taskConfig.height" />
+                <component
+                    :is="taskComponent"
+                    v-else
+                    v-bind="taskConfig"
+                />
+            </template>
             <div ref="sentinel" class="invisible" />
         </ol>
         <div v-else class="text-grey-dark flex flex-col justify-center items-center gap-2 select-none absolute top-1/2 left-1/2 -translate-1/2">

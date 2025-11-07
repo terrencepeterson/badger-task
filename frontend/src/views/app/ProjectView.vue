@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, inject, computed } from 'vue'
+import { onMounted, inject, provide, computed, ref } from 'vue'
 import { onBeforeRouteUpdate, useRoute } from 'vue-router'
 import { useFetch } from '@/composables/useFetch'
 import { addRecentlyViewedProject } from '@/localStorage.js'
@@ -12,11 +12,33 @@ const { data, error, getData: getEndpointData } = useFetch()
 const toggleIsViewLoading = inject('toggleIsViewLoading')
 const route = useRoute()
 const projectId = +route.params.projectId
+const placeholderConfig = ref({ columnProjectId: null, row: null, height: null, taskId: Date.now(), placeholder: true })
+const setPlaceholderCoordinates = (col, row, height) => {
+    data.value.tasks = data.value.tasks.map(t => ({ ...t, ...(t.columnProjectId === placeholderConfig.value.columnProjectId && t.row > placeholderConfig.value.row ? { row: t.row += 1 } : {} )}))
+    placeholderConfig.value.columnProjectId = col
+    placeholderConfig.value.row = row
+    placeholderConfig.value.height = height
+    console.log(placeholderConfig.value)
+    data.value.tasks = data.value.tasks.map(t => ({ ...t, ...(t.columnProjectId === col && t.row >= row ? { row: t.row += 1 } : {} )}))
+}
+const addPlaceholder = () => {
+    data.value.tasks.push(placeholderConfig.value)
+}
+const removePlaceholder = () => {
+    data.value.tasks = data.value.tasks.filter(t => !t.placeholder)
+}
+provide('setPlaceholderCoordinates', setPlaceholderCoordinates)
+provide('addPlaceholder', addPlaceholder)
+provide('removePlaceholder', removePlaceholder)
 
 // when data passed from backend the tasks only have the ids for the user and the tags
 // this converts the ids to the actual config objects
 const tasks = computed(() => {
     return data.value?.tasks.map(task => {
+        if (task.placeholder) {
+            return task
+        }
+
         const user = data.value.users.find(u => u.id == task.assigneeId)
         const tags = task.tags.map(tId => data.value.tags.find(t => t.id == tId))
         return {
@@ -35,13 +57,14 @@ const configs = computed(() => {
     }
 
     const ascendingColumnIds = [...data.value.columns].sort((a, b) => a.column - b.column).map(c => c.id)
-    const test = {
-        tasksInColumns: ascendingColumnIds.map((columnId) =>
-            tasks.value.filter(task => task.columnProjectId === columnId).sort((a, b) => a.row - b.row)
+    return {
+        tasksInColumns: ascendingColumnIds.map(columnId =>
+            tasks.value
+                .filter(task => task.columnProjectId === columnId) // gets tasks for column
+                .sort((a, b) => a.row - b.row) // put in ascending order (by row)
         ),
         columnHeaders: ascendingColumnIds.map(cId => data.value.columns.find(c => c.id === cId))
     }
-    return test
 })
 
 const getData = async () => {
