@@ -1,11 +1,13 @@
 <script setup>
-import { onMounted, useTemplateRef, onUnmounted, computed, watch } from 'vue'
+import { onMounted, useTemplateRef, onUnmounted, computed, watch, ref, inject } from 'vue'
 import VIcon from '@/components/shared/utilities/VIcon.vue'
-import TaskPlaceholder from '@/components/app/taskColumn/TaskPlaceholer.vue'
 
 const sentinelElement = useTemplateRef('sentinel')
 const listContainerElement = useTemplateRef('list-container')
+const setPlaceholderCoordinates = inject('setPlaceholderCoordinates')
 const emit = defineEmits(['loadMoreTasks'])
+const placeholder = ref()
+const isDragEntered = ref(false)
 const props = defineProps({
     headerConfig: {
         type: Object,
@@ -49,14 +51,66 @@ watch(shouldGetMoreTasks, (newValue) => {
         observer?.disconnect()
     }
 })
+
+const dragEnterHandler = () => {
+    isDragEntered.value = true
+}
+
+const dragLeaveHandler = () => {
+    isDragEntered.value = false
+}
+
+const dragOverHandler = (e) => {
+    if (e.dataTransfer.types.includes("task")) {
+        e.preventDefault(); // without this the drop event doesn't fire!
+    }
+
+    if (placeholder.value instanceof Element) {
+        const placeholderRect = placeholder.value.getBoundingClientRect()
+        if (
+            placeholderRect.top <= e.clientY &&
+            placeholderRect.bottom >= e.clientY
+        ) {
+            return
+        }
+    }
+
+    const taskElements = Array.from(listContainerElement.value.children)
+    for (const [idx, taskElement] of taskElements.entries()) {
+        if (taskElement === placeholder.value) continue
+        const taskRect = taskElement.getBoundingClientRect()
+        const taskMidwayPoint = taskRect.top + ((taskRect.bottom - taskRect.top) / 2)
+        if (taskMidwayPoint < e.clientY) continue
+
+        if (taskElements[idx - 1] === placeholder.value) return
+
+        setPlaceholderCoordinates(props.headerConfig.id, idx)
+        return
+    }
+}
+
+const dropHandler = () => {
+    isDragEntered.value = false
+}
 </script>
 
 <template>
     <div class="min-w-[275px] max-w-[275px] relative flex flex-col">
         <component :is="headerComponent" v-bind="headerConfig" />
-        <ol v-if="taskConfigs.length" ref="list-container" class="p-3 flex flex-col gap-3 overflow-y-scroll">
+        <ol ref="list-container"
+            class="p-3 flex flex-col gap-3 overflow-y-scroll"
+            :class="{ 'dragging': isDragEntered }"
+            @dragenter="dragEnterHandler"
+            @dragleave="dragLeaveHandler"
+            @dragover="dragOverHandler"
+            @drop="dropHandler"
+        >
             <template v-for="taskConfig in taskConfigs" :key="taskConfig.taskId">
-                <TaskPlaceholder v-if="taskConfig.placeholder" :height="taskConfig.height" />
+                <div v-if="taskConfig.placeholder"
+                     :ref="(el) => placeholder = el"
+                     class="placeholder border-2 border-primary rounded-lg shadow-md select-none w-full bg-white/30"
+                     :style="{ minHeight: `${taskConfig.height}px` }"
+                />
                 <component
                     :is="taskComponent"
                     v-else
@@ -64,11 +118,17 @@ watch(shouldGetMoreTasks, (newValue) => {
                 />
             </template>
             <div ref="sentinel" class="invisible" />
+            <div v-if="!taskConfigs.length" class="text-grey-dark flex flex-col justify-center items-center gap-2 select-none absolute top-1/2 left-1/2 -translate-1/2">
+                <VIcon name="check-circle" class="w-16 h-16" />
+                <span class="text-lg">No Tasks</span>
+            </div>
         </ol>
-        <div v-else class="text-grey-dark flex flex-col justify-center items-center gap-2 select-none absolute top-1/2 left-1/2 -translate-1/2">
-            <VIcon name="check-circle" class="w-16 h-16" />
-            <span class="text-lg">No Tasks</span>
-        </div>
     </div>
 </template>
+
+<style scoped>
+.dragging * {
+    pointer-events: none;
+}
+</style>
 

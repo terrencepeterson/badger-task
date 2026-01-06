@@ -8,14 +8,14 @@ import { inject, useTemplateRef, ref } from "vue"
 
 const lorem = new LoremIpsum()
 const generateRandomNumber = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min
-const loremWords = lorem.generateWords(generateRandomNumber(5, 25))
+const loremWords = ' ' + lorem.generateWords(generateRandomNumber(2, 5))
 
-const setPlaceholderCoordinates = inject('setPlaceholderCoordinates')
 const removePlaceholder = inject('removePlaceholder')
 const addPlaceholder = inject('addPlaceholder')
+const tempRemoveTask = inject('tempRemoveTask')
+const addTask = inject('addTask')
 const taskRef = useTemplateRef('task')
 const dragging = ref(false)
-const hideElement = ref(false)
 
 const props = defineProps({
     taskId: {
@@ -25,7 +25,7 @@ const props = defineProps({
     projectName: {
         type: String,
         required: false,
-        default: 'Killer ink'
+        default: ''
     },
     projectAvatarImgUrl: {
         type: String,
@@ -72,35 +72,34 @@ const props = defineProps({
 const dragStartHandler = (e) => {
     e.dataTransfer.effectAllowed = "move"
     e.dataTransfer.setData("task", "")
-    setPlaceholderCoordinates(props.columnProjectId, props.row, taskRef.value.$el.offsetHeight)
     // we don't add the placeholder or hide the task straight away, if you do so it affects [offsets by the placeholder height]
     // the 'copied' element under the cursor when dragging
     // however we want the copied element to have a border-primary so we do that here
     dragging.value = true
 
     setTimeout(() => {
-        addPlaceholder()
-        hideElement.value = true
+        tempRemoveTask(props.taskId)
+        addPlaceholder(props.columnProjectId, props.row, taskRef.value.$el.offsetHeight)
     })
 }
 
 const dragEndHandler = () => {
+    addTask()
     removePlaceholder()
-    setPlaceholderCoordinates(null, null, null)
-    hideElement.value = false
     dragging.value = false
 }
 </script>
 
 <template>
-    <RouterLink ref="task"
-                class="task flex flex-col gap-4 p-4 rounded-lg bg-white cursor-pointer select-none
+    <RouterLink
+        ref="task"
+        class="task flex flex-col gap-4 p-4 rounded-lg bg-white cursor-pointer select-none
                 border-2 shadow-sm hover:shadow-lg transition-shadow"
-                :class="{ hidden: hideElement, 'border-primary': dragging, 'border-[#F5F5F5]': !dragging }"
-                draggable="true"
-                :to="{ name: 'modal' }"
-                @dragstart="dragStartHandler"
-                @dragend="dragEndHandler"
+        :class="{ 'border-primary': dragging, 'border-[#F5F5F5]': !dragging }"
+        draggable="true"
+        :to="{ name: 'modal' }"
+        @dragstart="dragStartHandler"
+        @dragend="dragEndHandler"
     >
         <div v-if="completed" class="bg-success flex -mx-4 -mt-4 py-2 px-4 rounded-t-lg gap-4">
             <span>

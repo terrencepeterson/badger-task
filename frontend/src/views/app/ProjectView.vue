@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, inject, provide, computed, ref } from 'vue'
+import { onMounted, inject, provide, computed, reactive, ref} from 'vue'
 import { onBeforeRouteUpdate, useRoute } from 'vue-router'
 import { useFetch } from '@/composables/useFetch'
 import { addRecentlyViewedProject } from '@/localStorage.js'
@@ -9,27 +9,59 @@ import TaskColumnProjectHeader from '@/components/app/taskColumn/headers/TaskCol
 import TaskColumnTaskRoot from '@/components/app/taskColumn/taskOverviews/TaskColumnTaskRoot.vue'
 
 const { data, error, getData: getEndpointData } = useFetch()
+const draggedTask = ref(null)
 const toggleIsViewLoading = inject('toggleIsViewLoading')
 const route = useRoute()
 const projectId = +route.params.projectId
-const placeholderConfig = ref({ columnProjectId: null, row: null, height: null, taskId: Date.now(), placeholder: true })
-const setPlaceholderCoordinates = (col, row, height) => {
-    data.value.tasks = data.value.tasks.map(t => ({ ...t, ...(t.columnProjectId === placeholderConfig.value.columnProjectId && t.row > placeholderConfig.value.row ? { row: t.row += 1 } : {} )}))
-    placeholderConfig.value.columnProjectId = col
-    placeholderConfig.value.row = row
-    placeholderConfig.value.height = height
-    console.log(placeholderConfig.value)
-    data.value.tasks = data.value.tasks.map(t => ({ ...t, ...(t.columnProjectId === col && t.row >= row ? { row: t.row += 1 } : {} )}))
+const placeholderConfig = reactive({ columnProjectId: null, row: null, height: null, taskId: Date.now(), placeholder: true })
+const setPlaceholderCoordinates = (col, row) => {
+    const shiftTasks = (direction) => {
+        data.value.tasks = data.value.tasks.map(t => ({
+            ...t,
+            ...(t.columnProjectId === placeholderConfig.columnProjectId && t.row >= placeholderConfig.row && !t.placeholder ? { row: t.row + direction } : {})
+        }))
+    }
+
+    if (placeholderConfig.row < row) { // needed - when cursor moving down it's offsetted by 1 (placeholder) and below we move all the tasks down so we need to offset it
+        row = row - 1
+    }
+
+    shiftTasks(-1)
+
+    removePlaceholder()
+    placeholderConfig.columnProjectId = col
+    placeholderConfig.row = row
+    data.value.tasks.push(placeholderConfig)
+
+    shiftTasks(1)
 }
-const addPlaceholder = () => {
-    data.value.tasks.push(placeholderConfig.value)
+const addPlaceholder = (col, row, height) => {
+    placeholderConfig.columnProjectId = col
+    placeholderConfig.row = row
+    placeholderConfig.height = height
+    data.value.tasks.push(placeholderConfig)
 }
 const removePlaceholder = () => {
     data.value.tasks = data.value.tasks.filter(t => !t.placeholder)
 }
+const tempRemoveTask = (taskId) => {
+    draggedTask.value = data.value.tasks.find(t => t.taskId === taskId)
+    data.value.tasks = data.value.tasks.filter(t => t.taskId !== taskId)
+}
+const addTask = () => {
+    draggedTask.value.row = placeholderConfig.row
+    draggedTask.value.columnProjectId = placeholderConfig.columnProjectId
+    data.value.tasks.push(draggedTask.value)
+    placeholderConfig.row = null
+    placeholderConfig.columnProjectId = null
+    placeholderConfig.height = null
+    draggedTask.value = null
+}
 provide('setPlaceholderCoordinates', setPlaceholderCoordinates)
 provide('addPlaceholder', addPlaceholder)
 provide('removePlaceholder', removePlaceholder)
+provide('tempRemoveTask', tempRemoveTask)
+provide('addTask', addTask)
 
 // when data passed from backend the tasks only have the ids for the user and the tags
 // this converts the ids to the actual config objects
