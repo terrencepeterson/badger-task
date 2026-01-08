@@ -98,8 +98,8 @@ const dragEndHandler = () => {
         :class="{ 'border-primary': dragging, 'border-[#F5F5F5]': !dragging }"
         draggable="true"
         :to="{ name: 'modal' }"
-        @dragstart="dragStartHandler"
-        @dragend="dragEndHandler"
+        @dragstart.stop="dragStartHandler"
+        @dragend.stop="dragEndHandler"
     >
         <div v-if="completed" class="bg-success flex -mx-4 -mt-4 py-2 px-4 rounded-t-lg gap-4">
             <span>

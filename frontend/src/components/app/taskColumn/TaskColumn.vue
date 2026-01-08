@@ -3,11 +3,13 @@ import { onMounted, useTemplateRef, onUnmounted, computed, watch, ref, inject } 
 import VIcon from '@/components/shared/utilities/VIcon.vue'
 
 const sentinelElement = useTemplateRef('sentinel')
+const header = useTemplateRef('header')
 const listContainerElement = useTemplateRef('list-container')
 const setPlaceholderCoordinates = inject('setPlaceholderCoordinates')
 const emit = defineEmits(['loadMoreTasks'])
 const placeholder = ref()
 const isDragEntered = ref(false)
+const isTaskDragged = ref(false)
 const props = defineProps({
     headerConfig: {
         type: Object,
@@ -92,11 +94,20 @@ const dragOverHandler = (e) => {
 const dropHandler = () => {
     isDragEntered.value = false
 }
+
+const dragStartHandler = (e) => {
+    e.dataTransfer.effectAllowed = "move"
+    e.dataTransfer.setData("column", "")
+    if (e.offsetY > header.value.height) { // if clicked outside of header
+        e.preventDefault()
+        return
+    }
+}
 </script>
 
 <template>
-    <div class="min-w-[275px] max-w-[275px] relative flex flex-col">
-        <component :is="headerComponent" v-bind="headerConfig" />
+    <div class="min-w-[275px] max-w-[275px] relative flex flex-col" draggable="true" @dragstart.stop="dragStartHandler">
+        <component :is="headerComponent" v-bind="headerConfig" ref="header" />
         <ol ref="list-container"
             class="p-3 flex flex-col gap-3 overflow-y-scroll"
             :class="{ 'dragging': isDragEntered }"
