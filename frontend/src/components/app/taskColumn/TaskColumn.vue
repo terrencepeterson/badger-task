@@ -9,7 +9,6 @@ const setPlaceholderCoordinates = inject('setPlaceholderCoordinates')
 const emit = defineEmits(['loadMoreTasks'])
 const placeholder = ref()
 const isDragEntered = ref(false)
-const isTaskDragged = ref(false)
 const props = defineProps({
     headerConfig: {
         type: Object,
@@ -27,6 +26,10 @@ const props = defineProps({
         type: Object,
         required: true
     },
+    isDraggedTask: {
+        type: Boolean,
+        default: false
+    }
 })
 const shouldGetMoreTasks = computed(() => props.headerConfig.taskCount > props.taskConfigs.length)
 
@@ -63,6 +66,10 @@ const dragLeaveHandler = () => {
 }
 
 const dragOverHandler = (e) => {
+    if (!props.isDraggedTask) {
+        return
+    }
+
     if (e.dataTransfer.types.includes("task")) {
         e.preventDefault(); // without this the drop event doesn't fire!
     }
@@ -106,7 +113,10 @@ const dragStartHandler = (e) => {
 </script>
 
 <template>
-    <div class="min-w-[275px] max-w-[275px] relative flex flex-col" draggable="true" @dragstart.stop="dragStartHandler">
+    <div class="min-w-[275px] max-w-[275px] relative flex flex-col"
+         draggable="true"
+         @dragstart.stop="dragStartHandler"
+    >
         <component :is="headerComponent" v-bind="headerConfig" ref="header" />
         <ol ref="list-container"
             class="p-3 flex flex-col gap-3 overflow-y-scroll"
