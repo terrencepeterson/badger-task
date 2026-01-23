@@ -5,7 +5,7 @@ import VIcon from '@/components/shared/utilities/VIcon.vue'
 const sentinelElement = useTemplateRef('sentinel')
 const header = useTemplateRef('header')
 const listContainerElement = useTemplateRef('list-container')
-const setPlaceholderCoordinates = inject('setPlaceholderCoordinates')
+const setTaskPlaceholderCoordinates = inject('setTaskPlaceholderCoordinates')
 const emit = defineEmits(['loadMoreTasks'])
 const placeholder = ref()
 const isDragEntered = ref(false)
@@ -28,7 +28,19 @@ const props = defineProps({
     },
     isDraggedTask: {
         type: Boolean,
-        default: false
+        required: true
+    },
+    removeDraggedColumn: {
+        type: Function,
+        required: true
+    },
+    addColumnPlaceholder: {
+        type: Function,
+        required: true
+    },
+    moveDroppedColumn: {
+        type: Function,
+        required: true
     }
 })
 const shouldGetMoreTasks = computed(() => props.headerConfig.taskCount > props.taskConfigs.length)
@@ -66,7 +78,7 @@ const dragLeaveHandler = () => {
 }
 
 const dragOverHandler = (e) => {
-    if (!props.isDraggedTask) {
+    if (!props.isDraggedTask) { // prevent task placeholder from showing when dragging columns
         return
     }
 
@@ -93,13 +105,14 @@ const dragOverHandler = (e) => {
 
         if (taskElements[idx - 1] === placeholder.value) return
 
-        setPlaceholderCoordinates(props.headerConfig.id, idx)
+        setTaskPlaceholderCoordinates(props.headerConfig.id, idx)
         return
     }
 }
 
-const dropHandler = () => {
+const dragEndHandler = () => {
     isDragEntered.value = false
+    props.moveDroppedColumn()
 }
 
 const dragStartHandler = (e) => {
@@ -109,6 +122,11 @@ const dragStartHandler = (e) => {
         e.preventDefault()
         return
     }
+
+    setTimeout(() => {
+        props.removeDraggedColumn(props.headerConfig)
+        props.addColumnPlaceholder(props.headerConfig.column - 0.5)
+    })
 }
 </script>
 
@@ -116,6 +134,7 @@ const dragStartHandler = (e) => {
     <div class="min-w-[275px] max-w-[275px] relative flex flex-col"
          draggable="true"
          @dragstart.stop="dragStartHandler"
+         @dragend.stop="dragEndHandler"
     >
         <component :is="headerComponent" v-bind="headerConfig" ref="header" />
         <ol ref="list-container"

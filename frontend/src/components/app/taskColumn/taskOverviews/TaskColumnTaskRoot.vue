@@ -8,12 +8,12 @@ import { inject, useTemplateRef, ref } from "vue"
 
 const lorem = new LoremIpsum()
 const generateRandomNumber = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min
-const loremWords = ' ' + lorem.generateWords(generateRandomNumber(2, 5))
+const loremWords = ' ' + lorem.generateWords(generateRandomNumber(5, 12))
 
-const removePlaceholder = inject('removePlaceholder')
-const addPlaceholder = inject('addPlaceholder')
-const tempRemoveTask = inject('tempRemoveTask')
-const addTask = inject('addTask')
+const removeTaskPlaceholder = inject('removeTaskPlaceholder')
+const addTaskPlaceholder = inject('addTaskPlaceholder')
+const removeDraggedTask = inject('removeDraggedTask')
+const addDraggedTask = inject('addDraggedTask')
 const taskRef = useTemplateRef('task')
 const dragging = ref(false)
 
@@ -78,14 +78,14 @@ const dragStartHandler = (e) => {
     dragging.value = true
 
     setTimeout(() => {
-        tempRemoveTask(props.taskId)
-        addPlaceholder(props.columnProjectId, props.row, taskRef.value.$el.offsetHeight)
+        removeDraggedTask(props.taskId)
+        addTaskPlaceholder(props.columnProjectId, props.row, taskRef.value.$el.offsetHeight)
     })
 }
 
 const dragEndHandler = () => {
-    addTask()
-    removePlaceholder()
+    addDraggedTask()
+    removeTaskPlaceholder()
     dragging.value = false
 }
 </script>
