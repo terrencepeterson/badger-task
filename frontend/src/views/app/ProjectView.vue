@@ -13,32 +13,17 @@ const draggedTask = ref(null)
 const toggleIsViewLoading = inject('toggleIsViewLoading')
 const route = useRoute()
 const projectId = +route.params.projectId
-const isColumnDragged = computed(() => !!data.value?.columns.find(c => c.placeholder))
 const columnPlaceholderElement = ref()
 const columnContainerElement = useTemplateRef('column-container')
+const isDraggedColumn = computed(() => !!data.value?.columns.find(c => c.placeholder))
 
 /* ### Draging task START ### */
 const taskPlaceHolderConfig = reactive({ columnProjectId: null, row: null, height: null, taskId: Date.now(), placeholder: true })
 const setTaskPlaceholderCoordinates = (col, row) => {
-    const shiftTasks = (direction) => {
-        data.value.tasks = data.value.tasks.map(t => ({
-            ...t,
-            ...(t.columnProjectId === taskPlaceHolderConfig.columnProjectId && t.row >= taskPlaceHolderConfig.row && !t.placeholder ? { row: t.row + direction } : {})
-        }))
-    }
-
-    if (taskPlaceHolderConfig.row < row) { // needed - when cursor moving down it's offsetted by 1 (placeholder) and below we move all the tasks down so we need to offset it
-        row = row - 1
-    }
-
-    shiftTasks(-1)
-
     removeTaskPlaceholder()
     taskPlaceHolderConfig.columnProjectId = col
     taskPlaceHolderConfig.row = row
     data.value.tasks.push(taskPlaceHolderConfig)
-
-    shiftTasks(1)
 }
 const addTaskPlaceholder = (col, row, height) => {
     taskPlaceHolderConfig.columnProjectId = col
@@ -49,12 +34,20 @@ const addTaskPlaceholder = (col, row, height) => {
 const removeTaskPlaceholder = () => {
     data.value.tasks = data.value.tasks.filter(t => !t.placeholder)
 }
-const removeDraggedTask = (taskId) => {
+const removeDraggedTask = (taskId, row, columnId) => {
     draggedTask.value = data.value.tasks.find(t => t.taskId === taskId)
     data.value.tasks = data.value.tasks.filter(t => t.taskId !== taskId)
+    data.value.tasks = data.value.tasks.map(t => ({
+        ...t,
+        ...(t.row > row && t.columnProjectId === columnId ? { row: t.row - 1 } : {})
+    }))
 }
 const addDraggedTask = () => {
-    draggedTask.value.row = taskPlaceHolderConfig.row
+    data.value.tasks = data.value.tasks.map(t => ({
+        ...t,
+        ...(t.columnProjectId === taskPlaceHolderConfig.columnProjectId && t.row > taskPlaceHolderConfig.row ? { row: t.row + 1 } : {})
+    }))
+    draggedTask.value.row = Math.abs(Math.ceil(taskPlaceHolderConfig.row))
     draggedTask.value.columnProjectId = taskPlaceHolderConfig.columnProjectId
     data.value.tasks.push(draggedTask.value)
     taskPlaceHolderConfig.row = null
@@ -137,7 +130,6 @@ const columnDragOverHandler = (e) => {
         return
     }
 }
-
 /* ### Draging column END ### */
 
 // when data passed from backend the tasks only have the ids for the user and the tags
@@ -174,7 +166,6 @@ const configs = computed(() => {
         ),
         columnHeaders: ascendingColumnIds.map(cId => data.value.columns.find(c => c.id === cId))
     }
-    // test.columnHeaders.forEach(ch => console.log(ch.column))
     // console.log(test)
     return test
 })
@@ -217,7 +208,7 @@ const addTasksToColumn = async (columnId, row) => {
     <div v-else
          ref="column-container"
          class="flex overflow-x-Scroll overflow-y-hidden h-full w-[calc(100%-90px)]"
-         :class="{ 'remove-pointer-events': isColumnDragged }"
+         :class="{ 'remove-pointer-events': isDraggedColumn }"
          @dragover="columnDragOverHandler"
     >
         <template v-for="(columnHeader, idx) in configs.columnHeaders" :key="columnHeader.id">
@@ -242,7 +233,7 @@ const addTasksToColumn = async (columnId, row) => {
 
 <style scoped>
 .remove-pointer-events * {
-    pointer-events: none;
+    /* pointer-events: none; */
 }
 </style>
 

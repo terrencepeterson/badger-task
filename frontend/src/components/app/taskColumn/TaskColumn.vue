@@ -6,9 +6,8 @@ const sentinelElement = useTemplateRef('sentinel')
 const header = useTemplateRef('header')
 const listContainerElement = useTemplateRef('list-container')
 const setTaskPlaceholderCoordinates = inject('setTaskPlaceholderCoordinates')
-const emit = defineEmits(['loadMoreTasks'])
+const emit = defineEmits(['load-more-tasks'])
 const placeholder = ref()
-const isDragEntered = ref(false)
 const props = defineProps({
     headerConfig: {
         type: Object,
@@ -53,7 +52,7 @@ onMounted(() => {
 
     observer = new IntersectionObserver(entries => {
         if (entries[0].isIntersecting) {
-            emit('loadMoreTasks', props.headerConfig.id, props.taskConfigs.length - 1)
+            emit('load-more-tasks', props.headerConfig.id, props.taskConfigs.length - 1)
         }
     }, { rootMargin: '300px 300px 300px 300px', root: listContainerElement.value })
     observer.observe(sentinelElement.value)
@@ -68,14 +67,6 @@ watch(shouldGetMoreTasks, (newValue) => {
         observer?.disconnect()
     }
 })
-
-const dragEnterHandler = () => {
-    isDragEntered.value = true
-}
-
-const dragLeaveHandler = () => {
-    isDragEntered.value = false
-}
 
 const dragOverHandler = (e) => {
     if (!props.isDraggedTask) { // prevent task placeholder from showing when dragging columns
@@ -105,13 +96,12 @@ const dragOverHandler = (e) => {
 
         if (taskElements[idx - 1] === placeholder.value) return
 
-        setTaskPlaceholderCoordinates(props.headerConfig.id, idx)
+        setTaskPlaceholderCoordinates(props.headerConfig.id, taskElement.dataset.row - 0.5)
         return
     }
 }
 
 const dragEndHandler = () => {
-    isDragEntered.value = false
     props.moveDroppedColumn()
 }
 
@@ -139,11 +129,7 @@ const dragStartHandler = (e) => {
         <component :is="headerComponent" v-bind="headerConfig" ref="header" />
         <ol ref="list-container"
             class="p-3 flex flex-col gap-3 overflow-y-scroll"
-            :class="{ 'dragging': isDragEntered }"
-            @dragenter="dragEnterHandler"
-            @dragleave="dragLeaveHandler"
             @dragover="dragOverHandler"
-            @drop="dropHandler"
         >
             <template v-for="taskConfig in taskConfigs" :key="taskConfig.taskId">
                 <div v-if="taskConfig.placeholder"
@@ -155,20 +141,18 @@ const dragStartHandler = (e) => {
                     :is="taskComponent"
                     v-else
                     v-bind="taskConfig"
+                    @dropped-task="console.log('you have dropped task')"
                 />
             </template>
             <div ref="sentinel" class="invisible" />
-            <div v-if="!taskConfigs.length" class="text-grey-dark flex flex-col justify-center items-center gap-2 select-none absolute top-1/2 left-1/2 -translate-1/2">
+            <div v-if="!taskConfigs.length"
+                 class="text-grey-dark flex flex-col
+                        justify-center items-center gap-2 select-none absolute top-1/2 left-1/2 -translate-1/2"
+            >
                 <VIcon name="check-circle" class="w-16 h-16" />
                 <span class="text-lg">No Tasks</span>
             </div>
         </ol>
     </div>
 </template>
-
-<style scoped>
-.dragging * {
-    pointer-events: none;
-}
-</style>
 

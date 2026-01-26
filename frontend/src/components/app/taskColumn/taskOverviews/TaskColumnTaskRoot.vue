@@ -78,8 +78,8 @@ const dragStartHandler = (e) => {
     dragging.value = true
 
     setTimeout(() => {
-        removeDraggedTask(props.taskId)
-        addTaskPlaceholder(props.columnProjectId, props.row, taskRef.value.$el.offsetHeight)
+        removeDraggedTask(props.taskId, props.row, props.columnProjectId)
+        addTaskPlaceholder(props.columnProjectId, props.row - 0.5, taskRef.value.$el.offsetHeight)
     })
 }
 
@@ -98,6 +98,7 @@ const dragEndHandler = () => {
         :class="{ 'border-primary': dragging, 'border-[#F5F5F5]': !dragging }"
         draggable="true"
         :to="{ name: 'modal' }"
+        :data-row="row"
         @dragstart.stop="dragStartHandler"
         @dragend.stop="dragEndHandler"
     >
