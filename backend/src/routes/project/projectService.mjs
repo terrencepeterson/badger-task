@@ -50,8 +50,6 @@ export async function getProjectsByUserId(userId) {
     `, [userId, userId])
 
     return projects.map(p => convertDbImgToUrl(p, AVATAR_IMAGE_TYPE, AVATAR_IMAGE_TYPE, defaultProjectAvatarLink, PROJECT_TABLE, p.id))
-
-    // return porj
 }
 
 export async function getProjectByProjectId(projectId) {
@@ -62,7 +60,8 @@ export async function getProjectByProjectId(projectId) {
             p.avatar_img_version,
             p.created_at,
             p.description,
-            u.name as createdBy
+            u.name as createdBy,
+            p.version
         FROM project p
         INNER JOIN user u
             ON u.id = p.created_by
